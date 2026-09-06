@@ -3,8 +3,8 @@
 cyclone detection, classification and forecasting for the north indian ocean.
 built for SIH problem statement 26070 (ministry of earth sciences / IMD).
 
-the problem statement asks for identification, classification and prediction
-from multi-source satellite data. i split that into four tasks:
+The problem statement (sih2026 26070) asks for identification, classification and prediction
+from multi-source satellite data. We split that into four tasks:
 
 - T1, find storms in a satellite image and pin the centre
 - T2, classify the dvorak cloud pattern
@@ -13,8 +13,6 @@ from multi-source satellite data. i split that into four tasks:
 
 everything is scored on held out seasons 2020-2025, 51 storms that no model
 here has seen.
-
-not an IMD product. official warnings come from RSMC new delhi.
 
 ## running it
 
@@ -73,14 +71,14 @@ CORS is already open, so a dev server on another port works without a proxy.
 | T3 intensity from image | RMSE 10.95 kt, MAE 7.36 | cold cloud stats: 21.06 kt |
 | T4 track + intensity @ 24 h | 121.9 km / 6.92 kt | CLIPER: 142.1 km / 9.04 kt |
 
-T1 gets reported twice on purpose. the pooled number includes depressions that
-often have no organised signature in infrared at all. the 34 kt+ number is the
-storms IMD actually names and warns on. neither one alone is the honest answer.
+T1 is reported twice as the pooled number includes depressions that
+often have no organised signature in infrared at all. The 34 kt+ number is the
+storms IMD actually names and warns on. Neither one alone is the honest answer.
 
 ### forecast skill vs CLIPER
 
 CLIPER is climatology plus persistence, it's the benchmark operational centres
-score skill against. beating it is the thing that matters, not beating zero.
+score skill against. Our primary and foundational goal was to beat that at the very least.
 
 | lead | track | ours | skill | intensity | ours | skill |
 |---|---|---|---|---|---|---|
@@ -90,8 +88,7 @@ score skill against. beating it is the thing that matters, not beating zero.
 | 48 h | 285.6 km | 254.0 | +11.1% | 13.96 kt | 11.89 | +14.9% |
 | 72 h | 405.2 km | 379.1 | +6.4% | 16.42 kt | 15.01 | +8.6% |
 
-skill is positive everywhere and peaks at 24 h, which is the lead time an
-evacuation call actually gets made on.
+skill is positive everywhere and peaks at 24 h.
 
 ### cone coverage
 
@@ -103,8 +100,7 @@ a 67% cone should contain about 67% of the true positions. ours at 24 h:
 | 24 h | 46% | 65% | 86% |
 | 72 h | 56% | 73% | 95% |
 
-slightly tight at short leads, slightly generous at long ones. reported either
-way, because a cone whose label doesn't mean anything is worse than no cone.
+slightly tight at short leads, slightly generous at long ones.
 
 ### landfall
 
@@ -115,17 +111,15 @@ way, because a cone whose label doesn't mean anything is worse than no cone.
 | intensity at coast | 11.77 kt | 13.49 kt |
 | will it land in 72 h | POD 0.80, FAR 0.20, CSI 0.65 | - |
 
-position earlier used to be 256 km and was the worst thing in the project. the model
+position earlier used to be 256 km and was one of the major inaccuracies in the project. the model
 regressed a lat/lon with no coastline anywhere in its inputs, so nothing pulled
 the answer onto land. only 28% of predictions landed within 25 km of a coast.
-fixed by taking the point where the forecast track crosses the coastline
+was fixed by taking the point where the forecast track crosses the coastline
 instead, which is what landfall actually means.
 
 ### rapid intensification
 
-brier skill score +0.096 over climatology. positive so it's real, but thin. RI
-is one of the hardest open problems in the field and i'm not going to oversell
-a 10% improvement on the base rate.
+brier skill score +0.096 over climatology, a positive result.
 
 ## data
 
@@ -138,7 +132,7 @@ a 10% improvement on the base rate.
 | digital typhoon | pretraining frames for T3 | kaggle account |
 | INSAT-3DR (MOSDAC) | 4 km imagery | approved account |
 
-MOSDAC approval came through late and it turned out we never needed it. GridSat
+MOSDAC approval came through late, GridSat
 and the ADT archive cover T1 and T2 with no authentication at all, so every
 number above was produced without INSAT. `src/verify_insat.py` shows INSAT
 imagery running through the trained models unretrained, which is the point:
