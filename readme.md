@@ -115,7 +115,7 @@ way, because a cone whose label doesn't mean anything is worse than no cone.
 | intensity at coast | 11.77 kt | 13.49 kt |
 | will it land in 72 h | POD 0.80, FAR 0.20, CSI 0.65 | - |
 
-position used to be 256 km and was the worst thing in the project. the model
+position earlier used to be 256 km and was the worst thing in the project. the model
 regressed a lat/lon with no coastline anywhere in its inputs, so nothing pulled
 the answer onto land. only 28% of predictions landed within 25 km of a coast.
 fixed by taking the point where the forecast track crosses the coastline
