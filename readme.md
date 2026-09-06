@@ -36,6 +36,33 @@ and open http://localhost:8000
 if you want to retrain instead of downloading, the `src/train_*.py` scripts do
 that, but you'll need the ~9 GB of source data first via `src/ingest/`.
 
+## building a different frontend
+
+`fixtures/` is the contract. it has a real captured response from every
+endpoint, 15 files and 70 KB total, so the whole UI can be built with no
+backend, no dataset and no GPU. the filenames say which endpoint each came
+from:
+
+| fixture | endpoint |
+|---|---|
+| `seasons.json`, `storms_2020.json` | `/api/seasons`, `/api/storms?season=` |
+| `storm_amphan.json` | `/api/storm/{sid}` |
+| `forecast_amphan_05/067/09.json` | `/api/storm/{sid}/forecast?level=`, all three levels |
+| `landfall_lands.json`, `landfall_none.json` | `/api/storm/{sid}/landfall`, both branches |
+| `bulletin_amphan.txt` | `/api/storm/{sid}/bulletin`, plain text not json |
+| `scene_amphan.json`, `intensity_amphan.json` | T2 and T3 on one patch |
+| `pipeline.json` | `/api/vision/pipeline`, the whole chain |
+| `vision_status.json`, `scene_meta.json`, `skill.json` | status, scene bounds, all metrics |
+
+`web/index.html` is a reference implementation, not a constraint. one file, no
+build step. regenerate the fixtures against a running server with
+
+```bash
+.venv/Scripts/python.exe src/dump_fixtures.py
+```
+
+CORS is already open, so a dev server on another port works without a proxy.
+
 ## results
 
 | task | ours | baseline it beats |
