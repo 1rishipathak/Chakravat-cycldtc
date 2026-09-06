@@ -1,0 +1,15 @@
+{
+  "available": true,
+  "scene_time": "2020-05-20 12:00:00",
+  "scene": "EMBC",
+  "confidence": 0.7912013530731201,
+  "probabilities": {
+    "EMBC": 0.7912013530731201,
+    "EYE": 0.14485538005828857,
+    "IRRCDO": 0.03768317773938179,
+    "SHEAR": 0.021929481998085976,
+    "CRVBND": 0.004330504219979048
+  },
+  "labels_note": "trained on CIMSS ADT scene types (algorithm output, not analyst labels)",
+  "sid": "2020136N10088"
+}

@@ -1,0 +1,148 @@
+{
+  "seasons": [
+    {
+      "season": 2025,
+      "storms": 8
+    },
+    {
+      "season": 2024,
+      "storms": 10
+    },
+    {
+      "season": 2023,
+      "storms": 9
+    },
+    {
+      "season": 2022,
+      "storms": 11
+    },
+    {
+      "season": 2021,
+      "storms": 6
+    },
+    {
+      "season": 2020,
+      "storms": 7
+    },
+    {
+      "season": 2019,
+      "storms": 9
+    },
+    {
+      "season": 2018,
+      "storms": 10
+    },
+    {
+      "season": 2017,
+      "storms": 5
+    },
+    {
+      "season": 2016,
+      "storms": 8
+    },
+    {
+      "season": 2015,
+      "storms": 10
+    },
+    {
+      "season": 2014,
+      "storms": 8
+    },
+    {
+      "season": 2013,
+      "storms": 10
+    },
+    {
+      "season": 2012,
+      "storms": 3
+    },
+    {
+      "season": 2011,
+      "storms": 7
+    },
+    {
+      "season": 2010,
+      "storms": 6
+    },
+    {
+      "season": 2009,
+      "storms": 5
+    },
+    {
+      "season": 2008,
+      "storms": 8
+    },
+    {
+      "season": 2007,
+      "storms": 5
+    },
+    {
+      "season": 2006,
+      "storms": 9
+    },
+    {
+      "season": 2005,
+      "storms": 11
+    },
+    {
+      "season": 2004,
+      "storms": 9
+    },
+    {
+      "season": 2003,
+      "storms": 5
+    },
+    {
+      "season": 2002,
+      "storms": 5
+    },
+    {
+      "season": 2001,
+      "storms": 6
+    },
+    {
+      "season": 2000,
+      "storms": 5
+    },
+    {
+      "season": 1999,
+      "storms": 7
+    },
+    {
+      "season": 1998,
+      "storms": 10
+    },
+    {
+      "season": 1997,
+      "storms": 4
+    },
+    {
+      "season": 1996,
+      "storms": 8
+    },
+    {
+      "season": 1995,
+      "storms": 4
+    },
+    {
+      "season": 1994,
+      "storms": 5
+    },
+    {
+      "season": 1993,
+      "storms": 4
+    },
+    {
+      "season": 1992,
+      "storms": 12
+    },
+    {
+      "season": 1991,
+      "storms": 8
+    },
+    {
+      "season": 1990,
+      "storms": 9
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+# Normalise line endings so a Windows checkout does not show every file as
+# modified on a Linux machine, and vice versa.
+* text=auto eol=lf
+
+# Vendored library: keep byte-for-byte, and hide it from diffs and language stats.
+web/vendor/** linguist-vendored -text
+
+# Data files are binary or generated; never try to merge them.
+*.geojson -text
+*.nc binary
+*.h5 binary
+*.npy binary
+*.pt binary
+*.joblib binary

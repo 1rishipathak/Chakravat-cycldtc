@@ -1,0 +1,71 @@
+{
+  "timing": {
+    "n": 303,
+    "baseline_mae_h": 14.88314123267332,
+    "model_mae_h": 9.042092956592082
+  },
+  "timing_from_crossing": {
+    "n": 229,
+    "crossing_mae_h": 11.456710287882126,
+    "model_mae_h_same_rows": 8.118462270943287
+  },
+  "position": {
+    "baseline_mean_km": 285.74528705038347,
+    "model_mean_km": 255.98107648283954,
+    "model_median_km": 211.3766196637074,
+    "snapped_mean_km": 233.6220122348065,
+    "snapped_median_km": 183.9903595986378,
+    "crossing_n": 229,
+    "crossing_mean_km": 159.92166832049193,
+    "hybrid_mean_km": 184.33462096602884,
+    "hybrid_median_km": 114.08433397880405,
+    "raw_frac_within_25km_of_coast": 0.2838283828382838
+  },
+  "intensity": {
+    "baseline_mae_kt": 13.492574257425742,
+    "model_mae_kt": 11.770283069757456
+  },
+  "will_land": {
+    "base_rate": 0.3282773564463705,
+    "hits": 243.0,
+    "misses": 60.0,
+    "false_alarms": 62.0,
+    "pod": 0.801980198019802,
+    "far": 0.20327868852459016,
+    "csi": 0.6657534246575343
+  },
+  "by_lead": [
+    {
+      "lead_from_h": 0,
+      "lead_to_h": 12,
+      "n": 64,
+      "timing_mae_h": 5.471113811199793,
+      "position_mean_km": 204.17381492172683,
+      "intensity_mae_kt": 9.066710274390033
+    },
+    {
+      "lead_from_h": 12,
+      "lead_to_h": 24,
+      "n": 59,
+      "timing_mae_h": 7.319838573829303,
+      "position_mean_km": 190.09000720152181,
+      "intensity_mae_kt": 11.693633877889916
+    },
+    {
+      "lead_from_h": 24,
+      "lead_to_h": 48,
+      "n": 106,
+      "timing_mae_h": 8.702687175654479,
+      "position_mean_km": 232.8044917586948,
+      "intensity_mae_kt": 12.046594259698315
+    },
+    {
+      "lead_from_h": 48,
+      "lead_to_h": 72,
+      "n": 74,
+      "timing_mae_h": 13.989831965612307,
+      "position_mean_km": 386.5210198378164,
+      "intensity_mae_kt": 13.77382327367595
+    }
+  ]
+}

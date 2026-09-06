@@ -1,0 +1,25 @@
+# Bytecode embeds the absolute build path; never commit it.
+__pycache__/
+*.py[cod]
+.venv/
+
+# Downloaded archives are large and reproducible - see the README for the fetch
+# commands. The vendored coastline is the exception: it is small, clipped to the
+# basin, and the landfall module needs it at runtime with no network.
+data/*
+!data/static/
+data/static/*
+!data/static/coastline_nio.geojson
+
+# Trained weights. Regenerate with the train_*.py scripts; the reports/ JSON
+# files carry the verified numbers and are committed.
+artifacts/*.pt
+artifacts/*.joblib
+
+# Editor and tooling scratch
+.vscode/
+.idea/
+*.part
+
+# internal frontend handoff doc, not for the public repo
+API.md

@@ -1,0 +1,37 @@
+{
+  "backbone": "convnext_tiny",
+  "frames": 4931,
+  "storms": 169,
+  "splits": {
+    "test": {
+      "frames": 982,
+      "storms": 33
+    },
+    "val": {
+      "frames": 695,
+      "storms": 25
+    },
+    "train": {
+      "frames": 3254,
+      "storms": 111
+    }
+  },
+  "predict_the_mean": {
+    "n": 982,
+    "rmse_kt": 18.03026467726429,
+    "mae_kt": 14.74626998323855,
+    "bias_kt": 4.05047586739554
+  },
+  "cold_cloud_stats": {
+    "n": 982,
+    "rmse_kt": 15.732412856794603,
+    "mae_kt": 12.268760040189973,
+    "bias_kt": 2.425536184835337
+  },
+  "cnn": {
+    "n": 982,
+    "rmse_kt": 8.944052696228027,
+    "mae_kt": 6.637051105499268,
+    "bias_kt": 0.5871098637580872
+  }
+}

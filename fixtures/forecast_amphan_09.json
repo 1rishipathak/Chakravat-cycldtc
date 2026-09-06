@@ -1,0 +1,70 @@
+{
+  "sid": "2020136N10088",
+  "name": "AMPHAN",
+  "issued_at": "2020-05-20 12:00:00",
+  "current": {
+    "lat": 22.1,
+    "lon": 88.4,
+    "vmax_kt": 85.0,
+    "category": "Very Severe Cyclonic Storm"
+  },
+  "cone_level": 0.9,
+  "forecast": [
+    {
+      "horizon_h": 6,
+      "lat": 23.526518138279833,
+      "lon": 88.97728530175827,
+      "radius_km": 114.54511206417762,
+      "vmax_kt": 63.72125773064391,
+      "vmax_lower": 45.31870879876203,
+      "vmax_upper": 82.1238066625258,
+      "category": "Severe Cyclonic Storm"
+    },
+    {
+      "horizon_h": 12,
+      "lat": 24.952795411934716,
+      "lon": 89.83599715490568,
+      "radius_km": 216.61192874448463,
+      "vmax_kt": 48.09688767464195,
+      "vmax_lower": 19.506249429206704,
+      "vmax_upper": 76.68752592007719,
+      "category": "Severe Cyclonic Storm"
+    },
+    {
+      "horizon_h": 24,
+      "lat": 26.932836013390986,
+      "lon": 91.65036604584171,
+      "radius_km": 307.96874992922926,
+      "vmax_kt": 41.84784876701343,
+      "vmax_lower": 0.7622018760399527,
+      "vmax_upper": 82.93349565798691,
+      "category": "Cyclonic Storm"
+    },
+    {
+      "horizon_h": 48,
+      "lat": 29.894157865528953,
+      "lon": 94.05091666060898,
+      "radius_km": 847.2254121911151,
+      "vmax_kt": 36.412557961423595,
+      "vmax_lower": 0.0,
+      "vmax_upper": 74.78518430144456,
+      "category": "Cyclonic Storm"
+    },
+    {
+      "horizon_h": 72,
+      "lat": 29.5300076759093,
+      "lon": 95.08182755595838,
+      "radius_km": 1200.057756246357,
+      "vmax_kt": 24.811523468664213,
+      "vmax_lower": 0.0,
+      "vmax_upper": 75.98805582505831,
+      "category": "Depression"
+    }
+  ],
+  "rapid_intensification": {
+    "probability": 0.004264502663285964,
+    "threshold": 0.12000000000000001,
+    "flagged": false,
+    "definition": "+30 kt within 24 h"
+  }
+}

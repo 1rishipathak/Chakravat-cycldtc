@@ -1,0 +1,153 @@
+{
+  "available": true,
+  "window_end": "2020-05-19 12:00:00",
+  "window_hours": 48,
+  "scenes_examined": 9,
+  "tracks_found": 1,
+  "storms": [
+    {
+      "id": "DET01",
+      "detected_at": "2020-05-19 09:00:00",
+      "lat": 16.587379455566406,
+      "lon": 87.44890594482422,
+      "detection_score": 0.7730695605278015,
+      "track_points": 9,
+      "scene": "EMBC",
+      "scene_confidence": 0.9258356690406799,
+      "vmax_kt": 135.30714371257383,
+      "history": [
+        {
+          "time": "2020-05-17 09:00:00",
+          "lat": 11.870254516601562,
+          "lon": 85.86309814453125,
+          "vmax_kt": 74.53710367016413,
+          "scene": "EMBC"
+        },
+        {
+          "time": "2020-05-17 15:00:00",
+          "lat": 11.870254516601562,
+          "lon": 86.39169311523438,
+          "vmax_kt": 89.98547039278839,
+          "scene": "EYE"
+        },
+        {
+          "time": "2020-05-17 21:00:00",
+          "lat": 12.918502807617188,
+          "lon": 85.86309814453125,
+          "vmax_kt": 120.51218768984037,
+          "scene": "EYE"
+        },
+        {
+          "time": "2020-05-18 03:00:00",
+          "lat": 13.442628860473633,
+          "lon": 85.86309814453125,
+          "vmax_kt": 141.86342657164528,
+          "scene": "EYE"
+        },
+        {
+          "time": "2020-05-18 09:00:00",
+          "lat": 13.442628860473633,
+          "lon": 85.86309814453125,
+          "vmax_kt": 152.6268140299846,
+          "scene": "EYE"
+        },
+        {
+          "time": "2020-05-18 15:00:00",
+          "lat": 14.49087905883789,
+          "lon": 86.39169311523438,
+          "vmax_kt": 160.47457875473796,
+          "scene": "EYE"
+        },
+        {
+          "time": "2020-05-18 21:00:00",
+          "lat": 15.015003204345703,
+          "lon": 86.39169311523438,
+          "vmax_kt": 133.56319834038106,
+          "scene": "EMBC"
+        },
+        {
+          "time": "2020-05-19 03:00:00",
+          "lat": 16.587379455566406,
+          "lon": 87.44890594482422,
+          "vmax_kt": 79.6713304840745,
+          "scene": "EMBC"
+        },
+        {
+          "time": "2020-05-19 09:00:00",
+          "lat": 16.587379455566406,
+          "lon": 87.44890594482422,
+          "vmax_kt": 135.30714371257383,
+          "scene": "EMBC"
+        }
+      ],
+      "prediction": {
+        "issued_at": "2020-05-19 06:00:00",
+        "level": 0.67,
+        "forecast": [
+          {
+            "horizon_h": 6,
+            "lat": 17.6177859110145,
+            "lon": 87.92210404716832,
+            "radius_km": 43.8521975287905,
+            "vmax_kt": 97.61629879505129,
+            "vmax_lower": 90.53820076113175,
+            "vmax_upper": 104.69439682897084,
+            "category": "Extremely Severe Cyclonic Storm"
+          },
+          {
+            "horizon_h": 12,
+            "lat": 18.573160227447495,
+            "lon": 88.54598617683585,
+            "radius_km": 133.020048012818,
+            "vmax_kt": 83.58141920490272,
+            "vmax_lower": 75.71750285285928,
+            "vmax_upper": 91.44533555694615,
+            "category": "Very Severe Cyclonic Storm"
+          },
+          {
+            "horizon_h": 24,
+            "lat": 20.530774479330237,
+            "lon": 89.70535217800511,
+            "radius_km": 308.8550174334408,
+            "vmax_kt": 62.530216376813186,
+            "vmax_lower": 41.59700279907062,
+            "vmax_upper": 83.46342995455575,
+            "category": "Severe Cyclonic Storm"
+          },
+          {
+            "horizon_h": 48,
+            "lat": 23.003608831649636,
+            "lon": 91.96155190060219,
+            "radius_km": 688.0061260343424,
+            "vmax_kt": 27.795733390951355,
+            "vmax_lower": 0.0,
+            "vmax_upper": 60.801463046168664,
+            "category": "Depression"
+          },
+          {
+            "horizon_h": 72,
+            "lat": 22.029613063389355,
+            "lon": 92.54044891013808,
+            "radius_km": 801.9903223627509,
+            "vmax_kt": 16.4114095031413,
+            "vmax_lower": 0.0,
+            "vmax_upper": 46.62419332113838,
+            "category": "Low Pressure Area"
+          }
+        ],
+        "rapid_intensification": {
+          "probability": 0.004835221082702316,
+          "flagged": false
+        },
+        "landfall": {
+          "probability_within_72h": 0.8780028611764275,
+          "hours": 32.471122294821264,
+          "lat": 22.708089943434715,
+          "lon": 91.38193726230938,
+          "vmax_kt": 62.995271348933535
+        }
+      }
+    }
+  ],
+  "note": "detected from imagery alone; pressure and distance-to-land are unavailable and passed as missing"
+}

@@ -1,0 +1,16 @@
+{
+  "sid": "2022338N05100",
+  "issued_at": "2022-12-09 12:00:00",
+  "probability_within_72h": 0.7888245232716207,
+  "hours_to_landfall": 14.502883284740088,
+  "lat": 12.970461001655757,
+  "lon": 80.27155676996291,
+  "position_method": "track_crossing",
+  "vmax_kt": 34.88811309005095,
+  "category_at_landfall": "Cyclonic Storm",
+  "typical_error": {
+    "timing_h": 9.0,
+    "position_km": 160.0,
+    "intensity_kt": 11.8
+  }
+}

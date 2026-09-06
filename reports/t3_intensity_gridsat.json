@@ -1,0 +1,10 @@
+{
+  "backbone": "convnext_tiny",
+  "patches": 728,
+  "storms": 86,
+  "transferred": true,
+  "predict_the_mean_rmse_kt": 28.883980588074163,
+  "cold_cloud_rmse_kt": 21.057453295674346,
+  "cnn_rmse_kt": 11.65788459777832,
+  "cnn_mae_kt": 8.224101066589355
+}

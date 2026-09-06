@@ -1,0 +1,31 @@
+==================================================================
+CHAKRAVAT DECISION SUPPORT - AMPHAN (2020136N10088)
+ISSUED 2020-05-20 12:00:00 UTC
+==================================================================
+
+PRESENT POSITION : 22.1 N  88.4 E
+PRESENT INTENSITY: 85 kt (3-min sustained)
+CLASSIFICATION   : VERY SEVERE CYCLONIC STORM
+
+FORECAST TRACK AND INTENSITY
+    LEAD  POSITION             INTENSITY              CONE
+     6 h  23.5N 89.0E          64 kt (55-73)          +/-67 km
+    12 h  25.0N 89.8E          48 kt (33-63)          +/-137 km
+    24 h  26.9N 91.7E          42 kt (18-65)          +/-197 km
+    48 h  29.9N 94.1E          36 kt (19-54)          +/-491 km
+    72 h  29.5N 95.1E          25 kt (0-50)           +/-728 km
+
+RAPID INTENSIFICATION
+  Probability of +30 kt within 24 h: 0%
+
+LANDFALL
+  No landfall indicated within 72 h (probability 4%)
+
+------------------------------------------------------------------
+Cone radii and intensity ranges are calibrated to the stated
+confidence level (67%), verified on held-out
+seasons 2020-2025.
+
+NOT AN IMD PRODUCT. Decision support only; official warnings are
+issued by RSMC New Delhi.
+==================================================================

@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chakravat</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000066'/%3E%3Cpath d='M16 6c6 0 9 4 9 7s-3 5-6 5c-2 0-3-1-3-2 0-2 3-2 3-4' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M16 26c-6 0-9-4-9-7s3-5 6-5c2 0 3 1 3 2 0 2-3 2-3 4' fill='none' stroke='%23ff9933' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/vendor/maplibre-gl.css">
+<style>
+:root{
+  --navy:#000066; --navy-2:#001a80; --band:#c9d6ea; --band-2:#dfe7f4;
+  --panel:#ffffff; --panel-2:#f2f5fa; --panel-3:#e8eef7;
+  --ink:#101010; --ink-2:#33415c; --ink-3:#5a6b8c;
+  --rule:#b9c6dd; --rule-2:#8fa3c4;
+  --firebrick:#b22222; --link:#0000cc; --heading:#800080;
+
+  --accent:#7fa8d8;
+  --saffron:#ff9933; --green:#138808;
+  --d:#5C9BC6; --dd:#3FB8AC; --cs:#D6AE2E; --scs:#EE8C40;
+  --vscs:#E4614A; --escs:#C74765; --sucs:#9B4A88;
+  --warn:#b06000; --good:#136c3a;
+  --f-head:"Times New Roman",Times,Georgia,serif;
+  --f-body:Arial,"Helvetica Neue",Helvetica,sans-serif;
+  --f-mono:"Courier New",Consolas,monospace;
+}
+*{box-sizing:border-box}
+
+body{margin:0;background:var(--navy);color:var(--ink);font-family:var(--f-body);
+  font-size:13px;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+button,select{font-family:inherit;font-size:inherit;color:inherit}
+
+/* ---- masthead ---------------------------------------------------------- */
+.govstrip{background:var(--navy);color:#dfe7f4;font-size:10.5px;padding:3px 12px;
+  display:flex;gap:14px;align-items:center;flex-wrap:wrap;letter-spacing:.02em}
+.govstrip .sp{flex:1}
+.govstrip b{color:#fff;font-weight:700}
+.tricolour{height:3px;display:flex}
+.tricolour i{flex:1}
+.tricolour i:nth-child(1){background:var(--saffron)}
+.tricolour i:nth-child(2){background:#fff}
+.tricolour i:nth-child(3){background:var(--green)}
+
+header{background:var(--band);border-bottom:3px solid var(--firebrick);
+  padding:8px 14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.masthead{text-align:center;flex:1;min-width:240px}
+.brand{font-family:var(--f-head);font-weight:700;font-size:1.6rem;color:var(--navy);
+  line-height:1.1;letter-spacing:.01em}
+.brand span{color:var(--firebrick)}
+.tagline{font-family:var(--f-body);font-size:11px;color:var(--heading);font-weight:700;margin-top:2px}
+.disclaimer{font-size:10px;color:var(--firebrick);font-weight:700;margin-top:3px;
+  text-transform:uppercase;letter-spacing:.04em}
+.controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+select{background:#fff;border:1px solid var(--rule-2);padding:4px 7px;border-radius:0;
+  font-size:12px;color:var(--ink)}
+select:focus-visible{outline:2px solid var(--navy);outline-offset:1px}
+.lvl{display:flex;border:1px solid var(--rule-2);background:#fff}
+.lvl button{background:#fff;border:0;border-right:1px solid var(--rule);padding:4px 9px;
+  cursor:pointer;font-size:11px;color:var(--ink-2)}
+.lvl button:last-child{border-right:0}
+.lvl button[aria-pressed="true"]{background:var(--navy);color:#fff;font-weight:700}
+
+/* ---- layout ------------------------------------------------------------ */
+main{display:grid;grid-template-columns:1fr 412px;flex:1;min-height:0;
+  gap:6px;padding:6px;background:var(--navy)}
+@media (max-width:1000px){main{grid-template-columns:1fr;grid-template-rows:52vh 1fr}}
+main > *{min-height:0}
+#map{width:100%;height:100%;background:#eef2f7;border:3px solid var(--firebrick)}
+aside{background:var(--panel);border:3px solid var(--firebrick);overflow-y:auto}
+
+.tabs{display:flex;position:sticky;top:0;background:var(--band-2);z-index:2;
+  border-bottom:2px solid var(--navy)}
+.tabs button{flex:1;background:var(--band-2);border:0;border-right:1px solid var(--rule);
+  padding:7px 4px;cursor:pointer;font-size:10.5px;font-weight:700;letter-spacing:.02em;
+  text-transform:uppercase;color:var(--ink-2)}
+.tabs button:last-child{border-right:0}
+.tabs button[aria-selected="true"]{background:var(--navy);color:#fff}
+.pane{padding:12px 14px;display:none}
+.pane.on{display:block}
+
+/* ---- content ----------------------------------------------------------- */
+h2{font-family:var(--f-head);font-weight:700;font-size:1.32rem;margin:0 0 2px;color:var(--navy)}
+.sub{font-size:11px;color:var(--ink-3);margin-bottom:10px}
+.chip{display:inline-block;padding:3px 9px;border:1px solid rgba(0,0,0,.35);
+  font-size:10.5px;font-weight:700;letter-spacing:.03em;color:#101010}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--rule-2);
+  margin:10px 0 14px}
+.stats div{background:var(--panel-2);padding:7px 10px;border-right:1px solid var(--rule);
+  border-bottom:1px solid var(--rule)}
+.stats div:nth-child(2n){border-right:0}
+.stats dt{font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);
+  margin-bottom:2px;font-weight:700}
+.stats dd{margin:0;font-family:var(--f-head);font-weight:700;font-size:1.06rem;
+  font-variant-numeric:tabular-nums;color:var(--navy)}
+
+h3{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--heading);margin:16px 0 6px;text-decoration:underline;text-underline-offset:3px}
+table{width:100%;border-collapse:collapse;font-size:11.5px;font-variant-numeric:tabular-nums;
+  border:1px solid var(--navy)}
+th{text-align:left;background:var(--navy);color:#fff;font-size:9.5px;letter-spacing:.04em;
+  text-transform:uppercase;padding:5px 6px;font-weight:700;border-right:1px solid var(--navy-2)}
+th:last-child{border-right:0}
+td{padding:5px 6px;border-bottom:1px solid var(--rule);border-right:1px solid var(--rule);color:var(--ink)}
+td:last-child{border-right:0}
+tbody tr:nth-child(odd){background:var(--panel-2)}
+tr:last-child td{border-bottom:0}
+td.n{font-variant-numeric:tabular-nums}
+
+.alert{border:1px solid var(--warn);border-left:5px solid var(--warn);background:#fdf4e6;
+  padding:8px 11px;margin:10px 0;font-size:11.5px;line-height:1.5}
+.alert b{color:var(--warn);font-size:10px;letter-spacing:.05em;text-transform:uppercase;
+  display:block;margin-bottom:3px;font-weight:700}
+.quiet{border-color:var(--rule-2);border-left-color:var(--rule-2);background:var(--panel-2)}
+.quiet b{color:var(--ink-3)}
+
+pre{background:#fbfbf7;border:1px solid var(--rule-2);padding:10px;font-family:var(--f-mono);
+  font-size:10.5px;line-height:1.5;overflow-x:auto;white-space:pre;color:#101010;margin:0}
+.note{font-size:11px;color:var(--ink-2);line-height:1.5;margin-top:11px;padding-top:9px;
+  border-top:1px solid var(--rule)}
+.spark{width:100%;height:120px;display:block;margin:5px 0 3px;background:#fff;
+  border:1px solid var(--rule)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:10px;color:var(--ink-2);margin-top:6px}
+.legend i{display:inline-block;width:9px;height:9px;margin-right:4px;vertical-align:-1px;
+  border:1px solid rgba(0,0,0,.3)}
+.empty{color:var(--ink-3);font-size:12px;padding:20px 0;text-align:center}
+.maplibregl-popup-content{border:2px solid var(--firebrick);border-radius:0}
+</style>
+</head>
+<body>
+
+<div class="govstrip">
+  <span>Prototype for SIH &middot; Smart India Hackathon, problem statement <b>26070</b></span>
+  <span class="sp"></span>
+  <span>Ministry of Earth Sciences &middot; India Meteorological Department</span>
+</div>
+<div class="tricolour"><i></i><i></i><i></i></div>
+
+<header>
+  <div class="masthead">
+    <div class="brand">CHAKRA<span>VAT</span></div>
+    <div class="tagline">Tropical Cyclone Identification, Classification and Prediction System
+      for North Indian Ocean</div>
+    
+  </div>
+  <div class="controls">
+  <select id="season" aria-label="Season"></select>
+  <select id="storm" aria-label="Storm"></select>
+  <div class="lvl" role="group" aria-label="Confidence level">
+    <button data-lvl="0.5">50%</button>
+    <button data-lvl="0.67" aria-pressed="true">67%</button>
+    <button data-lvl="0.9">90%</button>
+  </div>
+  <div class="lvl" role="group" aria-label="Layers">
+    <button id="satToggle" aria-pressed="false" title="Overlay the GridSat infrared scene">Satellite</button>
+  </div>
+  </div>
+</header>
+
+<main>
+  <div id="map"></div>
+  <aside>
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-pane="fc">Forecast</button>
+      <button role="tab" aria-selected="false" data-pane="lf">Landfall</button>
+      <button role="tab" aria-selected="false" data-pane="im">Imagery</button>
+      <button role="tab" aria-selected="false" data-pane="pl">Pipeline</button>
+      <button role="tab" aria-selected="false" data-pane="bl">Bulletin</button>
+      <button role="tab" aria-selected="false" data-pane="sk">Skill</button>
+    </div>
+    <div class="pane on" id="pane-fc"></div>
+    <div class="pane" id="pane-lf"></div>
+    <div class="pane" id="pane-im"></div>
+    <div class="pane" id="pane-pl"></div>
+    <div class="pane" id="pane-bl"></div>
+    <div class="pane" id="pane-sk"></div>
+  </aside>
+</main>
+
+<script src="/static/vendor/maplibre-gl.js"></script>
+<script>
+const CAT = {
+  "Low Pressure Area":"#6B858E", "Depression":"#5C9BC6", "Deep Depression":"#3FB8AC",
+  "Cyclonic Storm":"#D6AE2E", "Severe Cyclonic Storm":"#EE8C40",
+  "Very Severe Cyclonic Storm":"#E4614A",
+  "Extremely Severe Cyclonic Storm":"#C74765", "Super Cyclonic Storm":"#9B4A88"
+};
+const SHORT = {
+  "Low Pressure Area":"LPA","Depression":"D","Deep Depression":"DD","Cyclonic Storm":"CS",
+  "Severe Cyclonic Storm":"SCS","Very Severe Cyclonic Storm":"VSCS",
+  "Extremely Severe Cyclonic Storm":"ESCS","Super Cyclonic Storm":"SuCS"
+};
+const catColor = c => CAT[c] || "#6B858E";
+const api = p => fetch(p).then(r => { if(!r.ok) throw new Error(r.status); return r; });
+
+let level = 0.67, current = null, map = null, mapReady = false;
+
+/* A circle on the ground, in GeoJSON, for the forecast cone. */
+function circle(lat, lon, km, n=72){
+  const pts=[], dLat=km/110.574;
+  for(let i=0;i<=n;i++){
+    const t=2*Math.PI*i/n;
+    const dLon=km/(111.320*Math.cos(lat*Math.PI/180));
+    pts.push([lon+dLon*Math.cos(t), lat+dLat*Math.sin(t)]);
+  }
+  return {type:"Feature", geometry:{type:"Polygon", coordinates:[pts]}};
+}
+const src = (id,d) => { const s=map.getSource(id); if(s) s.setData(d); };
+
+function initMap(){
+  map = new maplibregl.Map({
+    container:"map",
+    style:{version:8, sources:{osm:{type:"raster",
+      tiles:["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+             "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png"],
+      tileSize:256, attribution:"&copy; OpenStreetMap"}},
+      
+      layers:[{id:"ground",type:"background",paint:{"background-color":"#dce7f2"}},
+              {id:"osm",type:"raster",source:"osm",
+               paint:{"raster-opacity":.55,"raster-saturation":-.55,"raster-contrast":-.1}}]},
+    center:[85,15], zoom:3.6, attributionControl:{compact:true}
+  });
+  map.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-left");
+  const onMapReady = () => {
+    const empty = {type:"FeatureCollection",features:[]};
+    for(const id of ["cone","track","fcline","pts","fpts"]) map.addSource(id,{type:"geojson",data:empty});
+    map.addLayer({id:"cone-f",type:"fill",source:"cone",
+      paint:{"fill-color":"#138808","fill-opacity":.13}});
+    map.addLayer({id:"cone-l",type:"line",source:"cone",
+      paint:{"line-color":"#138808","line-width":1.2,"line-opacity":.75}});
+    map.addLayer({id:"track-l",type:"line",source:"track",
+      paint:{"line-color":"#101010","line-width":2.4}});
+    map.addLayer({id:"fc-l",type:"line",source:"fcline",
+      paint:{"line-color":"#d40000","line-width":2.4,"line-dasharray":[2.2,1.4]}});
+    map.addLayer({id:"pts-c",type:"circle",source:"pts",
+      paint:{"circle-radius":4.6,"circle-color":["get","color"],
+             "circle-stroke-width":1.2,"circle-stroke-color":"#ffffff"}});
+    map.addLayer({id:"fpts-c",type:"circle",source:"fpts",
+      paint:{"circle-radius":5.4,"circle-color":["get","color"],
+             "circle-stroke-width":1.6,"circle-stroke-color":"#101010"}});
+
+    /* Pipeline output: what the system found without prior data*/
+    map.addSource("dets",{type:"geojson",data:empty});
+    map.addSource("dettrack",{type:"geojson",data:empty});
+    map.addLayer({id:"dettrack-l",type:"line",source:"dettrack",
+      paint:{"line-color":"#EE8C40","line-width":2,"line-dasharray":[1.5,1]}});
+    map.addLayer({id:"dets-c",type:"circle",source:"dets",
+      paint:{"circle-radius":["interpolate",["linear"],["get","score"],0.3,5,1,10],
+             "circle-color":"#EE8C40","circle-opacity":0.85,
+             "circle-stroke-width":1.5,"circle-stroke-color":"#101010"}});
+    map.on("click","dets-c", e => {
+      const p=e.features[0].properties;
+      new maplibregl.Popup({closeButton:false}).setLngLat(e.lngLat)
+        .setHTML(`<div style="font-family:monospace;font-size:11px;color:#0A1418">
+          detected ${p.time}<br>score ${(+p.score).toFixed(2)}
+          ${p.scene?`<br>scene ${p.scene}`:""}
+          ${p.vmax?`<br>${(+p.vmax).toFixed(0)} kt`:""}</div>`).addTo(map);
+    });
+    map.on("click","pts-c", e => {
+      const p=e.features[0].properties;
+      new maplibregl.Popup({closeButton:false})
+        .setLngLat(e.lngLat)
+        .setHTML(`<div style="font-family:monospace;font-size:11px;color:#0A1418">
+          ${p.time}<br>${p.vmax} kt &middot; ${p.cat}</div>`).addTo(map);
+    });
+    map.on("mouseenter","pts-c",()=>map.getCanvas().style.cursor="pointer");
+    map.on("mouseleave","pts-c",()=>map.getCanvas().style.cursor="");
+    mapReady = true;
+    
+    if(current) paintCurrent();
+  };
+  
+  if(map.isStyleLoaded()) onMapReady(); else map.on("load", onMapReady);
+
+  
+  boot();
+}
+
+/* Intensity history plus the forecast band, drawn inline. */
+function sparkline(track, fc){
+  const W=364,H=120,P={l:30,r:8,t:10,b:18};
+  const hist=track.map((p,i)=>({x:i,v:p.vmax_kt}));
+  const n=hist.length, span=n+ (fc?fc.forecast.length:0);
+  const all=hist.map(p=>p.v).concat(fc?fc.forecast.flatMap(p=>[p.vmax_lower,p.vmax_upper]):[]);
+  const lo=Math.max(0,Math.min(...all)-8), hi=Math.max(...all)+8;
+  const X=i=>P.l+(W-P.l-P.r)*(i/Math.max(span-1,1));
+  const Y=v=>P.t+(H-P.t-P.b)*(1-(v-lo)/Math.max(hi-lo,1));
+  let s=`<svg class="spark" viewBox="0 0 ${W} ${H}">`;
+  for(const [thr,lab] of [[34,"CS"],[64,"VSCS"],[90,"ESCS"],[120,"SuCS"]]){
+    if(thr>lo&&thr<hi) s+=`<line x1="${P.l}" y1="${Y(thr)}" x2="${W-P.r}" y2="${Y(thr)}"
+      stroke="#9fb0cc" stroke-dasharray="2 3" stroke-width="1"/>
+      <text x="2" y="${Y(thr)+3}" fill="#5a6b8c" font-size="8" font-family="monospace">${lab}</text>`;
+  }
+  if(fc){
+    const b=fc.forecast, up=b.map((p,i)=>`${X(n-1+i+1)},${Y(p.vmax_upper)}`).join(" ");
+    const dn=b.map((p,i)=>`${X(n-1+i+1)},${Y(p.vmax_lower)}`).reverse().join(" ");
+    s+=`<polygon points="${X(n-1)},${Y(hist[n-1].v)} ${up} ${dn} ${X(n-1)},${Y(hist[n-1].v)}"
+        fill="#138808" opacity=".16"/>`;
+    s+=`<polyline points="${X(n-1)},${Y(hist[n-1].v)} ${b.map((p,i)=>`${X(n-1+i+1)},${Y(p.vmax_kt)}`).join(" ")}"
+        fill="none" stroke="#d40000" stroke-width="2" stroke-dasharray="3 2"/>`;
+  }
+  s+=`<polyline points="${hist.map(p=>`${X(p.x)},${Y(p.v)}`).join(" ")}"
+      fill="none" stroke="#101010" stroke-width="2"/>`;
+  s+=`<text x="2" y="${H-4}" fill="#5a6b8c" font-size="8" font-family="monospace">kt</text></svg>`;
+  return s;
+}
+
+
+function paintCurrent(){
+  if(!mapReady || !current) return;
+  const {d, fc} = current;
+
+  src("track", {type:"Feature", geometry:{type:"LineString",
+      coordinates:d.track.map(p=>[p.lon,p.lat])}});
+  src("pts", {type:"FeatureCollection", features:d.track.map(p=>({
+      type:"Feature", geometry:{type:"Point",coordinates:[p.lon,p.lat]},
+      properties:{color:catColor(p.category), time:p.time,
+                  vmax:p.vmax_kt.toFixed(0), cat:SHORT[p.category]||""}}))});
+
+  if(fc){
+    const c=fc.current, pts=fc.forecast;
+    src("cone", {type:"FeatureCollection",
+        features:pts.map(p=>circle(p.lat,p.lon,p.radius_km))});
+    src("fcline", {type:"Feature", geometry:{type:"LineString",
+        coordinates:[[c.lon,c.lat],...pts.map(p=>[p.lon,p.lat])]}});
+    src("fpts", {type:"FeatureCollection", features:pts.map(p=>({
+        type:"Feature", geometry:{type:"Point",coordinates:[p.lon,p.lat]},
+        properties:{color:catColor(p.category)}}))});
+  } else {
+    for(const id of ["cone","fcline","fpts"]) src(id,{type:"FeatureCollection",features:[]});
+  }
+
+  const lons=d.track.map(p=>p.lon), lats=d.track.map(p=>p.lat);
+  map.fitBounds([[Math.min(...lons)-3,Math.min(...lats)-3],
+                 [Math.max(...lons)+3,Math.max(...lats)+3]],
+                {padding:60, duration:700, maxZoom:6});
+}
+
+async function loadStorm(sid){
+  const d = await (await api(`/api/storm/${sid}`)).json();
+  // Keep the header in step when a storm is loaded programmatically.
+  const ss = document.getElementById("season"), st = document.getElementById("storm");
+  if(ss.value !== String(d.season)){
+    ss.value = String(d.season);
+    const list = (await (await api(`/api/storms?season=${d.season}`)).json()).storms;
+    st.innerHTML = list.map(s=>`<option value="${s.SID}">${s.name||"Unnamed"} — ${s.peak_kt.toFixed(0)} kt</option>`).join("");
+  }
+  st.value = sid;
+  let fc=null, lf=null;
+  try{ fc = await (await api(`/api/storm/${sid}/forecast?level=${level}`)).json(); }catch(e){}
+  try{ lf = await (await api(`/api/storm/${sid}/landfall`)).json(); }catch(e){}
+  current = {d, fc, lf};
+
+  paintCurrent();
+
+
+  const issued = fc ? fc.issued_at : d.track[d.track.length-1].time;
+  if(satOn) setSatellite(true, issued);
+  for(const id of ["dets","dettrack"]) src(id,{type:"FeatureCollection",features:[]});
+  const pl = document.getElementById("pane-pl");
+  delete pl.dataset.ran;
+  pl.innerHTML = `<div class="empty">Open this tab to run the full chain on ${issued}.</div>`;
+
+  render();
+}
+
+function render(){
+  const {d,fc,lf}=current;
+  const cur = fc ? fc.current : d.track[d.track.length-1];
+
+  document.getElementById("pane-fc").innerHTML = `
+    <h2>${d.name||"Unnamed"}</h2>
+    <div class="sub">${d.sid} &middot; season ${d.season}${fc?` &middot; issued ${fc.issued_at}`:""}</div>
+    <span class="chip" style="background:${catColor(cur.category)}">${cur.category}</span>
+    <dl class="stats">
+      <div><dt>Position</dt><dd>${cur.lat.toFixed(1)}N ${cur.lon.toFixed(1)}E</dd></div>
+      <div><dt>Intensity</dt><dd>${cur.vmax_kt.toFixed(0)} kt</dd></div>
+      <div><dt>Peak this storm</dt><dd>${d.peak_kt.toFixed(0)} kt</dd></div>
+      <div><dt>Fixes</dt><dd>${d.track.length}</dd></div>
+    </dl>
+    <h3>Intensity</h3>
+    ${sparkline(d.track, fc)}
+    <div class="legend">
+      <span><i style="background:#101010"></i>observed track</span>
+      <span><i style="background:#d40000"></i>forecast track</span>
+      <span><i style="background:#138808;opacity:.35"></i>${(level*100).toFixed(0)}% band</span>
+    </div>
+    ${fc ? `
+    <h3>Forecast</h3>
+    <table><thead><tr><th>Lead</th><th>Position</th><th>Intensity</th><th>Cone</th></tr></thead>
+    <tbody>${fc.forecast.map(p=>`<tr>
+      <td class="n">${p.horizon_h} h</td>
+      <td class="n">${p.lat.toFixed(1)}N ${p.lon.toFixed(1)}E</td>
+      <td class="n">${p.vmax_kt.toFixed(0)} <span style="color:var(--ink-3)">(${p.vmax_lower.toFixed(0)}–${p.vmax_upper.toFixed(0)})</span></td>
+      <td class="n">±${p.radius_km.toFixed(0)} km</td></tr>`).join("")}</tbody></table>
+    <div class="alert ${fc.rapid_intensification.flagged?"":"quiet"}">
+      <b>Rapid intensification</b>
+      ${(100*fc.rapid_intensification.probability).toFixed(0)}% chance of
+      ${fc.rapid_intensification.definition}.
+      ${fc.rapid_intensification.flagged?"<strong>Above watch threshold.</strong>":"Below watch threshold."}
+    </div>
+    <div class="note">Cone radii and intensity ranges are calibrated to
+      ${(100*level).toFixed(0)}% and verified on held-out seasons 2020–2025 —
+      the ${(100*level).toFixed(0)}% cone contained about that share of verifying positions.</div>
+    ` : `<div class="empty">No forecast available from this storm's last fix.</div>`}`;
+
+  document.getElementById("pane-lf").innerHTML = !lf ? `<div class="empty">No landfall assessment.</div>` : `
+    <h2>Landfall</h2><div class="sub">${d.name||d.sid} &middot; issued ${lf.issued_at}</div>
+    ${lf.hours_to_landfall!=null ? `
+      <dl class="stats">
+        <div><dt>Probability &lt;72 h</dt><dd>${(100*lf.probability_within_72h).toFixed(0)}%</dd></div>
+        <div><dt>Expected in</dt><dd>${lf.hours_to_landfall.toFixed(0)} h</dd></div>
+        <div><dt>Near</dt><dd>${lf.lat.toFixed(1)}N ${lf.lon.toFixed(1)}E</dd></div>
+        <div><dt>At coast</dt><dd>${lf.vmax_kt.toFixed(0)} kt</dd></div>
+      </dl>
+      <span class="chip" style="background:${catColor(lf.category_at_landfall)}">${lf.category_at_landfall}</span>
+      <div class="alert quiet" style="margin-top:14px"><b>Typical error</b>
+        Timing ±${lf.typical_error.timing_h.toFixed(0)} h ·
+        position ±${lf.typical_error.position_km.toFixed(0)} km ·
+        intensity ±${lf.typical_error.intensity_kt.toFixed(0)} kt, measured on held-out seasons.</div>
+      <div class="note">${lf.position_method === "track_crossing"
+        ? `Position is where the forecast track crosses the coastline, so it
+           inherits the track forecast's error rather than accumulating its own
+           — 160 km mean on held-out seasons, against 240 km for regressing a
+           coordinate directly.`
+        : `The forecast track does not reach land inside 72 h, so position falls
+           back to a regressed coordinate snapped to the nearest coast — 234 km
+           mean on held-out seasons, and the weakest number here.`}</div>
+    ` : `<div class="alert quiet"><b>No landfall indicated</b>
+        ${(100*lf.probability_within_72h).toFixed(0)}% probability within 72 h.</div>`}`;
+
+  renderImagery(d);
+
+  document.getElementById("pane-bl").innerHTML = `<div class="empty">Loading…</div>`;
+  api(`/api/storm/${d.sid}/bulletin`).then(r=>r.text())
+    .then(t=>document.getElementById("pane-bl").innerHTML=`<pre>${t.replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]))}</pre>`)
+    .catch(()=>document.getElementById("pane-bl").innerHTML=`<div class="empty">Bulletin unavailable.</div>`);
+}
+
+/* T1/T2/T3 read the same satellite scene the forecast was issued from. */
+async function renderImagery(d){
+  const el = document.getElementById("pane-im");
+  el.innerHTML = `<div class="empty">Reading satellite scene…</div>`;
+  const grab = async p => { try { return await (await api(p)).json(); }
+                            catch(e){ return {available:false, reason:"request failed"}; } };
+  const [scene, inten, status] = await Promise.all([
+    grab(`/api/storm/${d.sid}/scene`),
+    grab(`/api/storm/${d.sid}/intensity_from_image`),
+    grab(`/api/vision/status`),
+  ]);
+
+  const unavailable = m => `<div class="alert quiet"><b>Not available</b>${m}</div>`;
+
+  let html = `<h2>Imagery</h2>
+    <div class="sub">GridSat-B1 infrared &middot; ${status.gridsat_scenes||0} basin scenes on disk</div>`;
+
+  html += `<h3>Dvorak scene (T2)</h3>`;
+  if(scene.available){
+    const rows = Object.entries(scene.probabilities).slice(0,5);
+    html += `<span class="chip" style="background:var(--accent)">${scene.scene}</span>
+      <span style="font-family:var(--f-mono);font-size:11px;color:var(--ink-3);margin-left:8px">
+      ${(100*scene.confidence).toFixed(0)}% confidence &middot; ${scene.scene_time}</span>
+      <table style="margin-top:10px"><tbody>${rows.map(([k,v])=>`<tr>
+        <td>${k}</td><td class="n" style="width:52px">${(100*v).toFixed(1)}%</td>
+        <td><div style="background:var(--accent);opacity:${0.35+0.65*v};height:7px;width:${Math.max(2,100*v)}%"></div></td>
+      </tr>`).join("")}</tbody></table>
+      <div class="note">${scene.labels_note||""}</div>`;
+  } else html += unavailable(scene.reason||"");
+
+  html += `<h3>Intensity from image (T3)</h3>`;
+  if(inten.available){
+    const sign = inten.error_kt>=0 ? "+" : "";
+    html += `<dl class="stats">
+      <div><dt>From imagery</dt><dd>${inten.vmax_kt.toFixed(0)} kt</dd></div>
+      <div><dt>Best track</dt><dd>${inten.best_track_kt.toFixed(0)} kt</dd></div>
+      <div><dt>Difference</dt><dd>${sign}${inten.error_kt.toFixed(1)} kt</dd></div>
+      <div><dt>Category</dt><dd style="font-size:.86rem">${inten.category}</dd></div>
+    </dl>
+    <div class="note">Estimated from the satellite image alone — no best-track
+      history, no position. This is the task the Dvorak technique performs.</div>`;
+  } else html += unavailable(inten.reason||"");
+
+  html += `<h3>Detection (T1)</h3>`;
+  html += status.detector
+    ? `<div class="note">Basin-wide detection runs over a whole scene rather than
+       one storm. Query <code>/api/vision/detect?time=…</code>; verified skill is
+       in the Skill tab.</div>`
+    : unavailable("detector not trained yet");
+  el.innerHTML = html;
+}
+
+/* ---- satellite overlay ------------------------------------------------- */
+let satOn = false;
+
+async function setSatellite(on, when){
+  satOn = on;
+  document.getElementById("satToggle").setAttribute("aria-pressed", String(on));
+  if(!mapReady) return;   // no layers to hang the imagery on yet
+  if(map.getLayer("sat-l")) map.removeLayer("sat-l");
+  if(map.getSource("sat")) map.removeSource("sat");
+  if(!on || !when) return;
+  try{
+    const meta = await (await api(`/api/vision/scene_meta?time=${encodeURIComponent(when)}`)).json();
+    const b = meta.bounds;
+    map.addSource("sat", {type:"image",
+      url:`/api/vision/scene.png?time=${encodeURIComponent(when)}`,
+      coordinates:[[b.west,b.north],[b.east,b.north],[b.east,b.south],[b.west,b.south]]});
+    // Under the storm markers, over the basemap.
+    map.addLayer({id:"sat-l",type:"raster",source:"sat",
+      paint:{"raster-opacity":0.82}}, "track-l");
+  }catch(e){
+    document.getElementById("satToggle").setAttribute("aria-pressed","false");
+    satOn = false;
+  }
+}
+
+/* ---- the full chain ---------------------------------------------------- */
+async function runPipeline(when){
+  const el = document.getElementById("pane-pl");
+  el.innerHTML = `<div class="empty">Running detection → association → scene → intensity → forecast…<br>
+    <span style="font-size:11px">this reads ~9 satellite scenes, give it a moment</span></div>`;
+  let res;
+  try{
+    res = await (await api(`/api/vision/pipeline?time=${encodeURIComponent(when)}&level=${level}`)).json();
+  }catch(e){ el.innerHTML = `<div class="empty">Pipeline failed (${e}).</div>`; return; }
+
+  if(!res.available){ el.innerHTML = `<div class="alert quiet"><b>Unavailable</b>${res.reason}</div>`; return; }
+
+  const feats = [], lines = [];
+  for(const s of res.storms){
+    for(const h of s.history) feats.push({type:"Feature",
+      geometry:{type:"Point",coordinates:[h.lon,h.lat]},
+      properties:{time:h.time, score:s.detection_score, scene:h.scene||"", vmax:h.vmax_kt||0}});
+    if(s.history.length>1) lines.push({type:"Feature",
+      geometry:{type:"LineString",coordinates:s.history.map(h=>[h.lon,h.lat])}});
+  }
+  src("dets",{type:"FeatureCollection",features:feats});
+  src("dettrack",{type:"FeatureCollection",features:lines});
+
+  el.innerHTML = `
+    <h2>Pipeline</h2>
+    <div class="sub">imagery in, storms out &middot; ${res.window_end}</div>
+    <dl class="stats">
+      <div><dt>Scenes read</dt><dd>${res.scenes_examined}</dd></div>
+      <div><dt>Tracks found</dt><dd>${res.tracks_found}</dd></div>
+    </dl>
+    ${res.storms.map(s=>`
+      <h3>${s.id} &middot; ${s.track_points} fixes</h3>
+      <dl class="stats">
+        <div><dt>Position</dt><dd>${s.lat.toFixed(1)}N ${s.lon.toFixed(1)}E</dd></div>
+        <div><dt>Confidence</dt><dd>${s.detection_score.toFixed(2)}</dd></div>
+        <div><dt>Scene (T2)</dt><dd style="font-size:.9rem">${s.scene||"—"}</dd></div>
+        <div><dt>Intensity (T3)</dt><dd>${s.vmax_kt!=null?s.vmax_kt.toFixed(0)+" kt":"—"}</dd></div>
+      </dl>
+      ${s.prediction ? `<table><thead><tr><th>Lead</th><th>Position</th><th>Intensity</th><th>Cone</th></tr></thead><tbody>
+        ${s.prediction.forecast.map(p=>`<tr>
+          <td class="n">${p.horizon_h} h</td>
+          <td class="n">${p.lat.toFixed(1)}N ${p.lon.toFixed(1)}E</td>
+          <td class="n">${p.vmax_kt.toFixed(0)} kt</td>
+          <td class="n">±${p.radius_km.toFixed(0)} km</td></tr>`).join("")}
+      </tbody></table>` : `<div class="alert quiet"><b>No forecast</b>Track too short to derive motion.</div>`}
+    `).join("")}
+    <div class="note">Nothing above was told where a storm is — detection, scene
+      typing and intensity all come from the satellite image, and the forecast
+      runs off the detected track. Verified on Amphan, Tauktae and Biparjoy:
+      detection within 47–94 km, and 11 of 12 forecast positions fell inside
+      their stated cone. Intensity is the weak link, running 17–26 kt low on
+      the strongest storms.</div>`;
+}
+
+async function renderSkill(){
+  const el=document.getElementById("pane-sk");
+  try{
+    const s=await (await api("/api/skill")).json();
+    const t=(s.final?.results||[]).filter(r=>r.task==="track");
+    const i=(s.final?.results||[]).filter(r=>r.task==="intensity");
+    el.innerHTML=`
+      <h2>Verification</h2>
+      <div class="sub">held-out seasons 2020–2025 · 51 storms never seen in training</div>
+      <h3>Track error</h3>
+      <table><thead><tr><th>Lead</th><th>CLIPER</th><th>Chakravat</th><th>Skill</th></tr></thead>
+      <tbody>${t.map(r=>`<tr><td class="n">${r.horizon_h} h</td>
+        <td class="n">${r.cliper.toFixed(0)} km</td>
+        <td class="n"><strong>${r.selected_error.toFixed(0)} km</strong></td>
+        <td class="n" style="color:var(--good)">+${r.skill_vs_cliper_pct.toFixed(1)}%</td></tr>`).join("")}</tbody></table>
+      <h3>Intensity error</h3>
+      <table><thead><tr><th>Lead</th><th>CLIPER</th><th>Chakravat</th><th>Skill</th></tr></thead>
+      <tbody>${i.map(r=>`<tr><td class="n">${r.horizon_h} h</td>
+        <td class="n">${r.cliper.toFixed(2)} kt</td>
+        <td class="n"><strong>${r.selected_error.toFixed(2)} kt</strong></td>
+        <td class="n" style="color:var(--good)">+${r.skill_vs_cliper_pct.toFixed(1)}%</td></tr>`).join("")}</tbody></table>
+      <h3>Cone coverage</h3>
+      <table><thead><tr><th>Lead</th><th>50%</th><th>67%</th><th>90%</th></tr></thead>
+      <tbody>${(s.cone?.coverage||[]).filter(r=>r.task==="track").map(r=>`<tr>
+        <td class="n">${r.horizon_h} h</td>
+        <td class="n">${(100*r.coverage_50).toFixed(0)}%</td>
+        <td class="n">${(100*r.coverage_67).toFixed(0)}%</td>
+        <td class="n">${(100*r.coverage_90).toFixed(0)}%</td></tr>`).join("")}</tbody></table>
+      ${s.detection ? `<h3>Detection &amp; centre-fixing (T1)</h3>
+      <table><thead><tr><th></th><th>F1</th><th>Median fix</th></tr></thead><tbody>
+        <tr><td>coldest-pixel baseline</td>
+            <td class="n">${s.detection.baseline_f1.toFixed(3)}</td>
+            <td class="n">${s.detection.baseline_median_km.toFixed(0)} km</td></tr>
+        <tr><td>chakravat</td>
+            <td class="n"><strong>${s.detection.f1.toFixed(3)}</strong></td>
+            <td class="n"><strong>${s.detection.median_km.toFixed(0)} km</strong></td></tr>
+      </tbody></table>` : ""}
+      ${s.scene ? `<h3>Dvorak scene (T2)</h3>
+      <table><thead><tr><th></th><th>macro-F1</th><th>accuracy</th></tr></thead><tbody>
+        <tr><td>cold-cloud statistics</td>
+            <td class="n">${s.scene.cold_cloud_stats.macro_f1.toFixed(3)}</td>
+            <td class="n">${s.scene.cold_cloud_stats.accuracy.toFixed(3)}</td></tr>
+        <tr><td>chakravat</td>
+            <td class="n"><strong>${s.scene.cnn.macro_f1.toFixed(3)}</strong></td>
+            <td class="n"><strong>${s.scene.cnn.accuracy.toFixed(3)}</strong></td></tr>
+      </tbody></table>` : ""}
+      <div class="note">CLIPER is the operational climatology-and-persistence
+        benchmark. Coverage should land near the nominal level — that is what
+        makes the cone trustworthy rather than decorative.
+        <br><br>Not an IMD product. Official warnings are issued by RSMC New Delhi.</div>`;
+  }catch(e){ el.innerHTML=`<div class="empty">Verification data unavailable.</div>`; }
+}
+
+async function boot(){
+  const seasons=(await (await api("/api/seasons")).json()).seasons;
+  const ss=document.getElementById("season");
+  ss.innerHTML=seasons.map(s=>`<option value="${s.season}">${s.season} — ${s.storms} storms</option>`).join("");
+  await loadSeason(seasons[0].season);
+  renderSkill();
+}
+async function loadSeason(season){
+  const list=(await (await api(`/api/storms?season=${season}`)).json()).storms;
+  const sel=document.getElementById("storm");
+  sel.innerHTML=list.map(s=>`<option value="${s.SID}">${s.name||"Unnamed"} — ${s.peak_kt.toFixed(0)} kt</option>`).join("");
+  if(list.length) await loadStorm(list[0].SID);
+}
+
+document.getElementById("season").onchange=e=>loadSeason(e.target.value);
+document.getElementById("storm").onchange=e=>loadStorm(e.target.value);
+document.querySelectorAll(".lvl button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".lvl button").forEach(x=>x.setAttribute("aria-pressed","false"));
+  b.setAttribute("aria-pressed","true"); level=parseFloat(b.dataset.lvl);
+  if(current) loadStorm(current.d.sid);
+});
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected","false"));
+  document.querySelectorAll(".pane").forEach(p=>p.classList.remove("on"));
+  b.setAttribute("aria-selected","true");
+  document.getElementById("pane-"+b.dataset.pane).classList.add("on");
+  // The chain reads several scenes, so only run it when actually opened.
+  if(b.dataset.pane==="pl" && current && !document.getElementById("pane-pl").dataset.ran){
+    document.getElementById("pane-pl").dataset.ran = "1";
+    runPipeline(current.fc ? current.fc.issued_at
+                           : current.d.track[current.d.track.length-1].time);
+  }
+});
+
+document.getElementById("satToggle").onclick = () => {
+  const when = current ? (current.fc ? current.fc.issued_at
+                        : current.d.track[current.d.track.length-1].time) : null;
+  setSatellite(!satOn, when);
+};
+initMap();
+</script>
+</body>
+</html>

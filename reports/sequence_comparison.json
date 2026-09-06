@@ -1,0 +1,72 @@
+[
+  {
+    "task": "track",
+    "horizon_h": 6,
+    "n": 860,
+    "chakravat_km": 34.02845048018546,
+    "gru_km": 35.396322165893906
+  },
+  {
+    "task": "track",
+    "horizon_h": 12,
+    "n": 809,
+    "chakravat_km": 61.86563662496832,
+    "gru_km": 63.69286974464089
+  },
+  {
+    "task": "track",
+    "horizon_h": 24,
+    "n": 712,
+    "chakravat_km": 127.25595737213384,
+    "gru_km": 124.31122410295025
+  },
+  {
+    "task": "track",
+    "horizon_h": 48,
+    "n": 516,
+    "chakravat_km": 256.0257381830168,
+    "gru_km": 266.0880790485638
+  },
+  {
+    "task": "track",
+    "horizon_h": 72,
+    "n": 363,
+    "chakravat_km": 394.12001940450614,
+    "gru_km": 391.19220096584894
+  },
+  {
+    "task": "intensity",
+    "horizon_h": 6,
+    "n": 860,
+    "chakravat_kt": 2.7761637151485172,
+    "gru_kt": 2.7256741523742676
+  },
+  {
+    "task": "intensity",
+    "horizon_h": 12,
+    "n": 809,
+    "chakravat_kt": 4.496132354967408,
+    "gru_kt": 4.374569892883301
+  },
+  {
+    "task": "intensity",
+    "horizon_h": 24,
+    "n": 712,
+    "chakravat_kt": 7.230681462289412,
+    "gru_kt": 7.258100509643555
+  },
+  {
+    "task": "intensity",
+    "horizon_h": 48,
+    "n": 516,
+    "chakravat_kt": 12.441023883890963,
+    "gru_kt": 12.326834678649902
+  },
+  {
+    "task": "intensity",
+    "horizon_h": 72,
+    "n": 363,
+    "chakravat_kt": 15.959275823622246,
+    "gru_kt": 15.099867820739746
+  }
+]

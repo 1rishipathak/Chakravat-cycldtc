@@ -1,0 +1,260 @@
+{
+  "selection": {
+    "intensity_6": "boosted",
+    "intensity_12": "boosted",
+    "intensity_24": "blend",
+    "intensity_48": "blend",
+    "intensity_72": "blend",
+    "track_6": "blend",
+    "track_12": "blend",
+    "track_24": "blend",
+    "track_48": "blend",
+    "track_72": "blend"
+  },
+  "results": [
+    {
+      "task": "track",
+      "horizon_h": 6,
+      "n": 860,
+      "unit": "km",
+      "cliper": 35.583162745648075,
+      "selected_model": "blend",
+      "selected_error": 33.558026588336304,
+      "skill_vs_cliper_pct": 5.691276438206582
+    },
+    {
+      "task": "track",
+      "horizon_h": 12,
+      "n": 809,
+      "unit": "km",
+      "cliper": 69.06317236524795,
+      "selected_model": "blend",
+      "selected_error": 60.23969200016572,
+      "skill_vs_cliper_pct": 12.775955784970773
+    },
+    {
+      "task": "track",
+      "horizon_h": 24,
+      "n": 712,
+      "unit": "km",
+      "cliper": 142.10930449618127,
+      "selected_model": "blend",
+      "selected_error": 121.87861491655926,
+      "skill_vs_cliper_pct": 14.23600632720403
+    },
+    {
+      "task": "track",
+      "horizon_h": 48,
+      "n": 516,
+      "unit": "km",
+      "cliper": 285.5818546040541,
+      "selected_model": "blend",
+      "selected_error": 254.00062876097766,
+      "skill_vs_cliper_pct": 11.058554783483121
+    },
+    {
+      "task": "track",
+      "horizon_h": 72,
+      "n": 363,
+      "unit": "km",
+      "cliper": 405.18241365670076,
+      "selected_model": "blend",
+      "selected_error": 379.1345299264266,
+      "skill_vs_cliper_pct": 6.428680725601232
+    },
+    {
+      "task": "intensity",
+      "horizon_h": 6,
+      "n": 860,
+      "unit": "kt",
+      "cliper": 3.0561843902593786,
+      "selected_model": "boosted",
+      "selected_error": 2.7761637151485172,
+      "skill_vs_cliper_pct": 9.162427371965476
+    },
+    {
+      "task": "intensity",
+      "horizon_h": 12,
+      "n": 809,
+      "unit": "kt",
+      "cliper": 5.373591633848957,
+      "selected_model": "boosted",
+      "selected_error": 4.496132354967408,
+      "skill_vs_cliper_pct": 16.32910237082993
+    },
+    {
+      "task": "intensity",
+      "horizon_h": 24,
+      "n": 712,
+      "unit": "kt",
+      "cliper": 9.044182509909689,
+      "selected_model": "blend",
+      "selected_error": 6.918263873370889,
+      "skill_vs_cliper_pct": 23.505923660976947
+    },
+    {
+      "task": "intensity",
+      "horizon_h": 48,
+      "n": 516,
+      "unit": "kt",
+      "cliper": 13.963723887928357,
+      "selected_model": "blend",
+      "selected_error": 11.885247712672886,
+      "skill_vs_cliper_pct": 14.884827227587294
+    },
+    {
+      "task": "intensity",
+      "horizon_h": 72,
+      "n": 363,
+      "unit": "kt",
+      "cliper": 16.42409986499836,
+      "selected_model": "blend",
+      "selected_error": 15.008393805980068,
+      "skill_vs_cliper_pct": 8.619687353675465
+    }
+  ],
+  "val_scores": {
+    "track_6": {
+      "n": 665,
+      "cliper": 32.21240522958935,
+      "boosted": 29.84214820284335,
+      "gru": 30.974754293357343,
+      "blend": 29.219111318210217
+    },
+    "intensity_6": {
+      "n": 665,
+      "cliper": 3.2573588640198765,
+      "boosted": 2.8686499180608496,
+      "gru": 3.151310682296753,
+      "blend": 2.9001137634354883
+    },
+    "track_12": {
+      "n": 635,
+      "cliper": 64.76590495702813,
+      "boosted": 57.821951470913866,
+      "gru": 57.33126590961035,
+      "blend": 55.304421919874656
+    },
+    "intensity_12": {
+      "n": 635,
+      "cliper": 5.831622720757839,
+      "boosted": 4.834961142499441,
+      "gru": 5.2564215660095215,
+      "blend": 4.872901439469523
+    },
+    "track_24": {
+      "n": 574,
+      "cliper": 140.3615898961022,
+      "boosted": 123.60931353616773,
+      "gru": 119.75364207243562,
+      "blend": 118.09504045301321
+    },
+    "intensity_24": {
+      "n": 574,
+      "cliper": 10.170817374318219,
+      "boosted": 8.805610072871241,
+      "gru": 9.100008964538574,
+      "blend": 8.651816796433586
+    },
+    "track_48": {
+      "n": 451,
+      "cliper": 309.6567173744188,
+      "boosted": 293.0346031964065,
+      "gru": 283.88959082029436,
+      "blend": 280.7402655598262
+    },
+    "intensity_48": {
+      "n": 451,
+      "cliper": 15.923137651584367,
+      "boosted": 14.734735524555001,
+      "gru": 15.187326431274414,
+      "blend": 14.419200652878615
+    },
+    "track_72": {
+      "n": 344,
+      "cliper": 455.68959329774833,
+      "boosted": 474.53647632070954,
+      "gru": 447.7774922643434,
+      "blend": 446.5608542838496
+    },
+    "intensity_72": {
+      "n": 344,
+      "cliper": 18.874852794300054,
+      "boosted": 18.320424524245787,
+      "gru": 18.539918899536133,
+      "blend": 17.55856840015012
+    }
+  },
+  "test_scores": {
+    "track_6": {
+      "n": 860,
+      "cliper": 35.583162745648075,
+      "boosted": 34.02845048018546,
+      "gru": 35.396322165893906,
+      "blend": 33.558026588336304
+    },
+    "intensity_6": {
+      "n": 860,
+      "cliper": 3.0561843902593786,
+      "boosted": 2.7761637151485172,
+      "gru": 2.7256741523742676,
+      "blend": 2.644799590028792
+    },
+    "track_12": {
+      "n": 809,
+      "cliper": 69.06317236524795,
+      "boosted": 61.86563662496832,
+      "gru": 63.69286974464089,
+      "blend": 60.23969200016572
+    },
+    "intensity_12": {
+      "n": 809,
+      "cliper": 5.373591633848957,
+      "boosted": 4.496132354967408,
+      "gru": 4.374569892883301,
+      "blend": 4.262805600733833
+    },
+    "track_24": {
+      "n": 712,
+      "cliper": 142.10930449618127,
+      "boosted": 127.25595737213384,
+      "gru": 124.31122410295025,
+      "blend": 121.87861491655926
+    },
+    "intensity_24": {
+      "n": 712,
+      "cliper": 9.044182509909689,
+      "boosted": 7.230681462289412,
+      "gru": 7.258100509643555,
+      "blend": 6.918263873370889
+    },
+    "track_48": {
+      "n": 516,
+      "cliper": 285.5818546040541,
+      "boosted": 256.0257381830168,
+      "gru": 266.0880790485638,
+      "blend": 254.00062876097766
+    },
+    "intensity_48": {
+      "n": 516,
+      "cliper": 13.963723887928357,
+      "boosted": 12.441023883890963,
+      "gru": 12.326834678649902,
+      "blend": 11.885247712672886
+    },
+    "track_72": {
+      "n": 363,
+      "cliper": 405.18241365670076,
+      "boosted": 394.12001940450614,
+      "gru": 391.19220096584894,
+      "blend": 379.1345299264266
+    },
+    "intensity_72": {
+      "n": 363,
+      "cliper": 16.42409986499836,
+      "boosted": 15.959275823622246,
+      "gru": 15.099867820739746,
+      "blend": 15.008393805980068
+    }
+  }
+}

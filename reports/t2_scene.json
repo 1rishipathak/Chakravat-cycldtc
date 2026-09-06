@@ -1,0 +1,24 @@
+{
+  "backbone": "convnext_tiny",
+  "classes": [
+    "EYE",
+    "CRVBND",
+    "SHEAR",
+    "EMBC",
+    "IRRCDO"
+  ],
+  "patches": 974,
+  "storms": 114,
+  "majority": {
+    "macro_f1": 0.13968253968253969,
+    "accuracy": 0.5365853658536586
+  },
+  "cold_cloud_stats": {
+    "macro_f1": 0.5626096513707133,
+    "accuracy": 0.6178861788617886
+  },
+  "cnn": {
+    "macro_f1": 0.6886280124075401,
+    "accuracy": 0.7642276422764228
+  }
+}
