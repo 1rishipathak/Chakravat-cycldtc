@@ -123,9 +123,6 @@ accumulating a separate one.
 | track x coastline (229 of 303 fixes) | 160 km | - |
 | hybrid, what ships | 184 km | 114 km |
 
-still not good enough to evacuate a specific village on. timing and the
-probability are the parts that carry weight.
-
 ## 5. the dvorak labels are algorithm output
 
 scene labels come from the CIMSS ADT archive, 8212 labelled north indian scenes
@@ -166,8 +163,7 @@ GridSat is 8 km 3-hourly, INSAT-3DR is 4 km half-hourly. everything here was
 trained on the coarser one because it needs no authentication.
 
 MOSDAC approval has since come through. every number in this file was still
-produced without INSAT and we think that was right, a system that depends on an
-approval you don't control isn't a system.
+produced without INSAT. 
 
 expected gain, stated up front so it can be checked: most on limitation 1, where
 4 km should help small weak systems. least on limitation 2, because section 2
