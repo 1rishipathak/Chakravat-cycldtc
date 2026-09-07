@@ -2,7 +2,7 @@
 
 bugs we hit, what caused them, and what caught them.
 
-the thing i'd point at: not one of the serious ones showed up in a loss curve.
+the thing we'd point at: not one of the serious ones showed up in a loss curve.
 every single one was caught by an assertion, a baseline beating the network, or
 an end to end run producing something absurd. that's why there's a physics
 baseline next to every model and why the pipeline tab runs the whole chain
@@ -75,11 +75,6 @@ which looks excellent and conceals both. we only found it by reporting bands.
 
 fixed by inverting the fitted line, fitted on validation and applied unchanged
 to test. RMSE 11.66 to 10.95 and every band improved.
-
-worth noting: the docstring in `calibrate_intensity.py` said 0.727 / 13.9 for a
-while, from an older run, while the checkpoint and the report both said
-0.852 / 7.60. i'd quoted the stale one in a doc. always trust the report file,
-the coefficients get refitted every run.
 
 ### depressions were drowning the detection loss
 
@@ -212,7 +207,7 @@ see limitations.md, it has the numbers. short list:
 - IRRCDO has 7 test examples so it's not really measurable
 - test sets are small, the basin makes about 5 storms a year
 
-## what judges will probably ask
+## common questions we expect
 
 **why not INSAT-3D for an indian problem statement.** we asked, approval came
 late, so we designed around it. GridSat carries the same IR window channel
