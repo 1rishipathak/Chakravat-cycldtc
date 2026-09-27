@@ -10,6 +10,36 @@ instead of showing four models separately.
 
 ## solved
 
+### giving the intensity model the environment changed nothing, for a reason
+
+T2 and T3 look at a picture and nothing else, which always felt like an omission:
+a storm in 20 m/s of shear over a cool sea is not the same storm as one with an
+identical cloud top over 30 C water, and T4 has had shear, steering, humidity,
+SST and divergence since it was built. so we gave them to T3 as well - the same
+ERA5 columns, sampled at each patch's own time and centre, 100% coverage, fused
+late so the trunk keeps its Digital Typhoon weights and the environment joins as
+numbers at the head.
+
+    image only (serves)    12.96 kt  [11.53, 14.42]   bias -0.09   cat 39%
+    image + ERA5           12.88 kt  [11.36, 14.42]   bias -0.68   cat 40%
+
+0.08 kt. the intervals sit on top of each other. not promoted.
+
+the reason is worth more than the experiment. the environment predicts *change*,
+not *state*. T3 is a state estimator: it reads one image and says how strong the
+storm is now, and how warm the sea is underneath does not change what the storm
+is doing at that instant - it changes where the storm is going, which is T4's
+job, and T4 already has these exact columns. on top of that the image is not
+independent of the environment: a sheared storm looks sheared, that is literally
+what the SHEAR scene class is, so handing the CNN a shear number tells it
+something it can already see.
+
+so the split we drew between the imagery models and the forecast model turns out
+to be the right one, and this is the measurement that says so. the ERA5 sidecar
+and the fusion path are kept behind --env, because the same argument predicts it
+should help a model of intensity *change*, and that is a different model we have
+not built.
+
 ### the depressions we miss are not behind the threshold
 
 recall on depressions is 0.39 against 0.76 on named storms, and the obvious

@@ -66,6 +66,9 @@ def run_t3(args, device, log):
 
     patches, meta, y = (t3.load_joint(args.target) if args.sources == "joint"
                         else t3.load_patches(args.target))
+    env = t3.env_matrix(meta) if args.env else None
+    if args.env and env is None:
+        raise SystemExit("no era5.csv sidecar - run src/add_era5_to_patches.py first")
     if "sensor" not in meta.columns:
         meta = meta.assign(sensor="gridsat")
     folds = fold_of(meta["storm"], args.folds)
@@ -88,16 +91,21 @@ def run_t3(args, device, log):
         train = np.flatnonzero((folds != f) & (folds != (f + 1) % args.folds))
         log(f"\nfold {f}  train {len(train)}  val {len(val)}  test {len(test)}")
 
-        model, info = t3.fit(patches, y, train, val, device, aug=args.aug,
+        model, info = t3.fit(patches, y, train, val, device, aug=args.aug, env=env,
                              seed=args.seed + f, log=log, epochs=args.epochs or t3.EPOCHS)
         scale = (info["y_mean"], info["y_std"])
-        c = t3.fit_calibration(t3.predict_idx(model, patches, y, val, scale, device), y[val])
-        p = t3.predict_idx(model, patches, y, test, scale, device)
+        es = info.get("env_scaled")
+        c = t3.fit_calibration(
+            t3.predict_idx(model, patches, y, val, scale, device, env=es), y[val])
+        p = t3.predict_idx(model, patches, y, test, scale, device, env=es)
         raw[test] = t3.apply_calibration(p, None)
         cal[test] = t3.apply_calibration(p, c)
 
         base = t3.fit_baselines(patches, y, np.concatenate([train, val]), test)
         mean_b[test], cold_b[test] = base["predict_the_mean"], base["cold_cloud"]
+        # env_scaled is the fold's standardised environment matrix, needed for
+        # predicting and far too large to write into a report
+        info = {k: v for k, v in info.items() if k != "env_scaled"}
         fold_info.append({"fold": f, **info, "calibration": c,
                           "test_rmse_raw": t3.rmse(raw[test], y[test]),
                           "test_rmse_cal": t3.rmse(cal[test], y[test]),
@@ -226,6 +234,8 @@ def main() -> None:
     ap.add_argument("task", choices=["t2", "t3"])
     ap.add_argument("--target", choices=["best_track", "adt"], default="best_track")
     ap.add_argument("--sources", choices=["gridsat", "joint"], default="gridsat")
+    ap.add_argument("--env", action="store_true",
+                    help="give T3 the ERA5 environment alongside the image")
     ap.add_argument("--aug", choices=AUGMENTATIONS, default="rotate")
     ap.add_argument("--folds", type=int, default=5)
     ap.add_argument("--seed", type=int, default=0)
@@ -234,7 +244,9 @@ def main() -> None:
     args = ap.parse_args()
 
     OUT.mkdir(parents=True, exist_ok=True)
-    name = (f"t3_{args.target}_{args.aug}" + ("_joint" if args.sources == "joint" else "")
+    name = (f"t3_{args.target}_{args.aug}"
+            + ("_joint" if args.sources == "joint" else "")
+            + ("_env" if args.env else "")
             if args.task == "t3" else f"t2_{args.aug}")
     if args.epochs:
         name += f"_smoke{args.epochs}"

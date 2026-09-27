@@ -51,6 +51,57 @@ def covers(path: Path | str, lat: float, margin_deg: float = 1.0) -> bool:
     return b is not None and (b[0] + margin_deg) <= lat <= (b[1] - margin_deg)
 
 
+AUX_CHANNELS = {
+    # 12.0 um. TIR1 minus this is the split window, which separates optically
+    # thick convective cloud from thin cirrus - the cirrus that hides an eyewall
+    # from a single infrared channel.
+    "tir2": ("IMG_TIR2", "IMG_TIR2_TEMP"),
+    # 3.9 um. at night it sees low cloud and convective texture the window
+    # channel flattens; by day it carries a solar component and means less.
+    "mir": ("IMG_MIR", "IMG_MIR_TEMP"),
+}
+# IMG_VIS and IMG_SWIR are also in every granule, as albedo and radiance rather
+# than temperature, and only useful by day. left out deliberately.
+
+
+def _regrid(arrays: dict[str, np.ndarray], lat, lon) -> xr.Dataset:
+    if lat[0] > lat[-1]:
+        lat = lat[::-1]
+        arrays = {k: v[::-1, :] for k, v in arrays.items()}
+    src = xr.Dataset({k: (("lat", "lon"), v) for k, v in arrays.items()},
+                     coords={"lat": lat, "lon": lon})
+    out = src.interp(lat=GRID_LAT, lon=GRID_LON, method="linear",
+                     kwargs={"fill_value": np.nan})
+    return out.expand_dims(time=[np.datetime64("1970-01-01")])
+
+
+def _geo(f):
+    x = np.asarray(f["X"][:])
+    y = np.asarray(f["Y"][:])
+    lon0 = float(f["Projection_Information"].attrs[
+        "longitude_of_projection_origin"][0])
+    return _mercator_lat(y), lon0 + np.degrees(x / EARTH_R_M)
+
+
+def to_gridsat_aux(path: Path | str) -> xr.Dataset:
+    """The channels the first pass threw away, on the same grid.
+
+    Written to a parallel tree rather than into the existing files, so nothing
+    that already works can be disturbed by this.
+    """
+    import h5py
+
+    with h5py.File(path, "r") as f:
+        arrays = {name: _channel(f, counts, lut)
+                  for name, (counts, lut) in AUX_CHANNELS.items()}
+        lat, lon = _geo(f)
+
+    out = _regrid(arrays, lat, lon)
+    out.attrs["source"] = str(Path(path).name)
+    out.attrs["note"] = "INSAT auxiliary channels on the GridSat 0.07deg grid"
+    return out
+
+
 def to_gridsat(path: Path | str) -> xr.Dataset:
     # regrid one granule to the GridSat lat/lon grid and variable names
     import h5py

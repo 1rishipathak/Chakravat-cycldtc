@@ -53,12 +53,61 @@ BANDS = [("<34", 0, 34), ("34-48", 34, 48), ("48-64", 48, 64),
 TARGETS = {"best_track": "bt_vmax_kt", "adt": "vmax_kt"}
 
 
+def load_env(cache: Path, meta: pd.DataFrame) -> np.ndarray | None:
+    """The ERA5 columns for these patches, in the order the patches come in.
+
+    Written by src/add_era5_to_patches.py to a sidecar, so a cache rebuild
+    cannot take them with it. Returns None if the sidecar is not there, which
+    is what keeps the image-only model the default.
+    """
+    path = cache / "era5.csv"
+    if not path.exists():
+        return None
+    from features.environment import ENV_FEATURES
+
+    side = pd.read_csv(path)
+    side["time"] = side["time"].astype(str)
+    key = meta.assign(time=meta["time"].astype(str))[["storm", "time"]]
+    joined = key.merge(side, on=["storm", "time"], how="left")
+    if len(joined) != len(meta):                       # duplicate keys in the sidecar
+        joined = joined.drop_duplicates(subset=["storm", "time"]).reset_index(drop=True)
+    return joined[ENV_FEATURES].to_numpy(dtype=np.float32)
+
+
+class EnvNet(nn.Module):
+    """The same trunk, with the environment concatenated at the head.
+
+    Late fusion rather than early: the convolutional trunk stays a picture
+    model and keeps its Digital Typhoon weights, and the environment joins as
+    numbers where the decision is made. Early fusion would have meant
+    broadcasting ten scalars into image planes and retraining the trunk from
+    scratch, which throws away the transfer that is worth the most here.
+    """
+
+    def __init__(self, backbone: str, n_env: int, pretrained: bool = True):
+        super().__init__()
+        import timm
+        self.trunk = timm.create_model(backbone, pretrained=pretrained,
+                                       num_classes=0, in_chans=3)
+        self.n_env = int(n_env)
+        d = self.trunk.num_features + self.n_env
+        self.head = nn.Sequential(nn.Linear(d, 256), nn.GELU(),
+                                  nn.Dropout(0.1), nn.Linear(256, 1))
+
+    def forward(self, x, env=None):
+        f = self.trunk(x)
+        if self.n_env:
+            f = torch.cat([f, env], dim=1)
+        return self.head(f)
+
+
 class IntensityPatches(Dataset):
     # GridSat patch -> intensity in knots, on whatever scale `y` carries
 
-    def __init__(self, patches, y, idx, train=False, weights=None, aug="reflect"):
+    def __init__(self, patches, y, idx, train=False, weights=None, aug="reflect",
+                 env=None):
         self.patches, self.y, self.idx, self.train = patches, y, idx, train
-        self.weights, self.aug = weights, aug
+        self.weights, self.aug, self.env = weights, aug, env
 
     def __len__(self):
         return len(self.idx)
@@ -71,7 +120,10 @@ class IntensityPatches(Dataset):
         a = np.ascontiguousarray(a.transpose(2, 0, 1))
         a = (a - IMAGENET_MEAN[:, None, None]) / IMAGENET_STD[:, None, None]
         w = 1.0 if self.weights is None else float(self.weights[i])
-        return (torch.from_numpy(a), torch.tensor(float(self.y[i]), dtype=torch.float32),
+        e = (np.zeros(0, dtype=np.float32) if self.env is None
+             else self.env[i].astype(np.float32))
+        return (torch.from_numpy(a), torch.from_numpy(e),
+                torch.tensor(float(self.y[i]), dtype=torch.float32),
                 torch.tensor(w, dtype=torch.float32))
 
 
@@ -103,6 +155,26 @@ def load_joint(target: str = "best_track"):
     meta = pd.concat([mg.assign(sensor="gridsat"), mi.assign(sensor="insat")],
                      ignore_index=True)
     return patches, meta, np.concatenate([yg, yi])
+
+
+def env_matrix(meta: pd.DataFrame) -> np.ndarray | None:
+    """ERA5 columns for a patch table, whether one sensor or both.
+
+    load_joint concatenates gridsat rows then insat rows, so the environment is
+    assembled in the same order and stays aligned with the patches.
+    """
+    if "sensor" not in meta.columns:
+        return load_env(CACHE, meta)
+    blocks = []
+    for sensor, cache in (("gridsat", CACHE), ("insat", INSAT_CACHE)):
+        sub = meta[meta["sensor"] == sensor].reset_index(drop=True)
+        if sub.empty:
+            continue
+        e = load_env(cache, sub)
+        if e is None:
+            return None
+        blocks.append(e)
+    return np.concatenate(blocks) if blocks else None
 
 
 def stats_features(patches, idx):
@@ -151,24 +223,47 @@ def fit_baselines(patches, y, fit_idx, eval_idx) -> dict[str, np.ndarray]:
 
 
 def fit(patches, y, train_idx, val_idx, device, aug="reflect", seed=SEED,
-        log=print, epochs=EPOCHS):
+        log=print, epochs=EPOCHS, env=None):
     # fine-tune from the Digital Typhoon weights, early-stopped on validation RMSE
     import timm
     torch.manual_seed(seed)
     np.random.seed(seed)
 
-    model = timm.create_model(BACKBONE, pretrained=True, num_classes=1,
-                              in_chans=3).to(device)
+    n_env = 0 if env is None else env.shape[1]
+    if n_env:
+        model = EnvNet(BACKBONE, n_env).to(device)
+    else:
+        model = timm.create_model(BACKBONE, pretrained=True, num_classes=1,
+                                  in_chans=3).to(device)
     transferred = False
     if PRETRAINED.exists():
         ckpt = torch.load(PRETRAINED, map_location=device, weights_only=False)
         try:
-            model.load_state_dict(ckpt["state_dict"])
-            transferred = True
+            if n_env:
+                # the checkpoint is a plain timm model; its trunk weights fit
+                # ours, its one-output head does not and is dropped.
+                trunk_only = {k: v for k, v in ckpt["state_dict"].items()
+                              if not k.startswith("head.")}
+                missing, _ = model.trunk.load_state_dict(trunk_only, strict=False)
+                transferred = len(missing) < 5
+            else:
+                model.load_state_dict(ckpt["state_dict"])
+                transferred = True
         except Exception as exc:  # noqa: BLE001
             log(f"  could not transfer weights ({str(exc)[:60]}); starting from ImageNet")
 
     y_mean, y_std = float(y[train_idx].mean()), float(y[train_idx].std())
+
+    env_scaled, env_scale = None, None
+    if n_env:
+        mu = np.nanmean(env[train_idx], axis=0)
+        sd = np.nanstd(env[train_idx], axis=0)
+        sd = np.where(sd > 1e-6, sd, 1.0)
+        env_scale = (mu.tolist(), sd.tolist())
+        env_scaled = (np.where(np.isfinite(env), env, mu) - mu) / sd
+        env_scaled = env_scaled.astype(np.float32)
+        gaps = float(np.mean(~np.isfinite(env)))
+        log(f"  environment: {n_env} features, {gaps:.1%} of values imputed")
 
     # inverse-frequency weights, computed on the training rows only.
     bins = np.clip(np.digitize(y, WEIGHT_BINS) - 1, 0, len(WEIGHT_BINS) - 2)
@@ -177,10 +272,11 @@ def fit(patches, y, train_idx, val_idx, device, aug="reflect", seed=SEED,
     weights = inv[bins]
 
     train_loader = DataLoader(IntensityPatches(patches, y, train_idx, train=True,
-                                               weights=weights, aug=aug),
+                                               weights=weights, aug=aug,
+                                               env=env_scaled),
                               batch_size=BATCH, shuffle=True,
                               pin_memory=(device == "cuda"))
-    val_loader = DataLoader(IntensityPatches(patches, y, val_idx),
+    val_loader = DataLoader(IntensityPatches(patches, y, val_idx, env=env_scaled),
                             batch_size=BATCH, pin_memory=(device == "cuda"))
 
     opt = torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=1e-4)
@@ -193,11 +289,13 @@ def fit(patches, y, train_idx, val_idx, device, aug="reflect", seed=SEED,
     for epoch in range(1, epochs + 1):
         model.train()
         t0 = time.time()
-        for x, yy_, w in train_loader:
-            x, yy_, w = x.to(device), yy_.to(device), w.to(device)
+        for x, ev, yy_, w in train_loader:
+            x, ev, yy_, w = (x.to(device), ev.to(device),
+                             yy_.to(device), w.to(device))
             opt.zero_grad(set_to_none=True)
             with torch.amp.autocast(device, enabled=(device == "cuda")):
-                per = loss_fn(model(x).squeeze(-1), (yy_ - y_mean) / y_std)
+                out = model(x, ev) if n_env else model(x)
+                per = loss_fn(out.squeeze(-1), (yy_ - y_mean) / y_std)
                 loss = (per * w).sum() / w.sum()
             scaler.scale(loss).backward()
             scaler.unscale_(opt)
@@ -220,21 +318,26 @@ def fit(patches, y, train_idx, val_idx, device, aug="reflect", seed=SEED,
 
     model.load_state_dict(best_state)
     return model, {"y_mean": y_mean, "y_std": y_std, "transferred": transferred,
-                   "best_epoch": best_epoch, "best_val_rmse": float(best)}
+                   "best_epoch": best_epoch, "best_val_rmse": float(best),
+                   "n_env": n_env, "env_scale": env_scale,
+                   "env_scaled": env_scaled}
 
 
 def predict(model, loader, scale, device) -> np.ndarray:
     # raw model output in knots, before calibration
     model.eval()
+    uses_env = getattr(model, "n_env", 0) > 0
     out = []
     with torch.no_grad():
-        for x, _, _ in loader:
-            out.append(model(x.to(device)).squeeze(-1).float().cpu().numpy())
+        for x, ev, _, _ in loader:
+            x = x.to(device)
+            pred = model(x, ev.to(device)) if uses_env else model(x)
+            out.append(pred.squeeze(-1).float().cpu().numpy())
     return np.concatenate(out) * scale[1] + scale[0]
 
 
-def predict_idx(model, patches, y, idx, scale, device) -> np.ndarray:
-    loader = DataLoader(IntensityPatches(patches, y, idx), batch_size=BATCH)
+def predict_idx(model, patches, y, idx, scale, device, env=None) -> np.ndarray:
+    loader = DataLoader(IntensityPatches(patches, y, idx, env=env), batch_size=BATCH)
     return predict(model, loader, scale, device)
 
 

@@ -151,6 +151,27 @@ uniform across bands. binned on the prediction rather than the truth, which is
 the only honest way to condition it and also the reason the number differs from
 the -12.7 kt in limitations.
 
+## storm surge: scouted and dropped
+
+surge is what kills in the bay of bengal, so it was worth asking whether we
+could forecast it honestly. the question is not whether a surge model can be
+written - it is whether the observations exist to check one. surge is validated
+against tide gauge residuals, observed sea level minus predicted tide, and
+`src/scout_tide_gauges.py` counts how many of our landfalls have a gauge near
+enough and recording at the time.
+
+the answer is no, and it is not close. UHSLC lists **four** gauges for the whole
+of india: minicoy, cochin, port blair and vishakhapatnam. exactly one of those
+is on the east coast, which is where 1999 odisha, phailin, fani and amphan came
+ashore. across the entire archive there are 19 severe landfalls near a working
+gauge and 12 of them are bangladesh; india contributes 2.
+
+so a surge model here would be fitted and checked almost entirely on bangladeshi
+landfalls, on fourteen storms, for an indian problem statement. that number
+would have been the only unverified figure in the project. not built, and the
+scouting report is kept so the decision can be checked rather than taken on
+trust.
+
 ## not doing
 
 - **more GridSat years.** 4x the data moved T1 F1 from 0.461 to 0.518. sample

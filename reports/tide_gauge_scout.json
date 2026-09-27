@@ -1,0 +1,1230 @@
+{
+  "stations_in_basin": 39,
+  "landfalls": 207,
+  "pairs_any": 76,
+  "pairs_severe": 19,
+  "storms_any": 53,
+  "storms_severe": 14,
+  "near_km": 200.0,
+  "stations": [
+    {
+      "name": "Mombasa",
+      "country": "Kenya",
+      "uhslc_id": 101,
+      "lon": 39.65732,
+      "lat": -4.06999
+    },
+    {
+      "name": "Praslin",
+      "country": "Seychelles",
+      "uhslc_id": 106,
+      "lon": 55.7667,
+      "lat": -4.3433
+    },
+    {
+      "name": "Male",
+      "country": "Maldives",
+      "uhslc_id": 108,
+      "lon": 73.52521,
+      "lat": 4.18747
+    },
+    {
+      "name": "Gan",
+      "country": "Maldives",
+      "uhslc_id": 109,
+      "lon": 73.15204,
+      "lat": -0.6878
+    },
+    {
+      "name": "Muscat",
+      "country": "Oman",
+      "uhslc_id": 110,
+      "lon": 58.565,
+      "lat": 23.6283
+    },
+    {
+      "name": "Port Victoria",
+      "country": "Seychelles",
+      "uhslc_id": 111,
+      "lon": 55.4583,
+      "lat": -4.6217
+    },
+    {
+      "name": "Masirah",
+      "country": "Oman",
+      "uhslc_id": 113,
+      "lon": 58.8717,
+      "lat": 20.6867
+    },
+    {
+      "name": "Salalah",
+      "country": "Oman",
+      "uhslc_id": 114,
+      "lon": 54.0067,
+      "lat": 16.935
+    },
+    {
+      "name": "Colombo",
+      "country": "Sri Lanka",
+      "uhslc_id": 115,
+      "lon": 79.85006,
+      "lat": 6.94012
+    },
+    {
+      "name": "Hanimaadhoo",
+      "country": "Maldives",
+      "uhslc_id": 117,
+      "lon": 73.1725,
+      "lat": 6.76444
+    },
+    {
+      "name": "Ko Miang",
+      "country": "Thailand",
+      "uhslc_id": 118,
+      "lon": 97.633,
+      "lat": 8.567
+    },
+    {
+      "name": "Djibouti",
+      "country": "Djibouti",
+      "uhslc_id": 119,
+      "lon": 43.14,
+      "lat": 11.6083
+    },
+    {
+      "name": "Pointe La Rue",
+      "country": "Seychelles",
+      "uhslc_id": 121,
+      "lon": 55.52943,
+      "lat": -4.67618
+    },
+    {
+      "name": "Sibolga",
+      "country": "Indonesia",
+      "uhslc_id": 122,
+      "lon": 98.78575,
+      "lat": 1.72849
+    },
+    {
+      "name": "Sabang",
+      "country": "Indonesia",
+      "uhslc_id": 123,
+      "lon": 95.31733,
+      "lat": 5.88865
+    },
+    {
+      "name": "Chittagong",
+      "country": "Bangladesh",
+      "uhslc_id": 124,
+      "lon": 91.82518,
+      "lat": 22.23652
+    },
+    {
+      "name": "Jask",
+      "country": "Iran, Islamic Republic of",
+      "uhslc_id": 126,
+      "lon": 57.77,
+      "lat": 25.63
+    },
+    {
+      "name": "Hiron Point",
+      "country": "Bangladesh",
+      "uhslc_id": 134,
+      "lon": 89.4667,
+      "lat": 21.7833
+    },
+    {
+      "name": "Khal #10",
+      "country": "Bangladesh",
+      "uhslc_id": 135,
+      "lon": 91.8167,
+      "lat": 22.2667
+    },
+    {
+      "name": "Cox's Bazaar",
+      "country": "Bangladesh",
+      "uhslc_id": 136,
+      "lon": 91.8333,
+      "lat": 21.45
+    },
+    {
+      "name": "Teknaf",
+      "country": "Bangladesh",
+      "uhslc_id": 137,
+      "lon": 92.3,
+      "lat": 20.8833
+    },
+    {
+      "name": "Charchanga",
+      "country": "Bangladesh",
+      "uhslc_id": 138,
+      "lon": 91.05,
+      "lat": 22.2167
+    },
+    {
+      "name": "Khepupara",
+      "country": "Bangladesh",
+      "uhslc_id": 139,
+      "lon": 89.8333,
+      "lat": 21.8333
+    },
+    {
+      "name": "Langkawi",
+      "country": "Malaysia",
+      "uhslc_id": 142,
+      "lon": 99.76286,
+      "lat": 6.43049
+    },
+    {
+      "name": "Karachi",
+      "country": "Pakistan",
+      "uhslc_id": 147,
+      "lon": 66.975,
+      "lat": 24.8117
+    },
+    {
+      "name": "Ko Taphao Noi",
+      "country": "Thailand",
+      "uhslc_id": 148,
+      "lon": 98.425,
+      "lat": 7.8317
+    },
+    {
+      "name": "Lamu",
+      "country": "Kenya",
+      "uhslc_id": 149,
+      "lon": 40.9027,
+      "lat": -2.26758
+    },
+    {
+      "name": "Minicoy",
+      "country": "India",
+      "uhslc_id": 153,
+      "lon": 73.05,
+      "lat": 8.117
+    },
+    {
+      "name": "Vishakhapatnam",
+      "country": "India",
+      "uhslc_id": 157,
+      "lon": 83.283,
+      "lat": 17.683
+    },
+    {
+      "name": "Aden",
+      "country": "Yemen",
+      "uhslc_id": 172,
+      "lon": 44.975,
+      "lat": 12.7883
+    },
+    {
+      "name": "Cochin",
+      "country": "India",
+      "uhslc_id": 174,
+      "lon": 76.267,
+      "lat": 9.967
+    },
+    {
+      "name": "Mina Sulman",
+      "country": "Bahrain",
+      "uhslc_id": 182,
+      "lon": 50.6,
+      "lat": 26.2333
+    },
+    {
+      "name": "Ko Lak",
+      "country": "Thailand",
+      "uhslc_id": 328,
+      "lon": 99.8167,
+      "lat": 11.795
+    },
+    {
+      "name": "Moulmein",
+      "country": "Myanmar",
+      "uhslc_id": 906,
+      "lon": 97.62193,
+      "lat": 16.46557
+    },
+    {
+      "name": "Sittwe (Akyab)",
+      "country": "Myanmar",
+      "uhslc_id": 907,
+      "lon": 92.90337,
+      "lat": 20.14055
+    },
+    {
+      "name": "Port Blair",
+      "country": "India",
+      "uhslc_id": 908,
+      "lon": 92.767,
+      "lat": 11.683
+    },
+    {
+      "name": "Telukdalam",
+      "country": "Indonesia",
+      "uhslc_id": 913,
+      "lon": 97.8167,
+      "lat": 0.55
+    },
+    {
+      "name": "Meulaboh",
+      "country": "Indonesia",
+      "uhslc_id": 914,
+      "lon": 96.21667,
+      "lat": 4.316667
+    },
+    {
+      "name": "Chabahar",
+      "country": "Iran, Islamic Republic of",
+      "uhslc_id": 915,
+      "lon": 60.6033,
+      "lat": 25.2967
+    }
+  ],
+  "pairs": [
+    {
+      "sid": "1990232N22089",
+      "storm": "UNNAMED",
+      "season": 1990,
+      "vmax_kt": 16.0,
+      "station": "Hiron Point",
+      "country": "Bangladesh",
+      "km": 54,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1990232N22089",
+      "storm": "UNNAMED",
+      "season": 1990,
+      "vmax_kt": 16.0,
+      "station": "Khepupara",
+      "country": "Bangladesh",
+      "km": 88,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1990246N23089",
+      "storm": "UNNAMED",
+      "season": 1990,
+      "vmax_kt": 16.0,
+      "station": "Hiron Point",
+      "country": "Bangladesh",
+      "km": 128,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1990246N23089",
+      "storm": "UNNAMED",
+      "season": 1990,
+      "vmax_kt": 16.0,
+      "station": "Khepupara",
+      "country": "Bangladesh",
+      "km": 156,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1990348N04087",
+      "storm": "UNNAMED",
+      "season": 1990,
+      "vmax_kt": 27.900000000000002,
+      "station": "Khal #10",
+      "country": "Bangladesh",
+      "km": 135,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1990348N04087",
+      "storm": "UNNAMED",
+      "season": 1990,
+      "vmax_kt": 27.900000000000002,
+      "station": "Cox's Bazaar",
+      "country": "Bangladesh",
+      "km": 81,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1990348N04087",
+      "storm": "UNNAMED",
+      "season": 1990,
+      "vmax_kt": 27.900000000000002,
+      "station": "Charchanga",
+      "country": "Bangladesh",
+      "km": 190,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1991113N10091",
+      "storm": "UNNAMED",
+      "season": 1991,
+      "vmax_kt": 30.0,
+      "station": "Khal #10",
+      "country": "Bangladesh",
+      "km": 168,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1991285N15090",
+      "storm": "UNNAMED",
+      "season": 1991,
+      "vmax_kt": 25.0,
+      "station": "Hiron Point",
+      "country": "Bangladesh",
+      "km": 60,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1991285N15090",
+      "storm": "UNNAMED",
+      "season": 1991,
+      "vmax_kt": 25.0,
+      "station": "Khal #10",
+      "country": "Bangladesh",
+      "km": 189,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1991285N15090",
+      "storm": "UNNAMED",
+      "season": 1991,
+      "vmax_kt": 25.0,
+      "station": "Cox's Bazaar",
+      "country": "Bangladesh",
+      "km": 199,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1991285N15090",
+      "storm": "UNNAMED",
+      "season": 1991,
+      "vmax_kt": 25.0,
+      "station": "Charchanga",
+      "country": "Bangladesh",
+      "km": 111,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1991285N15090",
+      "storm": "UNNAMED",
+      "season": 1991,
+      "vmax_kt": 25.0,
+      "station": "Khepupara",
+      "country": "Bangladesh",
+      "km": 25,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1992288N10089",
+      "storm": "UNNAMED",
+      "season": 1992,
+      "vmax_kt": 35.0,
+      "station": "Khal #10",
+      "country": "Bangladesh",
+      "km": 135,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1992288N10089",
+      "storm": "UNNAMED",
+      "season": 1992,
+      "vmax_kt": 35.0,
+      "station": "Cox's Bazaar",
+      "country": "Bangladesh",
+      "km": 81,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1992288N10089",
+      "storm": "UNNAMED",
+      "season": 1992,
+      "vmax_kt": 35.0,
+      "station": "Charchanga",
+      "country": "Bangladesh",
+      "km": 190,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1992311N06107",
+      "storm": "UNNAMED",
+      "season": 1992,
+      "vmax_kt": 9.3,
+      "station": "Langkawi",
+      "country": "Malaysia",
+      "km": 164,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "1992311N06107",
+      "storm": "UNNAMED",
+      "season": 1992,
+      "vmax_kt": 9.3,
+      "station": "Ko Taphao Noi",
+      "country": "Thailand",
+      "km": 85,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "1993331N07108",
+      "storm": "UNNAMED",
+      "season": 1993,
+      "vmax_kt": 18.6,
+      "station": "Langkawi",
+      "country": "Malaysia",
+      "km": 179,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "1993331N07108",
+      "storm": "UNNAMED",
+      "season": 1993,
+      "vmax_kt": 18.6,
+      "station": "Ko Taphao Noi",
+      "country": "Thailand",
+      "km": 75,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "1994117N07096",
+      "storm": "UNNAMED",
+      "season": 1994,
+      "vmax_kt": 74.4,
+      "station": "Cox's Bazaar",
+      "country": "Bangladesh",
+      "km": 84,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1994117N07096",
+      "storm": "UNNAMED",
+      "season": 1994,
+      "vmax_kt": 74.4,
+      "station": "Charchanga",
+      "country": "Bangladesh",
+      "km": 170,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1996122N08092",
+      "storm": "UNNAMED",
+      "season": 1996,
+      "vmax_kt": 30.0,
+      "station": "Cox's Bazaar",
+      "country": "Bangladesh",
+      "km": 41,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1996122N08092",
+      "storm": "UNNAMED",
+      "season": 1996,
+      "vmax_kt": 30.0,
+      "station": "Charchanga",
+      "country": "Bangladesh",
+      "km": 157,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1996161N17063",
+      "storm": "UNNAMED",
+      "season": 1996,
+      "vmax_kt": 32.550000000000004,
+      "station": "Masirah",
+      "country": "Oman",
+      "km": 148,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "1996296N09093",
+      "storm": "UNNAMED",
+      "season": 1996,
+      "vmax_kt": 30.0,
+      "station": "Hiron Point",
+      "country": "Bangladesh",
+      "km": 30,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1996296N09093",
+      "storm": "UNNAMED",
+      "season": 1996,
+      "vmax_kt": 30.0,
+      "station": "Charchanga",
+      "country": "Bangladesh",
+      "km": 194,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1996296N09093",
+      "storm": "UNNAMED",
+      "season": 1996,
+      "vmax_kt": 30.0,
+      "station": "Khepupara",
+      "country": "Bangladesh",
+      "km": 66,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1997133N03092",
+      "storm": "UNNAMED",
+      "season": 1997,
+      "vmax_kt": 83.7,
+      "station": "Charchanga",
+      "country": "Bangladesh",
+      "km": 169,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1997263N14084",
+      "storm": "UNNAMED",
+      "season": 1997,
+      "vmax_kt": 60.45,
+      "station": "Cox's Bazaar",
+      "country": "Bangladesh",
+      "km": 157,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1997263N14084",
+      "storm": "UNNAMED",
+      "season": 1997,
+      "vmax_kt": 60.45,
+      "station": "Charchanga",
+      "country": "Bangladesh",
+      "km": 74,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1997263N14084",
+      "storm": "UNNAMED",
+      "season": 1997,
+      "vmax_kt": 60.45,
+      "station": "Khepupara",
+      "country": "Bangladesh",
+      "km": 194,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1998133N04086",
+      "storm": "UNNAMED",
+      "season": 1998,
+      "vmax_kt": 55.800000000000004,
+      "station": "Cox's Bazaar",
+      "country": "Bangladesh",
+      "km": 131,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1998133N04086",
+      "storm": "UNNAMED",
+      "season": 1998,
+      "vmax_kt": 55.800000000000004,
+      "station": "Charchanga",
+      "country": "Bangladesh",
+      "km": 142,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1998320N10102",
+      "storm": "UNNAMED",
+      "season": 1998,
+      "vmax_kt": 23.25,
+      "station": "Ko Lak",
+      "country": "Thailand",
+      "km": 189,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "1999135N12073",
+      "storm": "UNNAMED",
+      "season": 1999,
+      "vmax_kt": 105.0,
+      "station": "Karachi",
+      "country": "Pakistan",
+      "km": 190,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1999219N21089",
+      "storm": "UNNAMED",
+      "season": 1999,
+      "vmax_kt": 20.0,
+      "station": "Hiron Point",
+      "country": "Bangladesh",
+      "km": 145,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1999219N21089",
+      "storm": "UNNAMED",
+      "season": 1999,
+      "vmax_kt": 20.0,
+      "station": "Khepupara",
+      "country": "Bangladesh",
+      "km": 181,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "1999298N12099",
+      "storm": "UNNAMED",
+      "season": 1999,
+      "vmax_kt": 23.25,
+      "station": "Ko Lak",
+      "country": "Thailand",
+      "km": 75,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2000299N13093",
+      "storm": "UNNAMED",
+      "season": 2000,
+      "vmax_kt": 35.0,
+      "station": "Hiron Point",
+      "country": "Bangladesh",
+      "km": 52,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "2000299N13093",
+      "storm": "UNNAMED",
+      "season": 2000,
+      "vmax_kt": 35.0,
+      "station": "Khepupara",
+      "country": "Bangladesh",
+      "km": 90,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "2001361N01106",
+      "storm": "VAMEI",
+      "season": 2001,
+      "vmax_kt": 23.25,
+      "station": "Sibolga",
+      "country": "Indonesia",
+      "km": 127,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "2002126N09068",
+      "storm": "UNNAMED",
+      "season": 2002,
+      "vmax_kt": 27.900000000000002,
+      "station": "Salalah",
+      "country": "Oman",
+      "km": 109,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2003295N09101",
+      "storm": "UNNAMED",
+      "season": 2003,
+      "vmax_kt": 23.25,
+      "station": "Ko Lak",
+      "country": "Thailand",
+      "km": 82,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2004136N15090",
+      "storm": "UNNAMED",
+      "season": 2004,
+      "vmax_kt": 60.45,
+      "station": "Cox's Bazaar",
+      "country": "Bangladesh",
+      "km": 200,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "2007314N10093",
+      "storm": "SIDR",
+      "season": 2007,
+      "vmax_kt": 93.0,
+      "station": "Chittagong",
+      "country": "Bangladesh",
+      "km": 149,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2008298N16085",
+      "storm": "RASHMI",
+      "season": 2008,
+      "vmax_kt": 35.0,
+      "station": "Chittagong",
+      "country": "Bangladesh",
+      "km": 187,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2008338N06092",
+      "storm": "UNNAMED",
+      "season": 2008,
+      "vmax_kt": 23.25,
+      "station": "Colombo",
+      "country": "Sri Lanka",
+      "km": 141,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "2009104N13088",
+      "storm": "BIJLI",
+      "season": 2009,
+      "vmax_kt": 37.2,
+      "station": "Chittagong",
+      "country": "Bangladesh",
+      "km": 132,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2009344N06085",
+      "storm": "WARD",
+      "season": 2009,
+      "vmax_kt": 25.0,
+      "station": "Colombo",
+      "country": "Sri Lanka",
+      "km": 188,
+      "datasets": [
+        "research"
+      ]
+    },
+    {
+      "sid": "2010151N14065",
+      "storm": "PHET",
+      "season": 2010,
+      "vmax_kt": 65.0,
+      "station": "Masirah",
+      "country": "Oman",
+      "km": 101,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2010293N17093",
+      "storm": "GIRI",
+      "season": 2010,
+      "vmax_kt": 70.0,
+      "station": "Sittwe (Akyab)",
+      "country": "Myanmar",
+      "km": 111,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2011290N15090",
+      "storm": "UNNAMED",
+      "season": 2011,
+      "vmax_kt": 5.0,
+      "station": "Chittagong",
+      "country": "Bangladesh",
+      "km": 122,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2011290N15090",
+      "storm": "UNNAMED",
+      "season": 2011,
+      "vmax_kt": 5.0,
+      "station": "Sittwe (Akyab)",
+      "country": "Myanmar",
+      "km": 153,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2011302N13062",
+      "storm": "KEILA",
+      "season": 2011,
+      "vmax_kt": 30.0,
+      "station": "Salalah",
+      "country": "Oman",
+      "km": 53,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2013305N07141",
+      "storm": "UNNAMED",
+      "season": 2013,
+      "vmax_kt": 23.25,
+      "station": "Ko Lak",
+      "country": "Thailand",
+      "km": 152,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2013324N07103",
+      "storm": "LEHAR",
+      "season": 2013,
+      "vmax_kt": 13.950000000000001,
+      "station": "Langkawi",
+      "country": "Malaysia",
+      "km": 34,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2014279N11096",
+      "storm": "HUDHUD",
+      "season": 2014,
+      "vmax_kt": 60.0,
+      "station": "Vishakhapatnam",
+      "country": "India",
+      "km": 62,
+      "datasets": [
+        "fast"
+      ]
+    },
+    {
+      "sid": "2016138N10081",
+      "storm": "ROANU",
+      "season": 2016,
+      "vmax_kt": 35.0,
+      "station": "Chittagong",
+      "country": "Bangladesh",
+      "km": 87,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2017147N14087",
+      "storm": "MORA",
+      "season": 2017,
+      "vmax_kt": 55.0,
+      "station": "Chittagong",
+      "country": "Bangladesh",
+      "km": 87,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2017333N06082",
+      "storm": "OCKHI",
+      "season": 2017,
+      "vmax_kt": 25.0,
+      "station": "Colombo",
+      "country": "Sri Lanka",
+      "km": 132,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2018141N08059",
+      "storm": "MEKUNU",
+      "season": 2018,
+      "vmax_kt": 75.0,
+      "station": "Salalah",
+      "country": "Oman",
+      "km": 61,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2018148N17090",
+      "storm": "UNNAMED",
+      "season": 2018,
+      "vmax_kt": 30.0,
+      "station": "Sittwe (Akyab)",
+      "country": "Myanmar",
+      "km": 116,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2018281N14088",
+      "storm": "TITLI",
+      "season": 2018,
+      "vmax_kt": 80.0,
+      "station": "Vishakhapatnam",
+      "country": "India",
+      "km": 171,
+      "datasets": [
+        "fast"
+      ]
+    },
+    {
+      "sid": "2018347N07089",
+      "storm": "PHETHAI",
+      "season": 2018,
+      "vmax_kt": 25.0,
+      "station": "Vishakhapatnam",
+      "country": "India",
+      "km": 53,
+      "datasets": [
+        "fast"
+      ]
+    },
+    {
+      "sid": "2020150N17054",
+      "storm": "UNNAMED",
+      "season": 2020,
+      "vmax_kt": 25.0,
+      "station": "Salalah",
+      "country": "Oman",
+      "km": 51,
+      "datasets": [
+        "fast"
+      ]
+    },
+    {
+      "sid": "2020285N15087",
+      "storm": "UNNAMED",
+      "season": 2020,
+      "vmax_kt": 25.0,
+      "station": "Vishakhapatnam",
+      "country": "India",
+      "km": 194,
+      "datasets": [
+        "fast"
+      ]
+    },
+    {
+      "sid": "2021267N18094",
+      "storm": "GULAB:SHAHEEN-GU",
+      "season": 2021,
+      "vmax_kt": 35.0,
+      "station": "Vishakhapatnam",
+      "country": "India",
+      "km": 70,
+      "datasets": [
+        "fast"
+      ]
+    },
+    {
+      "sid": "2022295N13093",
+      "storm": "SITRANG",
+      "season": 2022,
+      "vmax_kt": 40.0,
+      "station": "Chittagong",
+      "country": "Bangladesh",
+      "km": 198,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2023030N08087",
+      "storm": "UNNAMED",
+      "season": 2023,
+      "vmax_kt": 25.0,
+      "station": "Colombo",
+      "country": "Sri Lanka",
+      "km": 186,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2023129N08091",
+      "storm": "MOCHA",
+      "season": 2023,
+      "vmax_kt": 75.0,
+      "station": "Chittagong",
+      "country": "Bangladesh",
+      "km": 198,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2023129N08091",
+      "storm": "MOCHA",
+      "season": 2023,
+      "vmax_kt": 75.0,
+      "station": "Sittwe (Akyab)",
+      "country": "Myanmar",
+      "km": 114,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2023293N12089",
+      "storm": "HAMOON",
+      "season": 2023,
+      "vmax_kt": 35.0,
+      "station": "Chittagong",
+      "country": "Bangladesh",
+      "km": 39,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2023317N10094",
+      "storm": "MIDHILI",
+      "season": 2023,
+      "vmax_kt": 40.0,
+      "station": "Chittagong",
+      "country": "Bangladesh",
+      "km": 120,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    },
+    {
+      "sid": "2024244N18085",
+      "storm": "UNNAMED",
+      "season": 2024,
+      "vmax_kt": 25.0,
+      "station": "Vishakhapatnam",
+      "country": "India",
+      "km": 79,
+      "datasets": [
+        "fast"
+      ]
+    },
+    {
+      "sid": "2024258N22091",
+      "storm": "UNNAMED",
+      "season": 2024,
+      "vmax_kt": 25.0,
+      "station": "Chittagong",
+      "country": "Bangladesh",
+      "km": 147,
+      "datasets": [
+        "research",
+        "fast"
+      ]
+    }
+  ],
+  "caveat": "a gauge inside its published span is not a guarantee of data during the storm: gauges fail, go off scale, or lose power at exactly the peak, which is when surge matters"
+}
