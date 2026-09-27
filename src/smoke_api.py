@@ -90,6 +90,14 @@ def main() -> None:
         ("why this forecast", f"/api/storm/{AMPHAN}/explain_forecast?horizon=24", False,
          lambda b: f"{b['track'][0]['label']} moves it {b['track'][0]['track_shift_km']:.0f} km"
          if b["track"] else _fail("nothing ranked")),
+        ("wind probability", f"/api/storm/{AMPHAN}/wind_probability?threshold=34", False,
+         lambda b: (f"{len(b['contours'])} contours, {b['places_total']} places, "
+                    f"{max((r['population'] for r in b['population_over_time']), default=0)/1e6:.1f} M people")
+         if b.get("contours") else _fail("no contours")),
+        ("analogues", f"/api/storm/{AMPHAN}/analogues", False,
+         lambda b: f"{b['analogues'][0]['name']} {b['analogues'][0]['season']} "
+                   f"from a pool of {b['pool_storms']}"
+         if b.get("analogues") else _fail(b.get("reason", "none found"))),
         ("skill", "/api/skill", False, lambda b: _skill(b)),
         ("live status", "/api/live/status", False,
          lambda b: f"{len(b['scenes'])} scenes, latest {b['latest']}, {b['age_hours']:.1f} h old"

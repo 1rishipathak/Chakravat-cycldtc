@@ -1,5 +1,5 @@
 {
-  "threshold_kt": 34,
+  "threshold_kt": 50,
   "window_h": 72,
   "grid_deg": 0.25,
   "storms": 51,
@@ -10,61 +10,61 @@
       "bin_lo": 0.0,
       "bin_hi": 0.0001,
       "forecast": 0.0,
-      "observed": 0.0010043258228541495,
-      "n": 11146781
+      "observed": 0.0006693581798804531,
+      "n": 11221197
     },
     {
       "bin_lo": 0.125,
       "bin_hi": 0.25,
       "forecast": 0.125,
-      "observed": 0.13554678581911875,
-      "n": 30661
+      "observed": 0.11195784706497126,
+      "n": 22964
     },
     {
       "bin_lo": 0.25,
       "bin_hi": 0.375,
       "forecast": 0.25,
-      "observed": 0.18303374329864397,
-      "n": 15855
+      "observed": 0.16926563916591114,
+      "n": 11030
     },
     {
       "bin_lo": 0.375,
       "bin_hi": 0.5,
       "forecast": 0.375,
-      "observed": 0.2611209964412811,
-      "n": 11240
+      "observed": 0.23377156943303204,
+      "n": 7302
     },
     {
       "bin_lo": 0.5,
       "bin_hi": 0.625,
       "forecast": 0.5,
-      "observed": 0.3017790467823413,
-      "n": 9106
+      "observed": 0.28142028476006326,
+      "n": 5689
     },
     {
       "bin_lo": 0.625,
       "bin_hi": 0.75,
       "forecast": 0.625,
-      "observed": 0.34082640332640335,
-      "n": 7696
+      "observed": 0.3056399132321041,
+      "n": 4610
     },
     {
       "bin_lo": 0.75,
       "bin_hi": 0.875,
       "forecast": 0.75,
-      "observed": 0.4026309318908286,
-      "n": 8134
+      "observed": 0.3651658767772512,
+      "n": 4220
     },
     {
       "bin_lo": 0.875,
       "bin_hi": 1.0001,
-      "forecast": 0.9841872045289506,
-      "observed": 0.8303273708078308,
-      "n": 67477
+      "forecast": 0.9780632460627947,
+      "observed": 0.7652221887852342,
+      "n": 19938
     }
   ],
-  "brier": 0.003331995859501901,
-  "base_rate": 0.007600458530842395,
-  "brier_skill_score": 0.5582484272926648,
+  "brier": 0.001911310962250873,
+  "base_rate": 0.0029622154652361923,
+  "brier_skill_score": 0.35285278174852386,
   "verifies": "track and intensity; the wind field radius model is shared with the truth side and is not tested here"
 }

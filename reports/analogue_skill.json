@@ -1,0 +1,35 @@
+{
+  "storms": 51,
+  "fixes_with_analogues": 294,
+  "leads": [
+    {
+      "lead_h": 24,
+      "analogue_km": 141.88257620461715,
+      "persistence_km": 280.59673728256007,
+      "cliper_km": 142.1,
+      "served_km": 126.2,
+      "analogue_intensity_mae_kt": 14.226872586872586,
+      "n": 259
+    },
+    {
+      "lead_h": 48,
+      "analogue_km": 305.717376527038,
+      "persistence_km": 493.28075411397714,
+      "cliper_km": 285.6,
+      "served_km": 259.2,
+      "analogue_intensity_mae_kt": 18.124901433691754,
+      "n": 186
+    },
+    {
+      "lead_h": 72,
+      "analogue_km": 463.1525774460676,
+      "persistence_km": 698.4938395717559,
+      "cliper_km": 406.5,
+      "served_km": 388.3,
+      "analogue_intensity_mae_kt": 19.047302259887008,
+      "n": 118
+    }
+  ],
+  "pool_rule": "storms that had already ended when the current storm began, so every analogue forecast is out of sample",
+  "note": "CLIPER and served errors are from forecast_skill_ci.json and are computed over a different set of fixes, so the comparison is indicative rather than paired"
+}

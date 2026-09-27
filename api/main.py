@@ -207,6 +207,25 @@ def _in_cone(fc: dict) -> tuple[list[dict], object]:
     return places_in_cone(nodes), cone_polygon(nodes)
 
 
+@app.get("/api/storm/{sid}/analogues")
+def analogues(sid: str, time: str | None = None, k: int = 5):
+    # what this storm has looked like before, and what became of those.
+    #
+    # the pool is restricted to storms that had already ended when this one
+    # began, which is what a forecaster at the time could have reached for. it
+    # also means the consensus below is an honest out-of-sample forecast rather
+    # than a lookup that has seen the answer.
+    from models import analogues as an
+
+    row = _row_at(sid, time)
+    found = an.find(store.data, sid, pd.Timestamp(row["ISO_TIME"].iloc[0]), k=k)
+    found["sid"] = sid
+    found["issued_at"] = str(row["ISO_TIME"].iloc[0])
+    found["consensus"] = an.consensus(found, float(row["LAT"].iloc[0]),
+                                      float(row["LON"].iloc[0]))
+    return found
+
+
 @app.get("/api/storm/{sid}/wind_probability")
 def wind_probability(sid: str, time: str | None = None, threshold: int = 34,
                      deg: float = 0.25):

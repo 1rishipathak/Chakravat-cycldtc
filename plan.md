@@ -115,6 +115,12 @@ land at all.
 
 | | what | why | state |
 |---|---|---|---|
+| A1 | wind probability swaths | the cone is a centre product; this is an impact one | done |
+| B3 | population in the swath over time | how likely, and by when | done |
+| A3 | historical analogues | the explanation a forecaster already trusts | done |
+| C1 | storm surge | scouted: the gauges to validate it do not exist | dropped |
+| - | ERA5 into T2/T3 | measured, no gain, not promoted | done |
+| - | six-channel INSAT regrid | 1,207 granules, split window available | done |
 | 1 | scene typing on INSAT | 0.61 against 0.72 on GridSat, and INSAT is the live feed | not fixed, diagnosed |
 | 2 | depression recall | we miss 6 in 10, and a second operating point costs no retraining | done |
 | 3 | prediction interval on T3 | the severe under-read is invisible in a point estimate | done |

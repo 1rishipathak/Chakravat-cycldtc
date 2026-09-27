@@ -456,12 +456,14 @@ function render(){
       ${fc.rapid_intensification.flagged?"<strong>Above watch threshold.</strong>":"Below watch threshold."}
     </div>
     <div id="fc-wind"></div>
+    <div id="fc-analog"></div>
     <div id="fc-why"></div>
     <div class="note">Cone radii and intensity ranges are calibrated to
       ${(100*level).toFixed(0)}% and verified on held-out seasons 2020–2025 —
       the ${(100*level).toFixed(0)}% cone contained about that share of verifying positions.</div>
     ` : `<div class="empty">No forecast available from this storm's last fix.</div>`}`;
   if(fc) renderWind(d, fc.issued_at);
+  if(fc) renderAnalogues(d, fc.issued_at);
   if(fc) renderWhy(d, fc.issued_at);
 
   document.getElementById("pane-lf").innerHTML = !lf ? `<div class="empty">No landfall assessment.</div>` : `
@@ -534,6 +536,38 @@ async function renderExposure(d, issued){
            in the path, not how badly they will be hit. Populations are Natural
            Earth metro estimates.</div>`;
   }catch(err){ el.innerHTML = `<div class="empty">Places unavailable.</div>`; }
+}
+
+/* What this storm has looked like before. The pool is storms that had already
+   ended when this one began, so it is what a forecaster could have reached for. */
+async function renderAnalogues(d, issued){
+  const box = document.getElementById("fc-analog");
+  if(!box) return;
+  let a;
+  try{
+    a = await (await api(`/api/storm/${d.sid}/analogues?time=${encodeURIComponent(issued||"")}`)).json();
+  }catch(e){ box.innerHTML = ""; return; }
+  if(!a || !a.analogues || !a.analogues.length){ box.innerHTML = ""; return; }
+
+  const fate = o => {
+    const lf = o.landfall;
+    const bits = [`peaked ${Math.round(o.peak_kt_after)} kt`];
+    if(lf) bits.push(`ashore in ${Math.round(lf.hours_after)} h at ${Math.round(lf.vmax_kt)} kt`);
+    else bits.push("stayed at sea");
+    return bits.join(", ");
+  };
+  box.innerHTML = `
+    <h3>Storms that looked like this</h3>
+    <table><thead><tr><th>Storm</th><th>Then</th><th>What happened next</th></tr></thead>
+    <tbody>${a.analogues.map(x=>`<tr>
+      <td>${esc(x.name)} <span style="color:var(--ink-3)">${x.season}</span></td>
+      <td class="n">${Math.round(x.vmax_kt)} kt</td>
+      <td>${esc(fate(x.outcome))}</td></tr>`).join("")}</tbody></table>
+    <div class="note">Nearest neighbours over position, motion, intensity and time of
+      year, each standardised, equal weights. Drawn only from the ${a.pool_storms}
+      storms that had already ended when this one began — a forecaster in the moment
+      could not have used a later one, so neither do we. This is context for reading
+      the forecast, not the forecast itself.</div>`;
 }
 
 /* Who gets the wind, rather than where the centre goes. Each ensemble member
