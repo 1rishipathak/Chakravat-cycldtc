@@ -10,7 +10,7 @@
       "population": 201026,
       "lat": 19.82,
       "lon": 85.9,
-      "first_inside_h": 14.5,
+      "first_inside_h": 14.0,
       "closest_approach_km": 266
     },
     {
@@ -20,7 +20,7 @@
       "population": 844000,
       "lat": 20.272,
       "lon": 85.825,
-      "first_inside_h": 17.0,
+      "first_inside_h": 16.5,
       "closest_approach_km": 293
     },
     {
@@ -30,7 +30,7 @@
       "population": 580000,
       "lat": 20.47,
       "lon": 85.89,
-      "first_inside_h": 18.0,
+      "first_inside_h": 17.0,
       "closest_approach_km": 295
     },
     {
@@ -40,7 +40,7 @@
       "population": 324726,
       "lat": 19.32,
       "lon": 84.8,
-      "first_inside_h": 19.5,
+      "first_inside_h": 18.0,
       "closest_approach_km": 350
     },
     {
@@ -50,7 +50,7 @@
       "population": 200762,
       "lat": 22.026,
       "lon": 88.058,
-      "first_inside_h": 21.5,
+      "first_inside_h": 21.0,
       "closest_approach_km": 156
     },
     {
@@ -60,7 +60,7 @@
       "population": 14787000,
       "lat": 22.497,
       "lon": 88.323,
-      "first_inside_h": 23.5,
+      "first_inside_h": 23.0,
       "closest_approach_km": 152
     },
     {
@@ -70,7 +70,7 @@
       "population": 169127,
       "lat": 22.33,
       "lon": 87.15,
-      "first_inside_h": 23.5,
+      "first_inside_h": 23.0,
       "closest_approach_km": 256
     },
     {
@@ -80,8 +80,18 @@
       "population": 4841638,
       "lat": 22.58,
       "lon": 88.33,
-      "first_inside_h": 24.0,
+      "first_inside_h": 23.5,
       "closest_approach_km": 155
+    },
+    {
+      "name": "Khulna",
+      "country": "Bangladesh",
+      "region": "Khulna",
+      "population": 1553000,
+      "lat": 22.842,
+      "lon": 89.558,
+      "first_inside_h": 25.0,
+      "closest_approach_km": 50
     },
     {
       "name": "Bhatpara",
@@ -94,14 +104,14 @@
       "closest_approach_km": 148
     },
     {
-      "name": "Khulna",
+      "name": "Jashore",
       "country": "Bangladesh",
       "region": "Khulna",
-      "population": 1553000,
-      "lat": 22.842,
-      "lon": 89.558,
+      "population": 243987,
+      "lat": 23.17,
+      "lon": 89.2,
       "first_inside_h": 26.0,
-      "closest_approach_km": 50
+      "closest_approach_km": 98
     },
     {
       "name": "Barishal",
@@ -114,6 +124,16 @@
       "closest_approach_km": 29
     },
     {
+      "name": "Jamshedpur",
+      "country": "India",
+      "region": "Jharkhand",
+      "population": 1300000,
+      "lat": 22.789,
+      "lon": 86.196,
+      "first_inside_h": 27.0,
+      "closest_approach_km": 366
+    },
+    {
       "name": "Barddhaman",
       "country": "India",
       "region": "West Bengal",
@@ -122,16 +142,6 @@
       "lon": 87.865,
       "first_inside_h": 27.0,
       "closest_approach_km": 227
-    },
-    {
-      "name": "Jashore",
-      "country": "Bangladesh",
-      "region": "Khulna",
-      "population": 243987,
-      "lat": 23.17,
-      "lon": 89.2,
-      "first_inside_h": 27.0,
-      "closest_approach_km": 98
     },
     {
       "name": "Krishnanagar",
@@ -154,23 +164,13 @@
       "closest_approach_km": 68
     },
     {
-      "name": "Jamshedpur",
-      "country": "India",
-      "region": "Jharkhand",
-      "population": 1300000,
-      "lat": 22.789,
-      "lon": 86.196,
-      "first_inside_h": 28.0,
-      "closest_approach_km": 366
-    },
-    {
       "name": "Sittwe",
       "country": "Myanmar",
       "region": "Rakhine",
       "population": 179032,
       "lat": 20.14,
       "lon": 92.88,
-      "first_inside_h": 29.0,
+      "first_inside_h": 28.0,
       "closest_approach_km": 324
     },
     {
@@ -180,7 +180,7 @@
       "population": 12797394,
       "lat": 23.725,
       "lon": 90.407,
-      "first_inside_h": 30.0,
+      "first_inside_h": 29.0,
       "closest_approach_km": 85
     },
     {
@@ -190,8 +190,38 @@
       "population": 1328000,
       "lat": 23.685,
       "lon": 86.981,
-      "first_inside_h": 30.0,
+      "first_inside_h": 29.0,
       "closest_approach_km": 329
+    },
+    {
+      "name": "Narayanganj",
+      "country": "Bangladesh",
+      "region": "Dhaka",
+      "population": 223622,
+      "lat": 23.62,
+      "lon": 90.5,
+      "first_inside_h": 29.0,
+      "closest_approach_km": 73
+    },
+    {
+      "name": "Pabna",
+      "country": "Bangladesh",
+      "region": "Rajshahi",
+      "population": 137888,
+      "lat": 24.0,
+      "lon": 89.25,
+      "first_inside_h": 29.0,
+      "closest_approach_km": 147
+    },
+    {
+      "name": "Raurkela",
+      "country": "India",
+      "region": "Orissa",
+      "population": 625831,
+      "lat": 22.23,
+      "lon": 84.83,
+      "first_inside_h": 30.0,
+      "closest_approach_km": 472
     },
     {
       "name": "Comilla",
@@ -202,26 +232,6 @@
       "lon": 91.17,
       "first_inside_h": 30.0,
       "closest_approach_km": 57
-    },
-    {
-      "name": "Narayanganj",
-      "country": "Bangladesh",
-      "region": "Dhaka",
-      "population": 223622,
-      "lat": 23.62,
-      "lon": 90.5,
-      "first_inside_h": 30.0,
-      "closest_approach_km": 73
-    },
-    {
-      "name": "Pabna",
-      "country": "Bangladesh",
-      "region": "Rajshahi",
-      "population": 137888,
-      "lat": 24.0,
-      "lon": 89.25,
-      "first_inside_h": 30.0,
-      "closest_approach_km": 147
     },
     {
       "name": "Dhanbad",
@@ -242,16 +252,6 @@
       "lon": 88.603,
       "first_inside_h": 31.0,
       "closest_approach_km": 222
-    },
-    {
-      "name": "Raurkela",
-      "country": "India",
-      "region": "Orissa",
-      "population": 625831,
-      "lat": 22.23,
-      "lon": 84.83,
-      "first_inside_h": 31.0,
-      "closest_approach_km": 472
     },
     {
       "name": "Agartala",
@@ -280,7 +280,7 @@
       "population": 142361,
       "lat": 24.58,
       "lon": 88.35,
-      "first_inside_h": 32.0,
+      "first_inside_h": 31.0,
       "closest_approach_km": 256
     },
     {
@@ -290,7 +290,7 @@
       "population": 1044000,
       "lat": 23.372,
       "lon": 85.328,
-      "first_inside_h": 33.0,
+      "first_inside_h": 32.0,
       "closest_approach_km": 472
     },
     {
@@ -330,8 +330,28 @@
       "population": 361548,
       "lat": 25.23,
       "lon": 86.98,
-      "first_inside_h": 36.0,
+      "first_inside_h": 35.0,
       "closest_approach_km": 408
+    },
+    {
+      "name": "Sylhet",
+      "country": "Bangladesh",
+      "region": "Sylhet",
+      "population": 237000,
+      "lat": 24.904,
+      "lon": 91.874,
+      "first_inside_h": 35.0,
+      "closest_approach_km": 218
+    },
+    {
+      "name": "Sambalpur",
+      "country": "India",
+      "region": "Orissa",
+      "population": 310852,
+      "lat": 21.47,
+      "lon": 83.97,
+      "first_inside_h": 36.0,
+      "closest_approach_km": 522
     },
     {
       "name": "Rangpur",
@@ -344,16 +364,6 @@
       "closest_approach_km": 322
     },
     {
-      "name": "Sylhet",
-      "country": "Bangladesh",
-      "region": "Sylhet",
-      "population": 237000,
-      "lat": 24.904,
-      "lon": 91.874,
-      "first_inside_h": 36.0,
-      "closest_approach_km": 218
-    },
-    {
       "name": "Saidpur",
       "country": "Bangladesh",
       "region": "Rajshahi",
@@ -362,6 +372,16 @@
       "lon": 89.0,
       "first_inside_h": 36.0,
       "closest_approach_km": 336
+    },
+    {
+      "name": "Shillong",
+      "country": "India",
+      "region": "Meghalaya",
+      "population": 375527,
+      "lat": 25.57,
+      "lon": 91.88,
+      "first_inside_h": 37.0,
+      "closest_approach_km": 292
     },
     {
       "name": "Purnia",
@@ -384,14 +404,14 @@
       "closest_approach_km": 220
     },
     {
-      "name": "Shillong",
+      "name": "Alipur Duar",
       "country": "India",
-      "region": "Meghalaya",
-      "population": 375527,
-      "lat": 25.57,
-      "lon": 91.88,
+      "region": "West Bengal",
+      "population": 127342,
+      "lat": 26.484,
+      "lon": 89.567,
       "first_inside_h": 38.0,
-      "closest_approach_km": 292
+      "closest_approach_km": 396
     },
     {
       "name": "Guwahati",
@@ -404,14 +424,54 @@
       "closest_approach_km": 358
     },
     {
-      "name": "Alipur Duar",
+      "name": "Gaya",
       "country": "India",
-      "region": "West Bengal",
-      "population": 127342,
-      "lat": 26.484,
-      "lon": 89.567,
+      "region": "Bihar",
+      "population": 423692,
+      "lat": 24.8,
+      "lon": 85.0,
       "first_inside_h": 39.0,
-      "closest_approach_km": 396
+      "closest_approach_km": 562
+    },
+    {
+      "name": "Imphal",
+      "country": "India",
+      "region": "Manipur",
+      "population": 264986,
+      "lat": 24.8,
+      "lon": 93.95,
+      "first_inside_h": 39.0,
+      "closest_approach_km": 285
+    },
+    {
+      "name": "Pakokku",
+      "country": "Myanmar",
+      "region": "Magway",
+      "population": 126938,
+      "lat": 21.332,
+      "lon": 95.087,
+      "first_inside_h": 39.0,
+      "closest_approach_km": 363
+    },
+    {
+      "name": "Magway",
+      "country": "Myanmar",
+      "region": "Magway",
+      "population": 125973,
+      "lat": 20.145,
+      "lon": 94.92,
+      "first_inside_h": 39.0,
+      "closest_approach_km": 432
+    },
+    {
+      "name": "Yaynangyoung",
+      "country": "Myanmar",
+      "region": "Magway",
+      "population": 110553,
+      "lat": 20.461,
+      "lon": 94.881,
+      "first_inside_h": 39.0,
+      "closest_approach_km": 404
     },
     {
       "name": "Siliguri",
@@ -424,63 +484,13 @@
       "closest_approach_km": 451
     },
     {
-      "name": "Sambalpur",
-      "country": "India",
-      "region": "Orissa",
-      "population": 310852,
-      "lat": 21.47,
-      "lon": 83.97,
-      "first_inside_h": 40.0,
-      "closest_approach_km": 522
-    },
-    {
-      "name": "Imphal",
-      "country": "India",
-      "region": "Manipur",
-      "population": 264986,
-      "lat": 24.8,
-      "lon": 93.95,
-      "first_inside_h": 40.0,
-      "closest_approach_km": 285
-    },
-    {
-      "name": "Pakokku",
-      "country": "Myanmar",
-      "region": "Magway",
-      "population": 126938,
-      "lat": 21.332,
-      "lon": 95.087,
-      "first_inside_h": 40.0,
-      "closest_approach_km": 363
-    },
-    {
-      "name": "Yaynangyoung",
-      "country": "Myanmar",
-      "region": "Magway",
-      "population": 110553,
-      "lat": 20.461,
-      "lon": 94.881,
-      "first_inside_h": 40.0,
-      "closest_approach_km": 404
-    },
-    {
-      "name": "Gaya",
-      "country": "India",
-      "region": "Bihar",
-      "population": 423692,
-      "lat": 24.8,
-      "lon": 85.0,
-      "first_inside_h": 41.0,
-      "closest_approach_km": 562
-    },
-    {
       "name": "Monywa",
       "country": "Myanmar",
       "region": "Sagaing",
       "population": 226222,
       "lat": 22.105,
       "lon": 95.15,
-      "first_inside_h": 41.0,
+      "first_inside_h": 40.0,
       "closest_approach_km": 334
     },
     {
@@ -490,18 +500,8 @@
       "population": 182324,
       "lat": 26.484,
       "lon": 87.283,
-      "first_inside_h": 41.0,
+      "first_inside_h": 40.0,
       "closest_approach_km": 487
-    },
-    {
-      "name": "Magway",
-      "country": "Myanmar",
-      "region": "Magway",
-      "population": 125973,
-      "lat": 20.145,
-      "lon": 94.92,
-      "first_inside_h": 41.0,
-      "closest_approach_km": 432
     },
     {
       "name": "Myingyan",
@@ -510,7 +510,7 @@
       "population": 163812,
       "lat": 21.462,
       "lon": 95.391,
-      "first_inside_h": 42.0,
+      "first_inside_h": 41.0,
       "closest_approach_km": 384
     },
     {
@@ -520,7 +520,7 @@
       "population": 2158000,
       "lat": 25.627,
       "lon": 85.128,
-      "first_inside_h": 43.0,
+      "first_inside_h": 42.0,
       "closest_approach_km": 589
     },
     {
@@ -530,7 +530,7 @@
       "population": 333200,
       "lat": 26.12,
       "lon": 85.38,
-      "first_inside_h": 44.0,
+      "first_inside_h": 43.0,
       "closest_approach_km": 596
     },
     {
@@ -540,7 +540,7 @@
       "population": 1300000,
       "lat": 21.972,
       "lon": 96.083,
-      "first_inside_h": 45.0,
+      "first_inside_h": 44.0,
       "closest_approach_km": 431
     },
     {
@@ -550,7 +550,7 @@
       "population": 166366,
       "lat": 27.483,
       "lon": 94.9,
-      "first_inside_h": 51.0,
+      "first_inside_h": 48.0,
       "closest_approach_km": 582
     },
     {
@@ -560,7 +560,7 @@
       "population": 135308,
       "lat": 18.816,
       "lon": 95.211,
-      "first_inside_h": 51.0,
+      "first_inside_h": 49.0,
       "closest_approach_km": 566
     },
     {
@@ -570,7 +570,7 @@
       "population": 930000,
       "lat": 19.769,
       "lon": 96.117,
-      "first_inside_h": 52.0,
+      "first_inside_h": 50.0,
       "closest_approach_km": 552
     },
     {
@@ -580,7 +580,7 @@
       "population": 160115,
       "lat": 20.782,
       "lon": 97.038,
-      "first_inside_h": 55.0,
+      "first_inside_h": 53.0,
       "closest_approach_km": 571
     },
     {
@@ -590,7 +590,7 @@
       "population": 139100,
       "lat": 25.36,
       "lon": 97.393,
-      "first_inside_h": 57.0,
+      "first_inside_h": 56.0,
       "closest_approach_km": 607
     },
     {
@@ -600,18 +600,8 @@
       "population": 106945,
       "lat": 18.948,
       "lon": 96.418,
-      "first_inside_h": 59.0,
+      "first_inside_h": 57.0,
       "closest_approach_km": 637
-    },
-    {
-      "name": "Hinthada",
-      "country": "Myanmar",
-      "region": "Ayeyarwady",
-      "population": 180728,
-      "lat": 17.648,
-      "lon": 95.468,
-      "first_inside_h": 62.0,
-      "closest_approach_km": 690
     },
     {
       "name": "Lhasa",
@@ -620,8 +610,18 @@
       "population": 219599,
       "lat": 29.645,
       "lon": 91.1,
-      "first_inside_h": 63.0,
+      "first_inside_h": 59.0,
       "closest_approach_km": 744
+    },
+    {
+      "name": "Hinthada",
+      "country": "Myanmar",
+      "region": "Ayeyarwady",
+      "population": 180728,
+      "lat": 17.648,
+      "lon": 95.468,
+      "first_inside_h": 60.0,
+      "closest_approach_km": 690
     },
     {
       "name": "Letpadan",
@@ -630,7 +630,7 @@
       "population": 176571,
       "lat": 17.782,
       "lon": 95.741,
-      "first_inside_h": 63.0,
+      "first_inside_h": 61.0,
       "closest_approach_km": 692
     },
     {
@@ -640,7 +640,7 @@
       "population": 126058,
       "lat": 25.033,
       "lon": 98.467,
-      "first_inside_h": 65.0,
+      "first_inside_h": 63.0,
       "closest_approach_km": 695
     },
     {
@@ -650,7 +650,7 @@
       "population": 237089,
       "lat": 16.77,
       "lon": 94.75,
-      "first_inside_h": 67.0,
+      "first_inside_h": 65.0,
       "closest_approach_km": 724
     },
     {
@@ -660,7 +660,7 @@
       "population": 1000000,
       "lat": 25.12,
       "lon": 99.15,
-      "first_inside_h": 70.0,
+      "first_inside_h": 69.0,
       "closest_approach_km": 763
     },
     {
@@ -670,294 +670,294 @@
       "population": 284318,
       "lat": 17.32,
       "lon": 96.515,
-      "first_inside_h": 72.0,
+      "first_inside_h": 70.0,
       "closest_approach_km": 781
     }
   ],
   "cone_polygon": [
     [
-      86.315,
-      13.844
+      86.286,
+      13.74
     ],
     [
-      86.083,
-      13.921
+      86.04,
+      13.82
     ],
     [
-      85.863,
-      14.026
+      85.807,
+      13.932
     ],
     [
-      85.659,
-      14.158
+      85.591,
+      14.072
     ],
     [
-      85.474,
-      14.315
+      85.395,
+      14.238
     ],
     [
-      85.313,
-      14.493
+      85.224,
+      14.427
     ],
     [
-      85.176,
-      14.691
+      85.08,
+      14.637
     ],
     [
-      85.068,
-      14.904
+      84.965,
+      14.863
     ],
     [
-      84.989,
-      15.13
+      84.881,
+      15.101
     ],
     [
-      84.941,
-      15.363
+      84.831,
+      15.349
     ],
     [
-      84.925,
+      84.814,
       15.6
     ],
     [
-      84.941,
-      15.837
+      84.831,
+      15.851
     ],
     [
-      84.97,
-      16.166
+      84.857,
+      16.153
     ],
     [
-      84.852,
-      16.543
+      84.743,
+      16.515
     ],
     [
-      84.784,
-      16.873
+      84.672,
+      16.859
     ],
     [
-      84.623,
-      18.444
+      84.516,
+      18.374
     ],
     [
-      83.815,
-      21.393
+      83.6,
+      21.34
     ],
     [
-      83.648,
-      22.173
+      83.427,
+      22.146
     ],
     [
-      83.592,
+      83.369,
       22.966
     ],
     [
-      83.648,
-      23.76
+      83.427,
+      23.787
     ],
     [
-      83.815,
-      24.54
+      83.6,
+      24.593
     ],
     [
-      84.091,
-      25.292
+      83.885,
+      25.371
     ],
     [
-      84.47,
-      26.005
+      84.278,
+      26.109
     ],
     [
-      84.947,
-      26.667
+      84.77,
+      26.792
     ],
     [
-      85.512,
-      27.264
+      85.355,
+      27.41
     ],
     [
-      86.157,
-      27.789
+      86.022,
+      27.952
     ],
     [
-      87.325,
-      28.618
+      87.24,
+      28.722
     ],
     [
-      88.164,
-      29.138
+      88.094,
+      29.251
     ],
     [
-      89.07,
-      29.552
+      89.016,
+      29.672
     ],
     [
-      90.025,
-      29.853
+      89.989,
+      29.979
     ],
     [
-      91.015,
-      30.035
+      90.997,
+      30.164
     ],
     [
       92.023,
-      30.097
+      30.227
     ],
     [
-      93.03,
-      30.035
+      93.048,
+      30.164
     ],
     [
-      94.02,
-      29.853
+      94.056,
+      29.979
     ],
     [
-      94.975,
-      29.552
+      95.029,
+      29.672
     ],
     [
-      95.881,
-      29.138
+      95.951,
+      29.251
     ],
     [
-      96.72,
-      28.618
+      96.805,
+      28.722
     ],
     [
-      97.479,
-      28.001
+      97.578,
+      28.093
     ],
     [
-      98.144,
-      27.298
+      98.256,
+      27.377
     ],
     [
-      98.705,
-      26.52
+      98.826,
+      26.585
     ],
     [
-      99.151,
-      25.681
+      99.281,
+      25.73
     ],
     [
-      99.476,
-      24.794
+      99.611,
+      24.828
     ],
     [
-      99.673,
-      23.877
+      99.812,
+      23.894
     ],
     [
-      99.739,
+      99.879,
       22.943
     ],
     [
-      99.673,
-      22.009
+      99.812,
+      21.992
     ],
     [
-      99.476,
-      21.091
+      99.611,
+      21.058
     ],
     [
-      99.151,
-      20.205
+      99.281,
+      20.156
     ],
     [
-      98.705,
-      19.366
+      98.826,
+      19.301
     ],
     [
-      98.144,
-      18.588
+      98.256,
+      18.509
     ],
     [
-      97.479,
-      17.884
+      97.578,
+      17.793
     ],
     [
-      96.72,
-      17.267
+      96.805,
+      17.164
     ],
     [
-      95.881,
-      16.748
+      95.951,
+      16.635
     ],
     [
-      94.975,
-      16.334
+      95.029,
+      16.214
     ],
     [
-      94.02,
-      16.033
+      94.056,
+      15.907
     ],
     [
-      93.03,
-      15.85
+      93.048,
+      15.721
     ],
     [
       92.023,
-      15.789
+      15.659
     ],
     [
-      91.015,
-      15.85
+      90.997,
+      15.721
     ],
     [
-      90.249,
-      15.992
+      90.251,
+      15.859
     ],
     [
-      89.07,
-      15.166
+      89.139,
+      15.08
     ],
     [
-      88.779,
-      14.979
+      88.835,
+      14.885
     ],
     [
-      88.56,
-      14.851
+      88.637,
+      14.769
     ],
     [
-      88.287,
-      14.493
+      88.376,
+      14.427
     ],
     [
-      88.126,
-      14.315
+      88.205,
+      14.238
     ],
     [
-      87.941,
-      14.158
+      88.009,
+      14.072
     ],
     [
-      87.737,
-      14.026
+      87.793,
+      13.932
     ],
     [
-      87.517,
-      13.921
+      87.56,
+      13.82
     ],
     [
-      87.285,
-      13.844
+      87.314,
+      13.74
     ],
     [
-      87.045,
-      13.798
+      87.059,
+      13.69
     ],
     [
       86.8,
-      13.782
+      13.674
     ],
     [
-      86.555,
-      13.798
+      86.541,
+      13.69
     ],
     [
-      86.315,
-      13.844
+      86.286,
+      13.74
     ]
   ],
   "note": "Places of 100,000 and up (Natural Earth metro estimates) inside the forecast cone widened by the typical gale-force wind radius for the forecast intensity. Says who is in the path, not how badly they will be affected."

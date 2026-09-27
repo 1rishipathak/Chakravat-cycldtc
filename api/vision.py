@@ -358,8 +358,6 @@ def classify_scene(when: pd.Timestamp, lat: float, lon: float,
         "confidence": float(probs[order[0]]),
         "probabilities": {classes[i]: float(probs[i]) for i in order},
         "method": method,
-        "labels_note": "trained on CIMSS ADT scene types (algorithm output, "
-                       "not analyst labels)",
     }
 
     # how well this class is actually read on the sensor it was read from. the

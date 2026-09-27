@@ -1,0 +1,178 @@
+{
+  "analogues": [
+    {
+      "sid": "2019116N02090",
+      "name": "FANI",
+      "season": 2019,
+      "time": "2019-05-02 18:00:00",
+      "similarity_km_equivalent": null,
+      "distance": 0.8761560838379862,
+      "lat": 18.3,
+      "lon": 85.0,
+      "vmax_kt": 115.0,
+      "outcome": {
+        "peak_kt_after": 115.0,
+        "hours_tracked_after": 42.0,
+        "at_24h": {
+          "lat": 22.1,
+          "lon": 87.4,
+          "vmax_kt": 55.0
+        },
+        "landfall": {
+          "hours_after": 12.0,
+          "lat": 20.2,
+          "lon": 85.9,
+          "vmax_kt": 85.0
+        }
+      }
+    },
+    {
+      "sid": "1990124N09088",
+      "name": "UNNAMED",
+      "season": 1990,
+      "time": "1990-05-08 00:00:00",
+      "similarity_km_equivalent": null,
+      "distance": 0.9925028642814456,
+      "lat": 13.1,
+      "lon": 81.8,
+      "vmax_kt": 127.0,
+      "outcome": {
+        "peak_kt_after": 127.0,
+        "hours_tracked_after": 78.0,
+        "at_24h": {
+          "lat": 15.0,
+          "lon": 81.0,
+          "vmax_kt": 90.0
+        },
+        "at_48h": {
+          "lat": 16.6,
+          "lon": 80.2,
+          "vmax_kt": 65.0
+        },
+        "at_72h": {
+          "lat": 20.4,
+          "lon": 79.8,
+          "vmax_kt": 32.550000000000004
+        },
+        "landfall": {
+          "hours_after": 36.0,
+          "lat": 15.8,
+          "lon": 81.0,
+          "vmax_kt": 90.0
+        }
+      }
+    },
+    {
+      "sid": "1991113N10091",
+      "name": "UNNAMED",
+      "season": 1991,
+      "time": "1991-04-28 18:00:00",
+      "similarity_km_equivalent": null,
+      "distance": 1.1006409988313877,
+      "lat": 17.4,
+      "lon": 88.7,
+      "vmax_kt": 115.0,
+      "outcome": {
+        "peak_kt_after": 127.0,
+        "hours_tracked_after": 48.0,
+        "at_24h": {
+          "lat": 22.0,
+          "lon": 91.6,
+          "vmax_kt": 127.0
+        },
+        "at_48h": {
+          "lat": 25.7,
+          "lon": 99.7,
+          "vmax_kt": 37.2
+        },
+        "landfall": {
+          "hours_after": 30.0,
+          "lat": 23.4,
+          "lon": 92.9,
+          "vmax_kt": 30.0
+        }
+      }
+    },
+    {
+      "sid": "2006114N08090",
+      "name": "MALA",
+      "season": 2006,
+      "time": "2006-04-28 18:00:00",
+      "similarity_km_equivalent": null,
+      "distance": 1.6191986212363276,
+      "lat": 16.2,
+      "lon": 93.2,
+      "vmax_kt": 100.0,
+      "outcome": {
+        "peak_kt_after": 100.0,
+        "hours_tracked_after": 18.0,
+        "landfall": {
+          "hours_after": 18.0,
+          "lat": 18.5,
+          "lon": 95.5,
+          "vmax_kt": 60.45
+        }
+      }
+    },
+    {
+      "sid": "1994117N07096",
+      "name": "UNNAMED",
+      "season": 1994,
+      "time": "1994-05-02 12:00:00",
+      "similarity_km_equivalent": null,
+      "distance": 1.671564585090716,
+      "lat": 20.7,
+      "lon": 92.1,
+      "vmax_kt": 115.0,
+      "outcome": {
+        "peak_kt_after": 115.0,
+        "hours_tracked_after": 24.0,
+        "at_24h": {
+          "lat": 23.5,
+          "lon": 95.6,
+          "vmax_kt": 18.6
+        },
+        "landfall": {
+          "hours_after": 6.0,
+          "lat": 21.7,
+          "lon": 92.6,
+          "vmax_kt": 74.4
+        }
+      }
+    }
+  ],
+  "pool_storms": 215,
+  "pool_fixes": 4423,
+  "features": [
+    "LAT",
+    "LON",
+    "vmax_kt",
+    "u_deg_h",
+    "v_deg_h",
+    "doy_sin",
+    "doy_cos"
+  ],
+  "rule": "only storms that had already ended when this one began, which is what a forecaster at the time could have used",
+  "sid": "2020136N10088",
+  "issued_at": "2020-05-19 00:00:00",
+  "consensus": {
+    "24h": {
+      "lat": 18.875,
+      "lon": 88.8,
+      "vmax_kt": 72.65,
+      "n": 4
+    },
+    "48h": {
+      "lat": 21.5,
+      "lon": 91.5,
+      "vmax_kt": 51.1,
+      "n": 2
+    },
+    "72h": {
+      "lat": 22.9,
+      "lon": 84.8,
+      "vmax_kt": 32.550000000000004,
+      "n": 1
+    }
+  }
+}

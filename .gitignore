@@ -12,6 +12,12 @@ data/static/*
 !data/static/coastline_nio.geojson
 !data/static/places_nio.geojson
 
+# Training transcripts. Nothing reads them, the scripts rewrite them on every
+# run, and the reports/ JSON alongside carries the numbers that matter. The
+# out-of-fold CSVs stay: eval_microwave.py and the paired comparisons read them.
+reports/**/*.log
+reports/*.log
+
 # Trained weights. Regenerate with the train_*.py scripts; the reports/ JSON
 # files carry the verified numbers and are committed.
 artifacts/*.pt

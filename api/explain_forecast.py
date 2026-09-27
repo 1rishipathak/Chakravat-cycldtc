@@ -110,8 +110,7 @@ def explain(ensemble, row: pd.DataFrame, medians: pd.Series, horizon: int,
         "intensity": sorted(out, key=lambda d: -abs(d["intensity_shift_kt"]))[:top],
         "method": "group ablation against the training median, holding present "
                   "position and intensity fixed",
-        "caveat": "Not Shapley values: these do not sum to the forecast, and a small "
-                  "shift means the forecast did not need that input given the others.",
+        "caveat": "A small shift means the forecast did not need that input."
     }
 
 

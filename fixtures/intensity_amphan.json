@@ -3,7 +3,19 @@
   "scene_time": "2020-05-20 12:00:00",
   "vmax_kt": 78.02715961739341,
   "category": "Very Severe Cyclonic Storm",
+  "interval": {
+    "lower_kt": 61.599299204795756,
+    "upper_kt": 93.4768026380455,
+    "level": 0.67,
+    "band": "64-90",
+    "measured_coverage": 0.6513888888888889,
+    "fitted_on": 187,
+    "note": "67% interval from out-of-fold residuals; this level contained 65% of held-out truths when each fold was scored against the other four."
+  },
+  "category_upper": "Extremely Severe Cyclonic Storm",
+  "category_lower": "Severe Cyclonic Storm",
   "sid": "2020136N10088",
+  "source": "gridsat",
   "best_track_kt": 85.0,
   "error_kt": -6.9728403826065914
 }

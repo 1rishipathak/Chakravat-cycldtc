@@ -79,6 +79,16 @@ def main() -> None:
           text=True)
     write("live_status.json", fetch(b, "/api/live/status"))
 
+    # the impact side of the chain: who gets the wind, what storms looked like
+    # this one, what the forecast rested on, and the alert as an SMS
+    write("wind_probability_amphan.json",
+          fetch(b, f"/api/storm/{AMPHAN}/wind_probability{before}&threshold=34"))
+    write("analogues_amphan.json", fetch(b, f"/api/storm/{AMPHAN}/analogues{before}"))
+    write("sms_amphan.json", fetch(b, f"/api/storm/{AMPHAN}/sms{before}"))
+    write("sms_amphan_hi.json", fetch(b, f"/api/storm/{AMPHAN}/sms{before}&lang=hi"))
+    write("explain_forecast_amphan.json",
+          fetch(b, f"/api/storm/{AMPHAN}/explain_forecast{before}"))
+
     write("scene_amphan.json", fetch(b, f"/api/storm/{AMPHAN}/scene"))
     write("intensity_amphan.json",
           fetch(b, f"/api/storm/{AMPHAN}/intensity_from_image"))

@@ -5,10 +5,27 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-# only ever read from here. Override with CHAKRAVAT_MOSDAC_CREDS if the file
-# lives somewhere else.
-DEFAULT_MOSDAC_PATH = Path(os.environ.get("CHAKRAVAT_MOSDAC_CREDS",
-                                          r"D:\mosdac_creds.txt"))
+# Credentials live outside the repository and are only ever read, never written
+# or echoed. The first of these that exists wins; set CHAKRAVAT_MOSDAC_CREDS to
+# put the file anywhere else.
+HOME = Path.home()
+_CANDIDATES = [
+    Path(os.environ["CHAKRAVAT_MOSDAC_CREDS"])
+    if os.environ.get("CHAKRAVAT_MOSDAC_CREDS") else None,
+    HOME / ".chakravat" / "mosdac_creds.txt",
+    Path(r"D:\mosdac_creds.txt"),          # where it sits on the build machine
+]
+
+
+def _first_present() -> Path:
+    found = [c for c in _CANDIDATES if c is not None]
+    for c in found:
+        if c.exists():
+            return c
+    return found[1] if len(found) > 1 else found[0]
+
+
+DEFAULT_MOSDAC_PATH = _first_present()
 
 _QUOTES = ("'", '"')
 

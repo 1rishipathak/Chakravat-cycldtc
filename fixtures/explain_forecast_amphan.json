@@ -1,0 +1,126 @@
+{
+  "horizon_h": 24,
+  "baseline": {
+    "lat": 19.08348189010788,
+    "lon": 88.3290723331241,
+    "vmax_kt": 95.37979370005885
+  },
+  "state": {
+    "LAT": 15.6,
+    "LON": 86.8,
+    "vmax_kt": 125.0
+  },
+  "track": [
+    {
+      "label": "steering flow",
+      "features": [
+        "env_steer_u",
+        "env_steer_v"
+      ],
+      "track_shift_km": 109.52858044299163,
+      "intensity_shift_kt": -0.13877475127344496
+    },
+    {
+      "label": "motion, last 12 h",
+      "features": [
+        "dlat_prev12",
+        "dlon_prev12"
+      ],
+      "track_shift_km": 100.39699687461848,
+      "intensity_shift_kt": 0.26943392595919136
+    },
+    {
+      "label": "speed and heading",
+      "features": [
+        "u_deg_h",
+        "v_deg_h"
+      ],
+      "track_shift_km": 79.2254923532331,
+      "intensity_shift_kt": -0.11408428090882694
+    },
+    {
+      "label": "motion, last 6 h",
+      "features": [
+        "dlat_prev6",
+        "dlon_prev6"
+      ],
+      "track_shift_km": 78.33240367025496,
+      "intensity_shift_kt": -0.023754817591679966
+    },
+    {
+      "label": "time of year",
+      "features": [
+        "doy_sin",
+        "doy_cos"
+      ],
+      "track_shift_km": 28.144199178221754,
+      "intensity_shift_kt": -3.417807443637244
+    },
+    {
+      "label": "total column water vapour",
+      "features": [
+        "env_tcwv"
+      ],
+      "track_shift_km": 16.07835636727133,
+      "intensity_shift_kt": 0.07532198194775219
+    }
+  ],
+  "intensity": [
+    {
+      "label": "RSMC Dvorak number",
+      "features": [
+        "NEWDELHI_CI"
+      ],
+      "track_shift_km": 3.6183477111299016,
+      "intensity_shift_kt": 4.753751477919025
+    },
+    {
+      "label": "distance to land",
+      "features": [
+        "DIST2LAND"
+      ],
+      "track_shift_km": 0.24199814110535692,
+      "intensity_shift_kt": -3.5036538784864604
+    },
+    {
+      "label": "time of year",
+      "features": [
+        "doy_sin",
+        "doy_cos"
+      ],
+      "track_shift_km": 28.144199178221754,
+      "intensity_shift_kt": -3.417807443637244
+    },
+    {
+      "label": "central pressure",
+      "features": [
+        "pres_hpa"
+      ],
+      "track_shift_km": 12.32029235534758,
+      "intensity_shift_kt": 3.0192840569254145
+    },
+    {
+      "label": "wind shear",
+      "features": [
+        "env_shear_ms",
+        "env_shear_u",
+        "env_shear_v"
+      ],
+      "track_shift_km": 5.41302179527032,
+      "intensity_shift_kt": 2.718082749293103
+    },
+    {
+      "label": "intensity trend",
+      "features": [
+        "dv_prev6",
+        "dv_prev12",
+        "dv_prev24"
+      ],
+      "track_shift_km": 3.8904393133389292,
+      "intensity_shift_kt": -2.439377437635983
+    }
+  ],
+  "method": "group ablation against the training median, holding present position and intensity fixed",
+  "caveat": "A small shift means the forecast did not need that input.",
+  "sentence": "Beyond where the storm already is, the 24 h position rests most on steering flow (removing it moves the forecast 110 km); the intensity most on RSMC Dvorak number (+4.8 kt)."
+}

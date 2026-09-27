@@ -11,6 +11,14 @@
     "CRVBND": 0.004166657105088234
   },
   "method": "hybrid",
-  "labels_note": "trained on CIMSS ADT scene types (algorithm output, not analyst labels)",
-  "sid": "2020136N10088"
+  "reliability": {
+    "sensor": "gridsat",
+    "class_f1_here": 0.69,
+    "class_f1_on_gridsat": 0.69,
+    "measured_on": 505,
+    "note": "EMBC is read at F1 0.69 on GridSat imagery.",
+    "weak_on_this_sensor": false
+  },
+  "sid": "2020136N10088",
+  "source": "gridsat"
 }

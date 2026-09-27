@@ -2,7 +2,7 @@
 
 bugs we hit, what caused them, and what caught them.
 
-the thing i'd point at: not one of the serious ones showed up in a loss curve.
+the thing we'd point at: not one of the serious ones showed up in a loss curve.
 every single one was caught by an assertion, a baseline beating the network, or
 an end to end run producing something absurd. that's why there's a physics
 baseline next to every model and why the pipeline tab runs the whole chain
@@ -197,7 +197,7 @@ a sentence in a document nobody opens.
 
 ### auditing the deck against the reports found five stale numbers and a bug
 
-before freezing the deck i checked every hard-coded figure in it against
+before freezing the deck we checked every hard-coded figure in it against
 `src/eval/headline_numbers.py`, which is supposed to be the arbiter. the audit
 found more in the arbiter than in the deck.
 
@@ -219,7 +219,7 @@ than restating it.
 
 **a storm count nobody could reproduce.** the deck said 4.4 named storms a
 season. IBTrACS over 1990-2025 gives 167 storms in 36 seasons, which is 4.6, and
-no definition i tried produced 4.4. the basin's own counts are now printed by
+no definition we tried produced 4.4. the basin's own counts are now printed by
 the arbiter, read from the best track file itself, so the claim is checkable
 like any other.
 
@@ -554,11 +554,6 @@ both numbers there are against ADT's wind, and the fix did not survive being
 cross-validated: see the two entries at the top of this log. the shrinkage is
 real, the inversion trades 2.4 kt of RMSE for it, and it is no longer served.
 
-worth noting: the docstring in `calibrate_intensity.py` said 0.727 / 13.9 for a
-while, from an older run, while the checkpoint and the report both said
-0.852 / 7.60. i'd quoted the stale one in a doc. always trust the report file,
-the coefficients get refitted every run.
-
 ### depressions were drowning the detection loss
 
 the basin has far more weak depressions than severe cyclones, so the loss was
@@ -580,9 +575,9 @@ the maximum always threw it away.
 
 fixed with an influence map where the nearest storm wins each cell.
 
-### two evaluation errors of my own
+### two evaluation errors of our own
 
-**misaligned verification.** i scored pipeline forecasts against valid times up
+**misaligned verification.** we scored pipeline forecasts against valid times up
 to 15 h adrift and concluded 3 of 4 verifying positions fell outside their cone,
 and that our uncertainty was understated. reported it before catching it.
 corrected: 11 of 12 inside.
@@ -607,7 +602,7 @@ reopening the netCDF twice per scene just to read constant lat/lon arrays, about
 maplibre was loading from unpkg. when the CDN failed the page went blank with no
 error at all.
 
-i first blamed browser flakiness, which was wrong. fixed by vendoring maplibre
+we first blamed browser flakiness, which was wrong. fixed by vendoring maplibre
 into `web/vendor/`, adding a painted background layer so losing the tile server
 costs coastlines not the storm, and an `isStyleLoaded()` guard because maplibre
 won't re-fire `load` if the style finished before the handler attached.
@@ -617,7 +612,7 @@ network only for basemap tiles.
 
 ### splits that reshuffled themselves as data arrived
 
-T2 looked like it regressed from 0.723 to 0.631 and i spent real time hunting a
+T2 looked like it regressed from 0.723 to 0.631 and we spent real time hunting a
 bug that didn't exist.
 
 the split was a seeded shuffle of the storm list, and GridSat was downloading
@@ -635,7 +630,7 @@ entirely east of 100E, because IBTrACS tracks storms across basins.
 they were training a north indian model on a different basin's dynamics.
 filtering took 291 storms to 266 and moved RI skill from +0.055 to +0.096.
 
-### the API broke on a change i made to the trainer
+### the API broke on a change we made to the trainer
 
 added an intensity weight map to the detection dataset, so
 `BasinScenes.__getitem__` started returning four values instead of three.
@@ -643,7 +638,7 @@ updated the training script, forgot the API, which still did
 `x, _, _ = ds_wrap[0]`.
 
 the pipeline endpoint 500'd with "too many values to unpack". it had been broken
-for a while and i missed it because i was verifying T1 from the report JSON
+for a while and we missed it because we were verifying T1 from the report JSON
 rather than through the API. fixed by indexing instead of destructuring so a
 fifth return value can't do it again.
 
@@ -691,7 +686,7 @@ see limitations.md, it has the numbers. short list:
 - 72 h forecast skill is positive but its interval crosses zero
 - test sets are small, the basin makes about 5 storms a year
 
-## what judges will probably ask
+## common questions we expect
 
 **why not INSAT for an indian problem statement.** we do use it. everything was
 trained on GridSat first, because it needs no approval and a system that depends

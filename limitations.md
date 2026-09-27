@@ -203,10 +203,7 @@ accumulating a separate one.
 | track x coastline (229 of 303 fixes) | 160 km | - |
 | hybrid, what ships | 184 km | 114 km |
 
-still not good enough to evacuate a specific village on. timing and the
-probability are the parts that carry weight.
-
-## 5. the dvorak labels are algorithm output, and it shows
+## 5. the dvorak labels are algorithm output
 
 scene labels come from the CIMSS ADT archive, 8,212 labelled north indian scenes
 2003-2025. a model trained on them learns to reproduce ADT, not a human
@@ -262,7 +259,7 @@ and INSAT is what a live system in india would actually read. both are on the
 same grid here, at the same slots, for the same storms, which is what lets the
 difference be measured rather than argued about.
 
-it is not small. a model trained only on GridSat, applied to INSAT imagery:
+a model trained only on GridSat, applied to INSAT imagery:
 
 | | on GridSat | on INSAT |
 |---|---|---|

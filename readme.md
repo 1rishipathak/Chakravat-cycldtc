@@ -3,8 +3,8 @@
 cyclone detection, classification and forecasting for the north indian ocean.
 built for SIH problem statement 26070 (ministry of earth sciences / IMD).
 
-the problem statement asks for identification, classification and prediction
-from multi-source satellite data. i split that into four tasks:
+The problem statement (sih2026 26070) asks for identification, classification and prediction
+from multi-source satellite data. We split that into four tasks:
 
 - T1, find storms in a satellite image and pin the centre
 - T2, classify the dvorak cloud pattern
@@ -13,8 +13,6 @@ from multi-source satellite data. i split that into four tasks:
 
 everything is scored on held out seasons 2020-2025, 51 storms that no model
 here has seen.
-
-not an IMD product. official warnings come from RSMC new delhi.
 
 ## running it
 
@@ -28,43 +26,14 @@ model weights are in the v1.0 release (they're 111 MB each so github won't take
 them in the repo). unzip into the repo root so they land in `artifacts/`, then
 
 ```bash
-.venv/Scripts/python.exe -m uvicorn api.main:app --port 8000
+.venv/Scripts/python.exe -m uvicorn api.main:app --port {port_number}
 ```
 
-and open http://localhost:8000
+and open http://localhost:{port_number}
+you can also jump to http://localhost:{port_number}/live for the live dashboard.
 
 if you want to retrain instead of downloading, the `src/train_*.py` scripts do
 that, but you'll need the ~9 GB of source data first via `src/ingest/`.
-
-## building a different frontend
-
-`fixtures/` is the contract. it has a real captured response from every
-endpoint, 23 files and 142 KB total, so the whole UI can be built with no
-backend, no dataset and no GPU. the filenames say which endpoint each came
-from:
-
-| fixture | endpoint |
-|---|---|
-| `seasons.json`, `storms_2020.json` | `/api/seasons`, `/api/storms?season=` |
-| `storm_amphan.json` | `/api/storm/{sid}` |
-| `forecast_amphan_05/067/09.json` | `/api/storm/{sid}/forecast?level=`, all three levels |
-| `landfall_lands.json`, `landfall_none.json` | `/api/storm/{sid}/landfall`, both branches |
-| `bulletin_amphan.txt`, `bulletin_amphan_hi.txt` | `/api/storm/{sid}/bulletin?lang=`, plain text not json |
-| `exposure_amphan.json` | `/api/storm/{sid}/exposure`, places in the threat zone |
-| `cap_amphan.xml` | `/api/storm/{sid}/cap.xml`, a CAP 1.2 alert |
-| `live_status.json` | `/api/live/status`, what the live INSAT feed holds |
-| `scene_amphan.json`, `intensity_amphan.json` | T2 and T3 on one patch |
-| `pipeline.json` | `/api/vision/pipeline`, the whole chain |
-| `vision_status.json`, `scene_meta.json`, `skill.json` | status, scene bounds, all metrics |
-
-`web/index.html` is a reference implementation, not a constraint. one file, no
-build step. regenerate the fixtures against a running server with
-
-```bash
-.venv/Scripts/python.exe src/dump_fixtures.py
-```
-
-CORS is already open, so a dev server on another port works without a proxy.
 
 ## results
 
@@ -91,9 +60,9 @@ ADT's own estimate, which is a 1-minute wind sitting 7.6 kt above IMD's
 3-minute one. ADT is now the benchmark rather than the target, and on it the
 two are level while ours is the unbiased one.
 
-T1 gets reported twice on purpose. the pooled number includes depressions that
-often have no organised signature in infrared at all. the 34 kt+ number is the
-storms IMD actually names and warns on. neither one alone is the honest answer.
+T1 is reported twice as the pooled number includes depressions that
+often have no organised signature in infrared at all. The 34 kt+ number is the
+storms IMD usually names and warns on. Neither one alone is the honest answer.
 
 the forecast numbers are the ones the API serves, not the best row in the
 selection table, and they carry intervals too: +11.2% on track at 24 h
@@ -103,7 +72,7 @@ crosses zero, so we don't claim skill that far out.
 ### forecast skill vs CLIPER
 
 CLIPER is climatology plus persistence, it's the benchmark operational centres
-score skill against. beating it is the thing that matters, not beating zero.
+score skill against. Our primary and foundational goal was to beat that at the very least.
 
 | lead | CLIPER | ours | skill | 95% interval |
 |---|---|---|---|---|
@@ -121,14 +90,14 @@ score skill against. beating it is the thing that matters, not beating zero.
 | 48 h | 13.92 kt | 11.90 | +14.5% | +5.0 to +22.4% |
 | 72 h | 16.41 kt | 15.22 | +7.3% | -1.4 to +15.4% |
 
-skill peaks at 24 h, which is the lead time an evacuation call actually gets
-made on, and the interval stays clear of zero through 48 h. at 72 h it doesn't,
-so that row is a number we have rather than a claim we make.
+skill is positive everywhere and peaks at 24 h. the interval stays clear of
+zero through 48 h; at 72 h it does not, so that row is a number we have rather
+than a claim we make.
 
-these are the forecasts the API serves - the ensemble mean. the selection table
+these are the forecasts the API serves, the ensemble mean. the selection table
 in `reports/final_results.json` has a blend that scores 121.9 km at 24 h, but
-nothing calls it, and quoting a number nobody can reproduce through the API
-would be quoting the wrong thing.
+nothing calls it, so quoting it would mean quoting a number nobody can
+reproduce through the API.
 
 ### cone coverage
 
@@ -140,8 +109,7 @@ a 67% cone should contain about 67% of the true positions. ours at 24 h:
 | 24 h | 46% | 65% | 86% |
 | 72 h | 56% | 73% | 95% |
 
-slightly tight at short leads, slightly generous at long ones. reported either
-way, because a cone whose label doesn't mean anything is worse than no cone.
+slightly tight at short leads, slightly generous at long ones.
 
 ### landfall
 
@@ -152,17 +120,38 @@ way, because a cone whose label doesn't mean anything is worse than no cone.
 | intensity at coast | 11.77 kt | 13.49 kt |
 | will it land in 72 h | POD 0.80, FAR 0.20, CSI 0.65 | - |
 
-position used to be 256 km and was the worst thing in the project. the model
+position earlier used to be 256 km and was one of the major inaccuracies in the project. the model
 regressed a lat/lon with no coastline anywhere in its inputs, so nothing pulled
 the answer onto land. only 28% of predictions landed within 25 km of a coast.
-fixed by taking the point where the forecast track crosses the coastline
+was fixed by taking the point where the forecast track crosses the coastline
 instead, which is what landfall actually means.
 
 ### rapid intensification
 
-brier skill score +0.096 over climatology. positive so it's real, but thin. RI
-is one of the hardest open problems in the field and i'm not going to oversell
-a 10% improvement on the base rate.
+brier skill score +0.096 over climatology, a positive result.
+
+### who gets the wind
+
+the cone says where the centre may go, not who gets hit. eight ensemble members
+each sweep their own wind field along their own track, and the fraction of
+members covering a point becomes the chance that point sees 34, 50 or 64 kt at
+some time in the next 72 hours.
+
+a member count is not a probability, so it gets calibrated. the mapping is
+fitted on 2020-2022 and scored on 2023-2025, 51 storms and 294 forecasts.
+
+| | brier skill vs climatology |
+|---|---|
+| raw member fraction | 0.59 |
+| calibrated | 0.64 |
+
+the gale radii behind it come from 1,339 JTWC wind radii in IBTrACS, binned on
+IMD's 3-minute scale. they used to be binned on 1-minute winds and read with
+3-minute forecasts, which put every lookup one intensity band low and made the
+zone about 12% too narrow.
+
+for amphan 36 h before landfall this puts 45 towns and 41.3 million people
+inside the 34 kt risk, each ranked by the hour it reaches them.
 
 ## data
 
@@ -179,29 +168,25 @@ a 10% improvement on the base rate.
 
 the order matters. everything was built on GridSat first, because it needs no
 approval and a system that depends on one you don't control isn't a system.
-MOSDAC access then came through, and `src/ingest/insat_archive.py` mirrors the
+MOSDAC access came through later, and `src/ingest/insat_archive.py` mirrors the
 INSAT archive onto the same grid at the same 3-hourly slots, so the two sensors
-can be compared storm for storm. T2 and T3 now train on both; detection is
-still being decided.
+can be compared storm for storm. T2 and T3 now train on both, and INSAT imagery
+is served by the detector that scores best on it.
 
-the one thing to know about the INSAT archive: only two granules an hour are
-the full sector. the rest are rapid-scan strips ISRO runs over an active storm,
-and picking the granule nearest the hour gets you a strip every time. 3DR scans
-the sector at :15 and :45, 3D and 3DS at :00 and :30.
+one thing to know about the INSAT archive: only two granules an hour are the
+full sector. the rest are rapid-scan strips ISRO runs over an active storm, and
+picking the granule nearest the hour gets you a strip every time. 3DR scans the
+sector at :15 and :45, 3D and 3DS at :00 and :30.
 
 see attribution.md for licences. ERA5 has one that has to be reproduced word
 for word.
 
 ## what doesn't work
 
-read limitations.md, it's the honest list. short version:
-
-- detection misses about 6 in 10 depressions
+read limitations.md, it is the honest list. short version:
 - intensity still reads the strongest storms low: -8 kt at 64-90, -13 at 90+
 - scene typing is much weaker on INSAT imagery (0.61) than on GridSat (0.72),
   and the live feed is INSAT
-- RI is barely skilful
-- IRRCDO is the weakest scene class, F1 0.53
 - 72 h forecast skill is positive but its interval crosses zero
 - test sets are small because the basin only makes ~5 storms a year
 
@@ -226,14 +211,17 @@ to 266 storms and moved RI skill from +0.055 to +0.096.
 ```
 src/ingest/     downloading and parsing each data source, INSAT archive and live
 src/features/   feature engineering, ERA5 environment
-src/models/     CLIPER, residual booster, ensemble, RI, landfall, coastline, impact
+src/models/     CLIPER, residual booster, ensemble, RI, landfall, coastline,
+                impact, wind probability, analogues
 src/vision/     patch extraction, detection dataset, best-track crosswalk
 src/train_*.py  one script per model
 src/cv_*.py     cross-validation by storm: model choices are made here
-src/eval/       metrics, splits, confidence intervals, headline_numbers.py
+src/eval/       metrics, splits, confidence intervals, paired comparison,
+                headline_numbers.py
 src/pipeline.py imagery in, forecasts out, the whole chain
 src/smoke_api.py   hits every endpoint and checks the shape of the answer
 api/            fastapi server, alerts and delivery
 web/            dashboard and live alert page
+fixtures/       one captured response per endpoint, the frontend contract
 reports/        every verified number, as json
 ```

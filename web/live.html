@@ -131,14 +131,14 @@ footer a{color:#cfe0ff}
 <body>
 
 <header><div class="wrap">
-  <h1>Chakravat <small>— live cyclone alert feed</small></h1>
+  <h1>Chakravat <small>live cyclone alert feed</small></h1>
   <div class="sub">AI/ML identification, classification and prediction of
     tropical cyclone patterns from multi-source satellite data · SIH 2026,
     PS 26070 · Team Chakravat (R203-33)</div>
 </div></header>
 
 <div class="exercise"><div class="wrap">
-  <b>EXERCISE ONLY — NOT AN IMD WARNING.</b>
+  <b>EXERCISE ONLY. NOT AN IMD WARNING.</b>
   Every alert on this page carries CAP <code>status=Exercise</code>. Official
   cyclone warnings for the North Indian Ocean are issued by the India
   Meteorological Department as RSMC New Delhi and reach the public through
@@ -156,12 +156,12 @@ footer a{color:#cfe0ff}
       <div class="body">
         <div class="kv"><span>Stream</span>
           <span id="conn"><i class="dot"></i>connecting…</span></div>
-        <div class="kv"><span>Latest scan</span><span id="scan">—</span></div>
-        <div class="kv"><span>Satellite</span><span id="sat">—</span></div>
-        <div class="kv"><span>Scan age</span><span id="age">—</span></div>
-        <div class="kv"><span>Last fetch</span><span id="fetched">—</span></div>
-        <div class="kv"><span>Systems tracked</span><span id="tracks">—</span></div>
-        <div class="kv"><span>Alerts published</span><span id="count">—</span></div>
+        <div class="kv"><span>Latest scan</span><span id="scan">-</span></div>
+        <div class="kv"><span>Satellite</span><span id="sat">-</span></div>
+        <div class="kv"><span>Scan age</span><span id="age">-</span></div>
+        <div class="kv"><span>Last fetch</span><span id="fetched">-</span></div>
+        <div class="kv"><span>Systems tracked</span><span id="tracks">-</span></div>
+        <div class="kv"><span>Alerts published</span><span id="count">-</span></div>
         <button id="run">Run the chain on the latest scan</button>
         <div class="muted" style="margin-top:7px;font-size:11px;line-height:1.5">
           Fetching new imagery is a separate job
@@ -182,7 +182,7 @@ footer a{color:#cfe0ff}
     <div class="card" style="margin-bottom:14px">
       <h2>Subscribe</h2>
       <div class="body" style="font-size:12px;line-height:1.6">
-        Alerts are published as <b>CAP 1.2</b> on an Atom feed — the format
+        Alerts are published as <b>CAP 1.2</b> on an Atom feed, the format
         NDMA's SACHET carries and every alerting aggregator already parses.
         Point a reader at
         <a id="feedlink" href="/api/alerts/feed.atom">/api/alerts/feed.atom</a>,
@@ -248,7 +248,7 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g,
 
 /* Alerts carry UTC with an explicit offset; readers here are in India. */
 function stamp(t){
-  if(!t) return '—';
+  if(!t) return '-';
   const d = new Date(String(t).trim().replace(' ','T').replace(/(\+00:00|Z)$/,'') + 'Z');
   if(isNaN(d)) return String(t);
   const p = new Date(d.getTime() + 330*60000), z = n => String(n).padStart(2,'0');
@@ -256,7 +256,7 @@ function stamp(t){
        + `${z(p.getUTCHours())}:${z(p.getUTCMinutes())} IST`;
 }
 function ago(hours){
-  if(hours == null) return '—';
+  if(hours == null) return '-';
   if(hours < 1) return Math.round(hours*60)+' min';
   return hours.toFixed(1)+' h';
 }
@@ -275,14 +275,14 @@ const originOf = a => (a.state && a.state.origin === 'live_insat') ? 'live' : 'h
 
 const EMPTY = {
   live: `<b>No live alerts.</b><br>
-    Nothing is wrong — this is what the page looks like when no system in the
+    Nothing is wrong, this is what the page looks like when no system in the
     basin meets the alerting threshold, which is most days.<br>
     Run the chain on the latest scan to check the newest INSAT imagery now.`,
   hist: `<b>No replayed alerts.</b><br>
     Replay a past storm through the same alerting decision with
     <code>python src/replay_alerts.py --suite</code>.`,
   all: `<b>No alerts published yet.</b><br>
-    Nothing is wrong — this is what the page looks like when no system in the
+    Nothing is wrong, this is what the page looks like when no system in the
     basin meets the alerting threshold.<br>
     Run the chain on the latest scan, or replay a past storm with
     <code>python src/replay_alerts.py</code>.`,
@@ -383,8 +383,8 @@ function unreachable(detail){
         <div style="margin-top:8px">${filey
           ? `This page was opened as a <b>local file</b>, so it guessed
              <code>http://127.0.0.1:8010</code>. Open it through the API
-             instead — <a href="http://localhost:8010/live">http://localhost:8010/live</a>
-             — or start the server:`
+             instead, <a href="http://localhost:8010/live">http://localhost:8010/live</a>
+             or start the server:`
           : `The API is not answering on this origin. If it runs elsewhere,
              append <code>?api=</code> with its address. To start it locally:`}
           <div style="font-family:var(--f-mono);background:var(--panel-2);
@@ -393,7 +393,7 @@ function unreachable(detail){
           </div>
         </div>
         <div class="muted" style="margin-top:8px">Nothing is being published or
-          missed while this is showing — the alert store is on the server, and
+          missed while this is showing. The alert store is on the server, and
           this page will catch up as soon as it can reach it.</div>
       </div>
     </div>`);
@@ -428,7 +428,7 @@ async function loadStatus(){
 function applyFetch(f){
   if(!f.available){ $('scan').textContent = 'none yet'; return; }
   $('scan').textContent = stamp(f.latest_scan);
-  $('sat').textContent = f.satellite || '—';
+  $('sat').textContent = f.satellite || '-';
   $('age').textContent = ago(f.age_hours);
   if(f.fetched_at) $('fetched').textContent = stamp(f.fetched_at);
   if(f.tracks_found != null) $('tracks').textContent = f.tracks_found;
@@ -457,7 +457,7 @@ function connect(){
   es.addEventListener('alert', e => {
     const d = JSON.parse(e.data);
     addAlert(d.alert, true);
-    log(`ALERT ${d.alert.msgType} ${d.alert.sid} — ${d.alert.reason}`);
+    log(`ALERT ${d.alert.msgType} ${d.alert.sid}: ${d.alert.reason}`);
   });
   es.addEventListener('fetch', e => {
     const d = JSON.parse(e.data);
