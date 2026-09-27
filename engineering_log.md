@@ -10,6 +10,38 @@ instead of showing four models separately.
 
 ## solved
 
+### the threat zone was drawn 15% too narrow, in the wrong direction
+
+this module exists because the first version of "places at risk" missed kolkata
+for amphan with the centre 52 km away. the fix was to widen the cone by the
+typical radius of gale-force winds for the forecast intensity. that was right,
+and the table it looked the radius up in was wrong.
+
+the table was binned on USA_WIND. that is a 1-minute sustained wind. everything
+our models produce is the 3-minute IMD wind, and `gale_radius_km()` is called
+with our intensity. a 1-minute wind runs about 11% above a 3-minute one, so a
+storm we call 60 kt is about 67 on the scale the table was built on, and the
+lookup handed back the band below the right one. every threat zone since has
+been about 15% too narrow.
+
+rebuilt in src/wind_radii.py, binned on the same 3-minute wind that looks it up,
+and written to reports/wind_radii.json so the table and the lookup can be
+checked against each other:
+
+    intensity   old (1-min binned)   new (3-min binned)
+    34-48              106 km              120 km
+    48-64              130                 153
+    64-90              162                 185
+    90+                201                 213
+
+it also measures the 50 and 64 kt radii, which nothing had before and which the
+probability swaths need.
+
+found by deriving the 50 and 64 kt tables for a different feature and noticing
+the 34 kt numbers did not reproduce. the direction matters: too narrow is the
+failure mode this whole feature was built to prevent, so it had been quietly
+undoing its own purpose.
+
 ### giving the intensity model the environment changed nothing, for a reason
 
 T2 and T3 look at a picture and nothing else, which always felt like an omission:
@@ -379,8 +411,9 @@ india's polygon before writing the file. the map now needs no network at all.
 the first version of "places at risk" used the forecast cone alone. a cone says
 where the centre might go; it says nothing about how wide the storm is. widened
 by the typical radius of gale-force winds for the forecast intensity - measured
-from JTWC wind radii in IBTrACS, 106 km at 34-48 kt rising to 201 km above
-90 kt - and kolkata appears, at 0 h, which is where it was.
+from JTWC wind radii in IBTrACS - and kolkata appears, at 0 h, which is where
+it was. (that table was 106 km at 34-48 kt rising to 201 above 90. it was also
+binned on the wrong wind scale; see below. it is now 120 rising to 213.)
 
 ### "stay at sea for 72 h" for a storm already ashore
 

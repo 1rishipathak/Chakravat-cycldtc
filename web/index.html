@@ -521,7 +521,7 @@ async function renderExposure(d, issued){
            <td class="n">${(p.population/1e6).toFixed(p.population >= 1e6 ? 1 : 2)} M</td></tr>`).join("")}</tbody></table>
          <div class="note">${e.places.length} places in all. The zone is the ${(100*level).toFixed(0)}%
            cone widened by the typical radius of gale-force winds for the forecast
-           intensity (106–201 km, from JTWC wind radii in IBTrACS). It says who is
+           intensity (120–213 km, from JTWC wind radii in IBTrACS). It says who is
            in the path, not how badly they will be hit. Populations are Natural
            Earth metro estimates.</div>`;
   }catch(err){ el.innerHTML = `<div class="empty">Places unavailable.</div>`; }
