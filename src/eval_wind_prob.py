@@ -73,7 +73,10 @@ def main() -> None:
     ap.add_argument("--max-storms", type=int, default=0)
     ap.add_argument("--min-kt", type=float, default=34.0,
                     help="only issue from fixes at least this strong")
+    ap.add_argument("--fit-seasons", default="2020,2021,2022",
+                    help="seasons used to fit the calibration; the rest verify it")
     args = ap.parse_args()
+    fit_seasons = {int(x) for x in args.fit_seasons.split(",") if x.strip()}
 
     import joblib
 
@@ -101,6 +104,10 @@ def main() -> None:
     psum = np.zeros(len(BINS) - 1)       # forecast probability sum, for the x axis
     cases, t0 = 0, time.time()
     brier_num, brier_n, climo_hits = 0.0, 0, 0.0
+    # eight members give nine possible raw values, so the calibration is a
+    # lookup over those nine rather than a fitted curve
+    grid_hits = {}                       # raw value -> observed count, per split
+    grid_n = {}
 
     for n, sid in enumerate(sids, 1):
         storm = data[data["SID"] == sid].sort_values("ISO_TIME")
@@ -116,10 +123,23 @@ def main() -> None:
                 tracks = wp.member_tracks(ens, one, HORIZONS)
             except Exception:                      # noqa: BLE001 - short track
                 continue
+            # raw, deliberately: this script is what fits the calibration, so
+            # scoring an already-calibrated field would be circular
             field = wp.probability_field(tracks, lat, lon,
-                                         thresholds=(args.threshold,))
+                                         thresholds=(args.threshold,),
+                                         calibrated=False)
             p = field[args.threshold].ravel()
             y = truth.ravel().astype(float)
+
+            split = "fit" if int(row["SEASON"]) in fit_seasons else "verify"
+            vals, inv = np.unique(np.round(p, 6), return_inverse=True)
+            cnt = np.bincount(inv, minlength=len(vals))
+            pos = np.bincount(inv, weights=y, minlength=len(vals))
+            for v, c_, h_ in zip(vals, cnt, pos):
+                grid_n.setdefault(split, {}).setdefault(float(v), 0)
+                grid_hits.setdefault(split, {}).setdefault(float(v), 0.0)
+                grid_n[split][float(v)] += int(c_)
+                grid_hits[split][float(v)] += float(h_)
 
             idx = np.digitize(p, BINS) - 1
             np.add.at(total, idx, 1.0)
@@ -158,7 +178,61 @@ def main() -> None:
     print(f"  base rate        {base:.5f}")
     print(f"  Brier skill      {bss:+.3f}  (against always forecasting the base rate)")
 
-    out = {"threshold_kt": args.threshold, "window_h": WINDOW_H,
+    # the calibration: what a raw member fraction has actually meant, fitted on
+    # the fit seasons only, forced upward-monotone so a larger fraction can
+    # never map to a smaller probability
+    fit_n, fit_h = grid_n.get("fit", {}), grid_hits.get("fit", {})
+    raw_vals = sorted(v for v in fit_n if fit_n[v] >= 500)
+    mapping, running = [], 0.0
+    for v in raw_vals:
+        obs = fit_h[v] / fit_n[v]
+        running = max(running, obs)
+        mapping.append({"raw": v, "calibrated": running, "n": int(fit_n[v])})
+
+    def apply_map(v: float) -> float:
+        if not mapping:
+            return v
+        if v <= mapping[0]["raw"]:
+            return mapping[0]["calibrated"]
+        for a_, b_ in zip(mapping, mapping[1:]):
+            if v <= b_["raw"]:
+                span = b_["raw"] - a_["raw"]
+                f = 0.0 if span <= 0 else (v - a_["raw"]) / span
+                return a_["calibrated"] + f * (b_["calibrated"] - a_["calibrated"])
+        return mapping[-1]["calibrated"]
+
+    ver_n, ver_h = grid_n.get("verify", {}), grid_hits.get("verify", {})
+    ver_rows, ver_brier, ver_pts, ver_pos = [], 0.0, 0, 0.0
+    for v in sorted(ver_n):
+        n_ = ver_n[v]
+        if n_ < 500:
+            continue
+        obs = ver_h[v] / n_
+        cal = apply_map(v)
+        ver_rows.append({"raw": v, "calibrated": cal, "observed": obs, "n": int(n_)})
+    for v in sorted(ver_n):
+        n_, o_ = ver_n[v], ver_h[v]
+        cal = apply_map(v)
+        ver_brier += o_ * (cal - 1.0) ** 2 + (n_ - o_) * cal ** 2
+        ver_pts += n_
+        ver_pos += o_
+    ver_brier = ver_brier / ver_pts if ver_pts else float("nan")
+    ver_base = ver_pos / ver_pts if ver_pts else float("nan")
+    ver_bss = (1 - ver_brier / (ver_base * (1 - ver_base))
+               if ver_pts and 0 < ver_base < 1 else float("nan"))
+
+    print(f"\ncalibration fitted on {sorted(fit_seasons)}, verified on the rest")
+    print(f"  {'members':>9}{'raw':>8}{'calibrated':>12}{'observed':>10}{'n':>12}")
+    for r in ver_rows:
+        print(f"  {r['raw']*8:>8.0f}/8{r['raw']:>8.3f}{r['calibrated']:>12.3f}"
+              f"{r['observed']:>10.3f}{r['n']:>12,}")
+    print(f"  calibrated Brier skill on the verify seasons: {ver_bss:+.3f}")
+
+    out = {"calibration": {"fit_seasons": sorted(fit_seasons), "mapping": mapping,
+                           "verification": ver_rows,
+                           "calibrated_brier": ver_brier,
+                           "calibrated_brier_skill": ver_bss},
+           "threshold_kt": args.threshold, "window_h": WINDOW_H,
            "grid_deg": args.deg, "storms": len(sids), "forecasts": cases,
            "grid_points": int(brier_n), "reliability": rows,
            "brier": brier, "base_rate": base, "brier_skill_score": bss,

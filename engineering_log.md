@@ -10,6 +10,49 @@ instead of showing four models separately.
 
 ## solved
 
+### the ensemble was never dispersed enough, and only the cone knew
+
+the wind probability swath is built by sweeping each member's wind field along
+its own track and counting how many of the eight cover a point. the first
+version reported the raw fraction as a probability. verified on all 51 held-out
+storms it was badly over-confident:
+
+    we said 25%  ->  happened 18%
+    we said 50%  ->  happened 30%
+    we said 75%  ->  happened 40%
+    we said 98%  ->  happened 83%
+
+two separate faults, and the first was already documented in another file.
+
+**the members sit too close together.** eight bootstrap members of one model
+family share that family's systematic errors, so they agree with each other far
+more than they agree with the truth. the cone has always known this - its
+calibration multipliers run from x2.5 to x7.9, which is a polite way of saying
+the raw spread is about a third of the real one. but the cone applies that when
+it draws a radius, and a swath is built from the member positions themselves, so
+the correction never reached it. every point scored 8/8 or 0/8 and the answer
+was nearly deterministic. now each member is pushed away from the ensemble mean
+by the factor the cone already measured, derived from the 50% multiplier through
+the rayleigh median. 75% went from meaning 40% to meaning 51%.
+
+**and a member count is still not a probability.** even properly dispersed, six
+of eight meant 52%, not 75%. so what a member count has actually meant is fitted
+on the 2020-2022 storms and verified on 2023-2025, which the fit never sees:
+
+    members   we now say   it happened
+      2/8        0.12         0.15
+      3/8        0.25         0.25
+      4/8        0.35         0.33
+      6/8        0.50         0.52
+      8/8        0.95         0.97
+
+brier skill +0.593 raw to +0.635 calibrated on the verification seasons. the
+same shape holds at 50 and 64 kt.
+
+worth saying what went wrong in the process, not only in the code. the first
+reliability numbers came from a three-storm smoke run and looked fine, and were
+reported as if they meant something. they did not; three storms is one weather
+pattern. the full run is what found this.
 ### the threat zone was drawn 15% too narrow, in the wrong direction
 
 this module exists because the first version of "places at risk" missed kolkata

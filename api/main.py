@@ -260,10 +260,14 @@ def wind_probability(sid: str, time: str | None = None, threshold: int = 34,
         "members": len(tracks),
         "contours": wp.contours(prob, lat, lon),
         "summary": wp.summarise({threshold: prob}, lat, lon)[str(threshold)],
-        "verification": ({"brier_skill_score": rel.get("brier_skill_score"),
-                          "reliability": rel.get("reliability"),
-                          "forecasts": rel.get("forecasts"),
-                          "verifies": rel.get("verifies")} if rel else None),
+        "verification": ({
+            "brier_skill_score": rel.get("brier_skill_score"),
+            "calibrated_brier_skill": (rel.get("calibration") or {}).get(
+                "calibrated_brier_skill"),
+            "calibration": (rel.get("calibration") or {}).get("verification"),
+            "fit_seasons": (rel.get("calibration") or {}).get("fit_seasons"),
+            "forecasts": rel.get("forecasts"),
+            "verifies": rel.get("verifies")} if rel else None),
         "note": "probability that sustained wind reaches this threshold at any "
                 "point in the window. the wind field is taken as circular, using "
                 "the quadrant-mean radius; a real one is widest in the "

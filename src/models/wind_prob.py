@@ -32,27 +32,70 @@ STEP_H = 1.0                 # how finely a member's track is walked
 KM_PER_DEG = 111.32
 
 
-def member_tracks(ensemble, row: pd.DataFrame, horizons) -> list[list[tuple]]:
+# A circular Gaussian's median radius is this many standard deviations. The cone
+# multipliers are fitted as "radius that contains half the truths, in units of
+# the raw ensemble spread", so dividing by this recovers how much the spread
+# itself has to grow.
+RAYLEIGH_MEDIAN = 1.1774
+
+
+def dispersion_factor(ensemble, horizon: int) -> float:
+    """How far the raw ensemble spread falls short of the real error spread.
+
+    Eight members bootstrapped from one model family share that family's
+    systematic errors, so they agree with each other far more than they agree
+    with the truth. The cone already knows this - it is why it carries
+    multipliers of 2.5 to 7.9 rather than 1 - but the cone applies the
+    correction when it draws a radius, and a swath is built from the member
+    positions themselves. Without this, all eight members sit almost on top of
+    each other, every point scores 8/8 or 0/8, and the probabilities come out
+    far more confident than they deserve.
+    """
+    mult = ensemble.multipliers.get(("track", int(horizon), 0.50))
+    if not mult:
+        return 1.0
+    return max(float(mult) / RAYLEIGH_MEDIAN, 1.0)
+
+
+def member_tracks(ensemble, row: pd.DataFrame, horizons,
+                  inflate: bool = True) -> list[list[tuple]]:
     """Each member's own future: (hours, lat, lon, vmax) including the start.
 
     The ensemble normally collapses to a mean and a spread. The swath needs the
     members themselves, because a wind field has to be swept along a coherent
     track - averaging first and sweeping after would draw one fat storm instead
     of eight plausible ones.
+
+    Each member is then pushed away from the ensemble mean by the factor the
+    cone calibration already measured, so the spread of the eight matches the
+    spread of the errors they actually make. Set inflate=False to see the raw
+    members, which is what the first version of this drew and why its
+    probabilities read 75% for things that happened 40% of the time.
     """
     lat0 = float(row["LAT"].iloc[0])
     lon0 = float(row["LON"].iloc[0])
     v0 = float(row["vmax_kt"].iloc[0])
 
-    tracks = []
-    for m in ensemble.members:
-        pts = [(0.0, lat0, lon0, v0)]
-        for h in horizons:
-            dlat = float(m.predict(row, f"y_dlat_{h}")[0])
-            dlon = float(m.predict(row, f"y_dlon_{h}")[0])
-            dv = float(m.predict(row, f"y_dv_{h}")[0])
-            pts.append((float(h), lat0 + dlat, lon0 + dlon, max(v0 + dv, 0.0)))
-        tracks.append(pts)
+    raw = {}
+    for h in horizons:
+        raw[h] = [(float(m.predict(row, f"y_dlat_{h}")[0]),
+                   float(m.predict(row, f"y_dlon_{h}")[0]),
+                   float(m.predict(row, f"y_dv_{h}")[0]))
+                  for m in ensemble.members]
+
+    tracks = [[(0.0, lat0, lon0, v0)] for _ in ensemble.members]
+    for h in horizons:
+        vals = raw[h]
+        k = dispersion_factor(ensemble, h) if inflate else 1.0
+        mlat = sum(v[0] for v in vals) / len(vals)
+        mlon = sum(v[1] for v in vals) / len(vals)
+        mv = sum(v[2] for v in vals) / len(vals)
+        for i, (dlat, dlon, dv) in enumerate(vals):
+            dlat = mlat + k * (dlat - mlat)
+            dlon = mlon + k * (dlon - mlon)
+            dv = mv + k * (dv - mv)
+            tracks[i].append((float(h), lat0 + dlat, lon0 + dlon,
+                              max(v0 + dv, 0.0)))
     return tracks
 
 
@@ -74,6 +117,42 @@ def densify(pts: list[tuple], step_h: float = STEP_H) -> list[tuple]:
     return out
 
 
+_CALIBRATION: dict = {}
+
+
+def calibration(threshold: int) -> list[dict]:
+    """What a raw member fraction has actually meant, fitted on held-out storms.
+
+    Even with the members properly dispersed, the share of them covering a point
+    is not the probability that it happens - six of eight meant 52% rather than
+    75%. The mapping is fitted on the 2020-2022 storms in
+    src/eval_wind_prob.py and verified on 2023-2025, which the fit never sees.
+    """
+    from pathlib import Path as _P
+    key = int(threshold)
+    if key not in _CALIBRATION:
+        root = _P(__file__).resolve().parents[2]
+        try:
+            import json
+            d = json.loads((root / "reports"
+                            / f"wind_prob_reliability_{key}.json").read_text())
+            _CALIBRATION[key] = d["calibration"]["mapping"]
+        except (OSError, ValueError, KeyError):
+            _CALIBRATION[key] = []
+    return _CALIBRATION[key]
+
+
+def calibrate(prob, threshold: int):
+    """Map raw member fractions onto the frequencies they have earned."""
+    table = calibration(threshold)
+    if not table:
+        return prob
+    xs = np.array([r["raw"] for r in table], dtype=float)
+    ys = np.array([r["calibrated"] for r in table], dtype=float)
+    return np.interp(np.asarray(prob, dtype=float), xs, ys,
+                     left=float(ys[0]), right=float(ys[-1]))
+
+
 def basin_grid(deg: float = 0.25) -> tuple[np.ndarray, np.ndarray]:
     lat = np.arange(-5.0, 31.0 + 1e-9, deg)
     lon = np.arange(34.0, 100.0 + 1e-9, deg)
@@ -81,7 +160,8 @@ def basin_grid(deg: float = 0.25) -> tuple[np.ndarray, np.ndarray]:
 
 
 def probability_field(tracks: list[list[tuple]], lat: np.ndarray, lon: np.ndarray,
-                      thresholds=THRESHOLDS, step_h: float = STEP_H) -> dict:
+                      thresholds=THRESHOLDS, step_h: float = STEP_H,
+                      calibrated: bool = True) -> dict:
     """Share of members whose wind field covers each point at any time.
 
     Distances use an equirectangular approximation rather than haversine: the
@@ -110,15 +190,21 @@ def probability_field(tracks: list[list[tuple]], lat: np.ndarray, lon: np.ndarra
             counts[t] += hit[t]
 
     n = max(len(tracks), 1)
-    return {t: counts[t] / n for t in counts}
+    out = {}
+    for t in counts:
+        raw = counts[t] / n
+        out[t] = calibrate(raw, t) if calibrated else raw
+    return out
 
 
 def contours(prob: np.ndarray, lat: np.ndarray, lon: np.ndarray,
-             levels=(0.125, 0.25, 0.5, 0.75)) -> list[dict]:
+             levels=(0.10, 0.25, 0.50, 0.75)) -> list[dict]:
     """Probability contours as GeoJSON-ready rings.
 
-    Levels default to eighths because eight members cannot resolve anything
-    finer, and a contour at 0.1 would imply a precision we do not have.
+    Drawn at round probabilities rather than at eighths. Before calibration the
+    only honest labels were member counts, because the raw eighths were not
+    probabilities; now that the axis has been fitted and verified against
+    observed frequency, 25% on this map means 25%.
     """
     from contourpy import contour_generator
 
@@ -186,7 +272,8 @@ def places_at_risk(tracks: list[list[tuple]], threshold: int = 34,
             "region": place.get("region"),
             "population": int(place.get("pop") or 0),
             "lat": float(place["lat"]), "lon": float(place["lon"]),
-            "probability": k / n, "members": k,
+            "probability": float(calibrate(k / n, int(threshold))),
+            "member_fraction": k / n, "members": k,
             "earliest_h": float(hours.min()),
             "median_h": float(np.median(hours)),
         })

@@ -1,0 +1,166 @@
+{
+  "calibration": {
+    "fit_seasons": [
+      2020,
+      2021,
+      2022
+    ],
+    "mapping": [
+      {
+        "raw": 0.0,
+        "calibrated": 0.0004138113485006563,
+        "n": 3356602
+      },
+      {
+        "raw": 0.125,
+        "calibrated": 0.07487589630446773,
+        "n": 14504
+      },
+      {
+        "raw": 0.25,
+        "calibrated": 0.1610305958132045,
+        "n": 4968
+      },
+      {
+        "raw": 0.375,
+        "calibrated": 0.28183118741058655,
+        "n": 2097
+      },
+      {
+        "raw": 0.5,
+        "calibrated": 0.37953488372093025,
+        "n": 1075
+      },
+      {
+        "raw": 0.625,
+        "calibrated": 0.43079922027290446,
+        "n": 513
+      },
+      {
+        "raw": 1.0,
+        "calibrated": 0.9645669291338582,
+        "n": 1016
+      }
+    ],
+    "verification": [
+      {
+        "raw": 0.0,
+        "calibrated": 0.0004138113485006563,
+        "observed": 0.00042198457503200956,
+        "n": 4504904
+      },
+      {
+        "raw": 0.125,
+        "calibrated": 0.07487589630446773,
+        "observed": 0.07831531018782015,
+        "n": 17570
+      },
+      {
+        "raw": 0.25,
+        "calibrated": 0.1610305958132045,
+        "observed": 0.15021459227467812,
+        "n": 5126
+      },
+      {
+        "raw": 0.375,
+        "calibrated": 0.28183118741058655,
+        "observed": 0.24740484429065743,
+        "n": 2312
+      },
+      {
+        "raw": 0.5,
+        "calibrated": 0.37953488372093025,
+        "observed": 0.3441226575809199,
+        "n": 1174
+      },
+      {
+        "raw": 0.625,
+        "calibrated": 0.43079922027290446,
+        "observed": 0.4446022727272727,
+        "n": 704
+      },
+      {
+        "raw": 0.75,
+        "calibrated": 0.6087217898932225,
+        "observed": 0.555992141453831,
+        "n": 509
+      },
+      {
+        "raw": 1.0,
+        "calibrated": 0.9645669291338583,
+        "observed": 0.9604904632152589,
+        "n": 1468
+      }
+    ],
+    "calibrated_brier": 0.0010922655349957099,
+    "calibrated_brier_skill": 0.3219655953037641
+  },
+  "threshold_kt": 64,
+  "window_h": 72,
+  "grid_deg": 0.25,
+  "storms": 51,
+  "forecasts": 206,
+  "grid_points": 7915550,
+  "reliability": [
+    {
+      "bin_lo": 0.0,
+      "bin_hi": 0.0001,
+      "forecast": 0.0,
+      "observed": 0.00041849487871662246,
+      "n": 7861506
+    },
+    {
+      "bin_lo": 0.125,
+      "bin_hi": 0.25,
+      "forecast": 0.125,
+      "observed": 0.07675999251730374,
+      "n": 32074
+    },
+    {
+      "bin_lo": 0.25,
+      "bin_hi": 0.375,
+      "forecast": 0.25,
+      "observed": 0.15553794333267287,
+      "n": 10094
+    },
+    {
+      "bin_lo": 0.375,
+      "bin_hi": 0.5,
+      "forecast": 0.375,
+      "observed": 0.2637786346110229,
+      "n": 4409
+    },
+    {
+      "bin_lo": 0.5,
+      "bin_hi": 0.625,
+      "forecast": 0.5,
+      "observed": 0.36104935526900844,
+      "n": 2249
+    },
+    {
+      "bin_lo": 0.625,
+      "bin_hi": 0.75,
+      "forecast": 0.625,
+      "observed": 0.4387838948233361,
+      "n": 1217
+    },
+    {
+      "bin_lo": 0.75,
+      "bin_hi": 0.875,
+      "forecast": 0.75,
+      "observed": 0.5724217844727694,
+      "n": 863
+    },
+    {
+      "bin_lo": 0.875,
+      "bin_hi": 1.0001,
+      "forecast": 0.9739483747609943,
+      "observed": 0.9126832377310389,
+      "n": 3138
+    }
+  ],
+  "brier": 0.0011807257550012318,
+  "base_rate": 0.0016662139712338372,
+  "brier_skill_score": 0.29018937504292197,
+  "verifies": "track and intensity; the wind field radius model is shared with the truth side and is not tested here"
+}

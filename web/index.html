@@ -577,7 +577,7 @@ const WIND_BAND = [
   {at:0.75, colour:"#7a0177", alpha:0.42},
   {at:0.50, colour:"#c51b8a", alpha:0.34},
   {at:0.25, colour:"#f768a1", alpha:0.26},
-  {at:0.125, colour:"#fbb4b9", alpha:0.20},
+  {at:0.10, colour:"#fbb4b9", alpha:0.20},
 ];
 let windThreshold = 0;          /* 0 = off, otherwise 34, 50 or 64 */
 async function renderWind(d, issued){
@@ -620,7 +620,6 @@ async function renderWind(d, issued){
   src("windprob", {type:"FeatureCollection", features:feats});
 
   const v = w.verification || {};
-  const rel = (v.reliability || []).filter(r => r.n > 200 && r.forecast > 0.01);
   body.innerHTML = `
     <dl class="stats">
       <div><dt>Area at 25% or more</dt><dd>${(w.summary.area_km2_at_25pct/1000).toFixed(0)}k km²</dd></div>
@@ -628,15 +627,18 @@ async function renderWind(d, issued){
     </dl>
     <div class="legend">${WIND_BAND.map(b =>
       `<span><i style="background:${b.colour};opacity:${b.alpha+0.3}"></i>${(100*b.at).toFixed(0)}%</span>`).join("")}</div>
-    ${rel.length ? `<h3>Has it been right before?</h3>
-      <table><thead><tr><th>We said</th><th>It happened</th><th>Forecasts</th></tr></thead>
-      <tbody>${rel.map(r => `<tr>
-        <td class="n">${(100*r.forecast).toFixed(0)}%</td>
+    ${(v.calibration||[]).length ? `<h3>Has it been right before?</h3>
+      <table><thead><tr><th>Members</th><th>We say</th><th>It happened</th><th>Points</th></tr></thead>
+      <tbody>${v.calibration.filter(r=>r.n>=400).map(r => `<tr>
+        <td class="n">${Math.round(8*r.raw)}/8</td>
+        <td class="n">${(100*r.calibrated).toFixed(0)}%</td>
         <td class="n">${(100*r.observed).toFixed(0)}%</td>
         <td class="n">${r.n.toLocaleString()}</td></tr>`).join("")}</tbody></table>
-      <div class="note">Every forecast on held-out storms, binned by the probability it
-        gave and compared with how often the wind actually arrived. Brier skill
-        ${v.brier_skill_score != null ? (v.brier_skill_score>=0?"+":"")+v.brier_skill_score.toFixed(2) : "—"}
+      <div class="note">Eight members agreeing is not the same as certainty, so what a
+        member count means was fitted on the 2020–22 storms and checked on 2023–25,
+        which the fit never saw. The middle column is what the map shows; the right
+        column is what happened. Brier skill
+        ${v.calibrated_brier_skill != null ? (v.calibrated_brier_skill>=0?"+":"")+v.calibrated_brier_skill.toFixed(2) : "—"}
         against forecasting the base rate every time.
         ${v.verifies ? "This verifies " + esc(v.verifies) + "." : ""}</div>`
       : `<div class="note">Verification has not been generated for this threshold yet.</div>`}
