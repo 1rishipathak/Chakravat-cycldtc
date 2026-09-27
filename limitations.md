@@ -352,6 +352,61 @@ of EMBC arrives carrying "0.47 here against 0.69 on GridSat" rather than
 arriving bare. `reports/t2_sensor_paired.json` has the table;
 `src/eval_t2_sensors.py` regenerates it.
 
+## 7b. microwave: the instrument that should have fixed this, and did not
+
+the severe-storm under-read has one obvious explanation. an infrared window
+channel sees the top of the cirrus canopy, and over a mature eyewall that canopy
+is uniformly cold whatever is happening beneath it - the information is not in
+the image to be recovered. at 89 GHz the canopy is transparent and
+precipitation-sized ice scatters the signal, so the eyewall prints as a cold
+ring around a warm eye. every textbook says this is the answer.
+
+so we went and got it. 456 of the 943 labelled patches have an overpass from
+GMI, AMSR2 or one of the three SSMIS flights within 90 minutes, across 100
+storms, pulled through OPeNDAP as storm-centred grids of polarisation corrected
+temperature. the signal is plainly there: median minimum 155 K against about
+270 K ambient, which is deep convection scattering hard.
+
+it does not help.
+
+| model | RMSE | 95% interval |
+|---|---|---|
+| T3 alone, the served model | 13.48 kt | [11.81, 15.05] |
+| T3 refitted on itself, no new data | 13.84 | [12.06, 15.54] |
+| T3 + 89 GHz structure | 13.92 | [12.09, 15.63] |
+| 89 GHz structure alone | 13.86 | [12.07, 15.57] |
+
+the control is the important row. a correction refitted on the T3 estimate with
+no new information at all costs 0.36 kt, so the whole of the apparent damage
+from microwave is the refit, and the instrument contributes nothing either way.
+the bands it was fetched for did not move: -10.7 to -11.6 at 64-90, -13.8 to
+-14.8 at 90+.
+
+we also nearly reported the opposite. restricted to storms whose **truth** is
+64 kt or more, adding 89 GHz appears to cut RMSE from 19.6 to 14.6, which reads
+like exactly the result we went looking for. it is an artefact. selecting rows
+by truth while the model is known to read that band low guarantees the selected
+residuals are biased positive, and a model with an intercept banks that whether
+or not it is handed any microwave - the control on that same subset scores 13.1,
+better still. gated on the **prediction** instead, which is the only thing that
+exists at runtime, the gain reverses: 18.3 to 20.1.
+
+what this is not is evidence that microwave cannot help. the literature is
+unambiguous that it does, and the reasons ours does not are visible in the
+setup: a median 44 minute gap between the pass and the label on a structure that
+evolves in minutes, ten hand-cut radial statistics standing in for what is
+really a pattern recognition problem, an SSMIS footprint of about 14 km against
+a 30 km eye, and 436 joined patches to learn from. tightening the gap does not
+rescue it - under 15 minutes it is worse - which points at the features rather
+than the collocation.
+
+the honest statement is narrow and it is the one we make: with these features,
+this sample and this collocation, 89 GHz did not improve intensity estimation.
+a convolutional model on the microwave image itself, trained on a basin's worth
+of passes rather than a season's, is the experiment that would settle it, and it
+is the first thing to build next. `src/ingest/microwave.py` and
+`src/eval_microwave.py` hold all of it, and the imagery is on disk.
+
 ## 8. what we don't claim
 
 - we don't beat IMD. official 24 h guidance for this basin is sharper than our
