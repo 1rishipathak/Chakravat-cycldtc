@@ -98,14 +98,14 @@ class Chakravat:
     # - stage 1 and 2 ---------------------------------------------------
 
     def detect_window(self, end: pd.Timestamp, hours: int = 48,
-                      step_h: int = 6, threshold: float = 0.30
-                      ) -> dict[pd.Timestamp, list[Detection]]:
+                      step_h: int = 6, threshold: float | None = None,
+                      source: str = "gridsat") -> dict[pd.Timestamp, list[Detection]]:
         # run T1 over a window of scenes ending at end
         out: dict[pd.Timestamp, list[Detection]] = {}
         steps = int(hours // step_h) + 1
         for k in range(steps - 1, -1, -1):
             when = pd.Timestamp(end) - pd.Timedelta(hours=step_h * k)
-            res = self.vision.detect(when, threshold)
+            res = self.vision.detect(when, threshold, source)
             if not res.get("available"):
                 continue
             slot = pd.Timestamp(res["scene_time"])
@@ -113,13 +113,13 @@ class Chakravat:
                          for d in res["detections"]]
         return out
 
-    def describe(self, det: Detection) -> Detection:
+    def describe(self, det: Detection, source: str = "gridsat") -> Detection:
         # T2 and T3 on one detection
-        scene = self.vision.classify_scene(det.time, det.lat, det.lon)
+        scene = self.vision.classify_scene(det.time, det.lat, det.lon, source)
         if scene.get("available"):
             det.scene = scene["scene"]
             det.scene_confidence = scene["confidence"]
-        inten = self.vision.estimate_intensity(det.time, det.lat, det.lon)
+        inten = self.vision.estimate_intensity(det.time, det.lat, det.lon, source)
         if inten.get("available"):
             det.vmax_kt = inten["vmax_kt"]
         return det
@@ -235,15 +235,16 @@ class Chakravat:
     # - the whole chain -------------------------------------------------
 
     def run(self, end: pd.Timestamp, hours: int = 48,
-            threshold: float = 0.30, level: float = 0.67) -> dict:
-        per_time = self.detect_window(end, hours, threshold=threshold)
+            threshold: float | None = None, level: float = 0.67,
+            source: str = "gridsat") -> dict:
+        per_time = self.detect_window(end, hours, threshold=threshold, source=source)
         if not per_time:
             return {"available": False,
-                    "reason": "no GridSat scenes in this window"}
+                    "reason": f"no {source} scenes in this window"}
 
         for dets in per_time.values():
             for d in dets:
-                self.describe(d)
+                self.describe(d, source)
 
         tracks = associate(per_time)
         storms = []
@@ -265,6 +266,8 @@ class Chakravat:
             })
 
         return {"available": True,
+                "source": source,
+                "threshold": threshold if threshold is not None else self.vision.tuned_threshold(),
                 "window_end": str(end),
                 "window_hours": hours,
                 "scenes_examined": len(per_time),

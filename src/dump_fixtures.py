@@ -68,6 +68,16 @@ def main() -> None:
 
     write("bulletin_amphan.txt", fetch(b, f"/api/storm/{AMPHAN}/bulletin", text=True),
           text=True)
+    write("bulletin_amphan_hi.txt",
+          fetch(b, f"/api/storm/{AMPHAN}/bulletin?lang=hi", text=True), text=True)
+
+    # issued before landfall, where the places list and the CAP alert have
+    # something to say; the default issue time has the centre already ashore
+    before = "?time=" + urllib.parse.quote("2020-05-19 00:00:00")
+    write("exposure_amphan.json", fetch(b, f"/api/storm/{AMPHAN}/exposure{before}"))
+    write("cap_amphan.xml", fetch(b, f"/api/storm/{AMPHAN}/cap.xml{before}", text=True),
+          text=True)
+    write("live_status.json", fetch(b, "/api/live/status"))
 
     write("scene_amphan.json", fetch(b, f"/api/storm/{AMPHAN}/scene"))
     write("intensity_amphan.json",
@@ -81,7 +91,7 @@ def main() -> None:
     if args.no_pipeline:
         print("  (pipeline skipped)")
     else:
-        print("  running the imagery chain, ~30 s ...")
+        print("  running the imagery chain, 15-35 s ...")
         when = urllib.parse.quote("2020-05-19 12:00")
         write("pipeline.json",
               fetch(b, f"/api/vision/pipeline?time={when}&level=0.67"))

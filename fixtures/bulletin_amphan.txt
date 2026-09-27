@@ -19,7 +19,7 @@ RAPID INTENSIFICATION
   Probability of +30 kt within 24 h: 0%
 
 LANDFALL
-  No landfall indicated within 72 h (probability 4%)
+  Centre is over land - landfall has already occurred.
 
 ------------------------------------------------------------------
 Cone radii and intensity ranges are calibrated to the stated

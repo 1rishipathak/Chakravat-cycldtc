@@ -31,6 +31,37 @@ be dishonest and quoting only the first understates it.
 we still miss about 6 in 10 depressions. that's partly deliberate from the
 intensity weighting below, and it's still a real miss rate.
 
+### is that a tuning choice? no, and we checked
+
+the served threshold is 0.25, picked on validation for F1, which is the right
+objective when a detection becomes a track and a track becomes a forecast. for
+asking "is anything forming out there" a miss costs more than a false alarm, so
+the same checkpoint gets a second operating point picked on validation for F2.
+nothing is retrained and the served point does not move.
+
+| tier | threshold | precision | weak recall | false alarms per scene | named F1 |
+|---|---|---|---|---|---|
+| warn, served | 0.25 | 0.640 | 0.480 | 0.33 | 0.700 |
+| watch | 0.15 | 0.495 | 0.529 | 0.66 | 0.647 |
+
+so the watch tier doubles the false alarms to move weak-system recall five
+points. that is a fair trade for a screening view and a bad one for a forecast,
+which is why both exist and the tier is explicit in the API.
+
+the number that matters more is the third row we ran, the most permissive
+threshold on the grid:
+
+| ceiling | 0.05 | 0.204 | 0.595 | 2.73 | - |
+
+eight times the false alarm rate of the served point, and four in ten weak
+systems are **still** missed. they are not systems the network nearly saw and
+narrowly rejected. they are systems with no signature it can find, which is what
+"a 20 kt depression looks like ordinary monsoon convection" means in practice.
+more sensitivity is not the lever; a different sensor would be.
+
+`reports/t1_operating_points.json` holds all of it,
+`src/t1_operating_points.py` regenerates it.
+
 what we tried: extending the archive from 4 seasons to 14 (224 to 921 scenes)
 moved F1 only 0.461 to 0.518. poor return on 4x the data, which was good
 evidence the limit wasn't sample count.
@@ -43,53 +74,102 @@ though depressions got weighted down to 0.3x.
 the 0.90 target isn't reachable on 8 km imagery and more of the same data won't
 get there.
 
-## 2. intensity reads low on severe storms
+## 2. intensity reads the strongest storms low
 
 worst limitation operationally, because under-reading a severe cyclone is the
 wrong direction to be wrong in.
 
-| band | n | bias before | bias after |
+truth here is IMD's best track, interpolated to the scene time. it used to be
+ADT's own estimate, which is a 1-minute wind and sits 7.6 kt above IMD's
+3-minute one; that mistake and its fix are the first entry in the engineering
+log. every number below is from 5-fold cross-validation grouped by storm, so all
+943 patches are scored by a model that never saw their storm, and the intervals
+come from resampling whole storms 2,000 times.
+
+| | RMSE | 95% interval | bias | IMD category exact |
+|---|---|---|---|---|
+| predict the mean | 24.86 kt | 21.6 to 28.3 | +0.8 | 13% |
+| cold-cloud statistics | 19.37 kt | 17.2 to 21.7 | +0.5 | 29% |
+| ADT, on the scenes it covers | 13.95 kt | 12.5 to 15.3 | +7.1 | 40% |
+| chakravat | 12.96 kt | 11.5 to 14.4 | -0.1 | 39% |
+
+against ADT on its own 719 scenes the difference is -2.6 to +1.6 kt, so the two
+are level and ours is the unbiased one. that is the claim: comparable to the
+operational objective method, not better than it. ADT still gets the category
+right slightly more often (40% against 39%), which is worth saying out loud
+because our RMSE is the better number and the category is the one a bulletin
+prints.
+
+the model serving this is trained on GridSat and INSAT together. that costs
+nothing here - 13.16 kt for GridSat-only training against 12.96 for joint on the
+same patches - and it is what makes the same model usable on the live INSAT
+feed, where a GridSat-only model reads 15.11 kt with a -4.7 kt bias against
+13.77 and -0.7 for this one.
+
+the band table is the part that matters:
+
+| truth band | <34 | 34-48 | 48-64 | 64-90 | 90+ |
+|---|---|---|---|---|---|
+| patches | 336 | 273 | 105 | 133 | 96 |
+| bias (kt) | +5.6 | +1.7 | -1.6 | -7.8 | -12.7 |
+
+the overall bias of -0.1 kt hides all of it. weak systems come out too strong and
+the strongest too weak, and the two cancel. the joint model is slightly worse at
+the top end than the GridSat-only one it replaced (-12.7 against -11.3) and
+better at the bottom; we took the trade for the lower RMSE and the working live
+feed, and the worst single case we have seen is Amphan at its peak, read 29 kt
+low from one scene.
+
+### so the estimate now comes with an interval
+
+a single number with a 13 kt error is not an answer. the estimate is served with
+a band, fitted on the out-of-fold residuals we already had - every patch
+predicted by a model that never saw its storm - and verified the same way the
+forecast cone is:
+
+| level | target | measured coverage | mean width |
 |---|---|---|---|
-| under 34 kt | 24 | +5.3 | +2.7 |
-| 34-47 | 32 | +4.8 | +3.4 |
-| 48-63 | 18 | -0.9 | -0.5 |
-| 64-89 | 12 | -14.2 | -12.0 |
-| 90+ | 10 | -16.6 | -7.0 |
+| 50% | 0.50 | 0.500 | 15.8 kt |
+| 67% | 0.67 | 0.651 | 23.5 kt |
+| 90% | 0.90 | 0.875 | 40.5 kt |
 
-overall RMSE 10.95 kt, MAE 7.36, bias -0.51. the overall bias looks great and
-hides the table completely, the errors are opposite signed and cancel. that's
-why we report bands.
+slightly tight at the top two levels, and uniform across bands: at 90% the
+coverage runs 0.854 to 0.882 whichever band the prediction lands in, so it is
+calibrated conditionally and not just on average.
 
-### a hypothesis we published and then disproved
+**the bands are on the prediction, not on the truth, and that distinction is the
+whole point.** the -12.7 kt figure above is conditioned on truth: when a storm
+really is 90 kt or more, we read it low. that is not usable at inference, where
+nobody knows the truth. conditioned on what the model *said*, the residual
+median in the top band is +2.1 kt and the 67% offsets are -12.8 and +19.7 - a
+band that leans upward, which is the same under-read seen from the other end.
+both numbers are correct and they are answers to different questions; binning by
+truth would have produced an interval that looks far better than it is.
+
+the case it misses is the one we already name: Amphan at peak, read 96 kt
+against 125, outside even the 90% band. that is one of the 12.5% the level does
+not claim, and it is the most important storm in the set, which is worth saying
+out loud rather than leaving for someone to find.
+
+`reports/t3_intervals.json`, regenerated by `src/t3_intervals.py`.
+
+### the calibration that fixes the bands costs accuracy
+
+that pattern is regression toward the mean: fit predicted against truth and the
+slope comes out near 0.75, so inverting the line should undo it. it does, for
+the bands - 90+ goes from -13 kt to +2 - and it costs 2.4 kt of RMSE, 13.0 to
+15.3, which holds even when the line is fitted on four folds of held-out
+predictions rather than one small validation set.
+
+so it is not served. the error we can measure is worse with it, and the bias we
+can measure is worse without it; we chose the one the primary metric picks and
+printed the band table rather than hiding either.
 
 an earlier version of this file argued the residual error wasn't a modelling
-problem at all. eye diameter and eyewall gradient are at or below the 8 km pixel
-scale, so a model can't read detail the sensor never recorded. we stopped tuning
-on the strength of that.
-
-it was wrong. within the 64 kt+ band the model correlates +0.883 with truth and
-reproduces the spread almost exactly (26.2 kt predicted vs 25.1 actual). a model
-that couldn't resolve intensity would show neither. the information was there,
-the mapping was broken.
-
-fitted on validation:
-
-```
-predicted = 0.852 x truth + 7.60
-```
-
-slope under 1 is regression toward the mean under squared error loss. weak
-systems come out too strong, severe ones too weak, and they cancel into that
-healthy looking overall bias. inverting the line took RMSE 11.66 to 10.95 and
-improved bias in every band, most at 90+ kt.
-
-two caveats we're keeping. the 64 kt+ band is 22 test patches, so this is
-evidence against our own hypothesis rather than a precise measurement. and
-64-89 kt is still 12 kt low, so it's reduced not solved.
-
-the case for INSAT is now narrower and more honest. 4 km resolves eye structure
-GridSat can't and we expect it to help, but we can't claim resolution was the
-binding constraint because we tested that and it wasn't.
+problem at all: eye diameter is at or below the 8 km pixel scale, so a model
+can't read detail the sensor never recorded. that was wrong, and testing it is
+what showed the mapping was the problem rather than the resolution - within the
+64 kt+ band the model correlates +0.883 with truth and reproduces its spread.
 
 ## 3. rapid intensification is barely skilful
 
@@ -126,63 +206,182 @@ accumulating a separate one.
 still not good enough to evacuate a specific village on. timing and the
 probability are the parts that carry weight.
 
-## 5. the dvorak labels are algorithm output
+## 5. the dvorak labels are algorithm output, and it shows
 
-scene labels come from the CIMSS ADT archive, 8212 labelled north indian scenes
+scene labels come from the CIMSS ADT archive, 8,212 labelled north indian scenes
 2003-2025. a model trained on them learns to reproduce ADT, not a human
-forecaster.
+forecaster. we think that's the right target, since the problem statement asks
+for objective automation and ADT is the operational objective standard, but it
+is a different claim from "matches an expert" and we don't make the second one.
 
-we think that's the right target since the problem statement asks for objective
-automation of dvorak and ADT is the operational objective standard. but it's a
-different claim from "matches an expert" and we don't make the second one.
+it has a sharper consequence than we expected. ADT assigns scene type with rules
+on cloud-top temperature, so a logistic model on temperature statistics
+reproduces the labels about as well as a CNN does. cross-validated over all 974
+patches:
 
-current: macro-F1 0.689, accuracy 0.764, vs 0.563 for cold cloud stats and
-0.140 for majority class. per class SHEAR 0.867, CRVBND 0.819, EYE 0.788,
-EMBC 0.636, IRRCDO 0.333.
+| | macro-F1 | 95% interval | accuracy |
+|---|---|---|---|
+| cold-cloud statistics | 0.650 | 0.604 to 0.691 | 0.659 |
+| CNN alone | 0.664 | 0.627 to 0.697 | 0.686 |
+| the two averaged, what serves | 0.710 | 0.672 to 0.741 | 0.721 |
 
-test set is 123 patches so these have wide error bars. IRRCDO is 7 test
-examples and basically not learned, it's the rarest class and the most visually
-ambiguous.
+the CNN does not beat the baseline. what it does is fail on different scenes -
+far better on EYE, worse on SHEAR and IRRCDO - so averaging their probabilities
+beats either alone by 0.029 to 0.065 macro-F1. equal weights, nothing tuned on
+the held-out folds.
 
-an earlier run said 0.723 and it's tempting to quote that instead. it's not
-comparable, the split was a seeded shuffle and the storm list grew between runs
-so every storm got reassigned. splits are hashed now. the lower number is the
-honest one.
+per class, the hybrid: SHEAR 0.82, EYE 0.78, CRVBND 0.73, EMBC 0.69,
+IRRCDO 0.53. IRRCDO is the rarest and most visually ambiguous class, 97 patches
+in the whole archive, and it is still the weakest thing in T2.
+
+an earlier single-split run said 0.689 for the CNN against 0.563 for the
+baseline. it isn't comparable and it was flattering: one split of 123 patches
+moves a long way between draws, which is why everything here is cross-validated
+now.
 
 ## 6. the pipeline inherits its own upstream errors
 
-run from imagery alone the chain detects storms within 47-94 km and puts 11 of
-12 forecast positions inside their stated cone on amphan, tauktae and biparjoy.
+run from imagery alone on amphan, tauktae and biparjoy, the chain finds the
+centre within 39-66 km and puts 11 of 12 forecast positions inside their stated
+cone. intensity from the image came within 5-6 kt on amphan and tauktae and
+19 kt low on biparjoy.
+
 but the forecast is driven by the detected track, not best track, so detection
-scatter propagates into the motion estimate.
+scatter propagates into the motion estimate, and the one position that fell
+outside its cone was the 6 h step on biparjoy, where the cone is only 29 km
+wide and the detection was 39 km off.
 
 two features have no imagery equivalent, central pressure and distance to land.
 they get passed as missing rather than guessed. the boosted trees handle NaN
 natively. guessing would have hidden the gap.
 
-## 7. imagery is coarser than operational
+## 7. the two sensors do not behave the same
 
-GridSat is 8 km 3-hourly, INSAT-3DR is 4 km half-hourly. everything here was
-trained on the coarser one because it needs no authentication.
+GridSat is 8 km and 3-hourly; INSAT-3D, 3DR and 3DS are 4 km and half-hourly,
+and INSAT is what a live system in india would actually read. both are on the
+same grid here, at the same slots, for the same storms, which is what lets the
+difference be measured rather than argued about.
 
-MOSDAC approval has since come through. every number in this file was still
-produced without INSAT and we think that was right, a system that depends on an
-approval you don't control isn't a system.
+it is not small. a model trained only on GridSat, applied to INSAT imagery:
 
-expected gain, stated up front so it can be checked: most on limitation 1, where
-4 km should help small weak systems. least on limitation 2, because section 2
-above shows resolution wasn't the binding constraint there.
+| | on GridSat | on INSAT |
+|---|---|---|
+| T3 intensity, RMSE | 13.50 kt | 15.11 kt, bias -4.7 |
+| T1 detection, F1 on named storms | 0.700 | 0.408 |
+| T2 scene, macro-F1 | 0.722 | 0.601 |
+
+training on both fixes T3 (13.77 kt on INSAT, bias -0.7, and no cost on
+GridSat) and fixes detection (0.675 against 0.408 on INSAT), so both of those
+now train on both sensors. detection keeps two checkpoints rather than one,
+because the joint detector loses 0.07 F1 on GridSat and nothing that works is
+allowed to get worse: GridSat scenes get the GridSat detector, INSAT and live
+scenes get the joint one.
+
+T2 is the one we could not fix, and we now know exactly what it is.
+
+every one of the 505 INSAT patches has a GridSat twin: same storm, same time,
+same ADT label, the same scene through two instruments. scoring on those pairs
+removes scene composition from the comparison and leaves only the sensor, and
+the gap survives it - 0.725 on GridSat against 0.601 on INSAT. the two sensors
+give the same answer on the same scene only 67% of the time, and where they
+disagree GridSat is right two and a half times more often.
+
+the per-class table says what is actually broken:
+
+| class | on GridSat | on INSAT | what the class is |
+|---|---|---|---|
+| EYE | 0.76 | 0.75 | a hole in the cloud |
+| SHEAR | 0.84 | 0.76 | a displaced centre |
+| CRVBND | 0.75 | 0.64 | a band with a shape |
+| EMBC | 0.69 | 0.47 | how cold the overcast is |
+| IRRCDO | 0.58 | 0.39 | how uniform it is |
+
+an eye is a geometric feature and it transfers intact. "is this central dense
+overcast embedded or irregular" is a judgement about brightness temperature and
+texture, and it does not transfer at all. that is not a bug we can normalise
+away, and we tried: standardising each patch by its own channel statistics
+removes the offset between the sensors, and it made both sensors worse (0.722
+to 0.703 on GridSat, 0.601 to 0.560 on INSAT) because it also removes the
+absolute temperature those two classes are defined by. fitting the cold-cloud
+half separately per sensor lifts that half a long way on INSAT, 0.415 to 0.505,
+and moves the blend almost nowhere, 0.601 to 0.608. a per-sensor blend weight
+was worse than the fixed one. training the CNN on both sensors gets 0.612.
+
+four attempts, no fix, so the GridSat-trained hybrid still serves everywhere and
+we say what it costs instead. the scene endpoint now returns the measured F1 for
+the class it just predicted on the sensor it just read, so a live INSAT reading
+of EMBC arrives carrying "0.47 here against 0.69 on GridSat" rather than
+arriving bare. `reports/t2_sensor_paired.json` has the table;
+`src/eval_t2_sensors.py` regenerates it.
 
 ## 8. what we don't claim
 
 - we don't beat IMD. official 24 h guidance for this basin is sharper than our
-  121.9 km. the claim is comparable objective guidance in seconds on a laptop,
+  126 km. the claim is comparable objective guidance in seconds on a laptop,
   with calibrated uncertainty.
+- we don't beat ADT either. on IMD best track the two are level within the
+  interval; ours is unbiased where ADT reads high, and that is the whole of it.
 - the 8.94 kt digital typhoon number is not our T3 result and isn't comparable
   to anything. different basin, sensor and era, and that model served against
-  GridSat reported amphan at 0 kt. it's a pretraining stage. our number is
-  10.95 kt.
+  GridSat reported amphan at 0 kt. it's a pretraining stage.
 - random split results aren't reported anywhere. a random frame split inflates
   our own 24 h intensity by 10-25%. every figure uses storm or season splits.
-- this isn't real time. GridSat is a delayed archive product. live operation
-  needs a real time feed, the models don't change.
+- forecast skill at 72 h is positive on this sample but its interval crosses
+  zero (track -1.4 to +11.3%), so we don't claim skill that far out. through
+  48 h the intervals stay clear of zero.
+- the forecast numbers quoted anywhere in this repo are the ones the API serves,
+  not the best model in the selection table. they differ: the blend scores
+  121.9 km at 24 h, the served ensemble 126.2 km. quoting the better one would
+  mean quoting something nobody can call.
+
+## 9. the alerts do not reach the public, by design
+
+we publish CAP 1.2 alerts on an Atom feed, and push them to subscribed systems
+over HTTP. we do not send anything to a member of the public, and the gap is
+not one we could close by writing more code.
+
+- **it is not ours to issue.** cyclone warnings for the north indian ocean are
+  issued by IMD as RSMC New Delhi. NDMA's SACHET carries them to cell
+  broadcast, location-based SMS and its own app. a prototype that pushed its
+  own cyclone warning to phones would be competing with the warning people are
+  supposed to act on, which is worse than useless in an evacuation.
+- **the channels are closed to us anyway, and for good reasons.** bulk SMS in
+  india needs TRAI DLT registration of the sender and every template; cell
+  broadcast needs telco and NDMA access. neither is available to a student
+  team, and building a mock of them would only prove we can print a message on
+  our own screen.
+- so the design goal is to be *consumable* rather than loud: a feed at a stable
+  URL, CAP an aggregator already parses, and every alert carrying status
+  `Exercise` and a note naming IMD as the real authority. the last mile is
+  already built by people with the mandate to run it. what is missing upstream
+  is faster objective guidance, and that is what we are.
+- **the cadence is measured, not asserted.** `src/replay_alerts.py --suite`
+  replays six storms from 25 kt to 130 kt through the live alerting decision
+  and writes `reports/alert_cadence.json`. it exists because the first two
+  versions of the rule failed it: version one sent on all 25 of amphan's
+  forecast cycles, with reasons like a landfall point that "moved" 472 km
+  between consecutive cycles and Lhasa entering the threat zone - the 72 h cone
+  wobbling, not the storm changing. version two fixed the reasons but still
+  sent on all 22 cycles of a 32 kt system that never became a cyclone, because
+  the cadence read proximity to a coast before severity.
+- the measured result is **2.2 to 4.0 alerts per day** across that range. IMD
+  bulletins 3-hourly in the cyclone stage, so 8/day is the operational
+  benchmark and every storm here sits below it. the ordering is deliberately
+  not monotonic in peak intensity: a landfalling 33 kt depression rates above a
+  super cyclone averaged over a life mostly spent at sea, because the tier
+  reads proximity as well as strength.
+- **that rate is set by the cadence constants, not by the trigger rules.**
+  checking which tier applied to each of the 184 alerts, every storm sits at or
+  just under its tier's ceiling, and material triggers nearly always coincide
+  with a bulletin that was already due. anyone tuning a threshold to change how
+  often alerts go out will be disappointed; the constants at the top of
+  `api/alert_store.py` are the lever.
+- those constants were tuned over four passes against these same six storms.
+  there is no held-out set for them and no cross-validation protecting them, so
+  they are policy choices rather than measurements, and a seventh storm could
+  behave differently.
+- what we still do not have: no digital signature on the CAP documents, so a
+  consumer cannot verify we sent them. real alerting authorities sign with
+  XMLDSig and are listed in the WMO register of alerting authorities. that is a
+  registration problem rather than a coding one, but the absence is real and a
+  production deployment would need it.

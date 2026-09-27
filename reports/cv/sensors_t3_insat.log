@@ -1,0 +1,62 @@
+T3 sensors  mode=insat  gridsat 943  insat 497  insat-era storms 67
+
+fold 0  train 289  val 112  test 305
+  epoch  1  val RMSE  30.53 kt  (32s)  *
+  epoch  2  val RMSE  15.14 kt  (3s)  *
+  epoch  4  val RMSE  14.48 kt  (2s)  *
+  epoch  5  val RMSE  13.43 kt  (3s)  *
+  epoch  9  val RMSE  12.19 kt  (2s)  *
+  epoch 10  val RMSE  13.57 kt  (3s)
+  epoch 15  val RMSE  13.10 kt  (3s)
+  epoch 20  val RMSE  11.89 kt  (3s)  *
+  epoch 25  val RMSE  12.93 kt  (3s)
+  epoch 26  val RMSE  11.40 kt  (3s)  *
+  epoch 30  val RMSE  12.32 kt  (3s)
+  epoch 35  val RMSE  13.31 kt  (3s)
+  early stop at epoch 38
+  fold 0 done (143s)
+
+fold 1  train 266  val 119  test 296
+  epoch  1  val RMSE  20.06 kt  (33s)  *
+  epoch  2  val RMSE  14.24 kt  (2s)  *
+  epoch  3  val RMSE  12.28 kt  (3s)  *
+  epoch  4  val RMSE  12.18 kt  (2s)  *
+  epoch  5  val RMSE  12.57 kt  (3s)
+  epoch  6  val RMSE  12.17 kt  (3s)  *
+  epoch 10  val RMSE  11.23 kt  (3s)  *
+  epoch 15  val RMSE  11.94 kt  (2s)
+  epoch 20  val RMSE  12.06 kt  (3s)
+  early stop at epoch 22
+  fold 1 done (92s)
+
+fold 2  train 280  val 98  test 355
+  epoch  1  val RMSE  10.91 kt  (39s)  *
+  epoch  5  val RMSE  13.35 kt  (2s)
+  epoch 10  val RMSE  11.34 kt  (2s)
+  early stop at epoch 13
+  fold 2 done (71s)
+
+fold 3  train 327  val 72  test 286
+  epoch  1  val RMSE  15.35 kt  (13s)  *
+  epoch  2  val RMSE  15.03 kt  (3s)  *
+  epoch  5  val RMSE  17.96 kt  (3s)
+  epoch 10  val RMSE  14.71 kt  (3s)  *
+  epoch 14  val RMSE  14.67 kt  (2s)  *
+  epoch 15  val RMSE  15.49 kt  (2s)
+  epoch 20  val RMSE  15.68 kt  (3s)
+  epoch 25  val RMSE  15.89 kt  (2s)
+  early stop at epoch 26
+  fold 3 done (78s)
+
+fold 4  train 329  val 96  test 198
+  epoch  1  val RMSE  17.87 kt  (18s)  *
+  epoch  3  val RMSE  16.19 kt  (3s)  *
+  epoch  5  val RMSE  17.49 kt  (3s)
+  epoch 10  val RMSE  16.85 kt  (2s)
+  epoch 15  val RMSE  18.29 kt  (2s)
+  early stop at epoch 15
+  fold 4 done (61s)
+  on gridsat  n=590  RMSE 14.91 [12.63, 17.00]  bias -3.92
+  on insat    n=497  RMSE 14.64 [12.07, 17.03]  bias -2.16
+
+wrote C:\Users\Rishi Pathak\workspace\Projects\Chakravat-cycldtc\reports\cv\sensors_t3_insat.json  (7.5 min)

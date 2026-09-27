@@ -37,6 +37,8 @@ from ingest.ibtracs import NIO_BOX                                  # noqa: E402
 TOKEN_URL = "https://mosdac.gov.in/download_api/gettoken"
 SEARCH_URL = "https://mosdac.gov.in/apios/datasets.json"
 DOWNLOAD_URL = "https://mosdac.gov.in/download_api/download"
+REFRESH_URL = "https://mosdac.gov.in/download_api/refresh-token"
+LOGOUT_URL = "https://mosdac.gov.in/download_api/logout"
 
 DATASET = "3RIMG_L1C_ASIA_MER"
 RAW_DIR = ROOT / "data" / "insat" / "raw"
@@ -51,6 +53,14 @@ CADENCE_HOURS = (0, 3, 6, 9, 12, 15, 18, 21)
 # each slot instead, rejecting it only when it is more than half a cadence step
 # away, which means the slot is genuinely absent from the archive.
 SLOT_TOLERANCE_MIN = 40
+
+# only two of those granules per half hour are the full sector. the rest are
+# rapid-scan strips ISRO runs over an active storm, about 18 degrees of
+# latitude, and nearest-to-the-hour picked a strip every time (:02). that is
+# where the "granule is a strip" finding came from. measured on storm days in
+# 2019, 2020 and 2024 and a quiet day in 2017: 3DR's full sector is always at
+# :15 and :45, 3D and 3DS at :00 and :30, and each covers 9.5S to 43.6N.
+FULL_SCAN_MINUTES = {"3RIMG": (15, 45), "3DIMG": (0, 30), "3SIMG": (0, 30)}
 PAGE_SIZE = 100                # the search endpoint's hard cap per request
 
 _TIME_RE = re.compile(r"_(\d{2}[A-Z]{3}\d{4})_(\d{4})_")
@@ -111,8 +121,17 @@ def entry_time(entry: dict) -> datetime | None:
         return None
 
 
-def subsample(entries: list[dict]) -> list[dict]:
+def is_full_scan(entry: dict) -> bool:
+    # True for a full-sector granule, False for a rapid-scan strip or unknown
+    minutes = FULL_SCAN_MINUTES.get(entry.get("identifier", "")[:5])
+    t = entry_time(entry)
+    return bool(minutes and t and t.minute in minutes)
+
+
+def subsample(entries: list[dict], full_only: bool = True) -> list[dict]:
     # keep the file closest to each 3-hourly slot, within tolerance
+    if full_only:
+        entries = [e for e in entries if is_full_scan(e)]
     dated = [(entry_time(e), e) for e in entries]
     dated = [(t, e) for t, e in dated if t is not None]
     if not dated:
@@ -135,8 +154,13 @@ def subsample(entries: list[dict]) -> list[dict]:
     return [e for _, (_, e) in sorted(best.items())]
 
 
-def get_token(creds_path: Path = DEFAULT_MOSDAC_PATH) -> str:
-    # authenticate
+class TokenExpired(RuntimeError):
+    # the access token lapsed mid-run; refresh it, never log in again
+    pass
+
+
+def get_tokens(creds_path: Path = DEFAULT_MOSDAC_PATH) -> dict:
+    # authenticate once: access token, refresh token, and the username for logout
     creds = load(creds_path)
     user, pwd = require(creds, "username", "password")
     r = requests.post(TOKEN_URL, json={"username": user, "password": pwd},
@@ -151,10 +175,43 @@ def get_token(creds_path: Path = DEFAULT_MOSDAC_PATH) -> str:
             f"MOSDAC auth failed ({r.status_code}): {detail}\n"
             f"NOT retrying - three consecutive failures lock the account for "
             f"an hour. Check the credentials in {creds_path} by hand.")
-    token = r.json().get("access_token")
-    if not token:
+    body = r.json()
+    if not body.get("access_token"):
         raise RuntimeError("auth returned 200 but no access_token")
-    return token
+    return {"access_token": body["access_token"],
+            "refresh_token": body.get("refresh_token"), "username": user}
+
+
+def get_token(creds_path: Path = DEFAULT_MOSDAC_PATH) -> str:
+    return get_tokens(creds_path)["access_token"]
+
+
+# the access token lasts about five minutes - a bulk download died at file 117
+# of 879 with INVALID_TOKEN. MOSDAC's own client (mdapi.py) swaps the refresh
+# token for a new pair when that happens, which needs no password and so can't
+# count toward the lockout. same here.
+def refresh_tokens(tokens: dict) -> dict:
+    if not tokens.get("refresh_token"):
+        raise RuntimeError("no refresh token to renew the session with")
+    r = requests.post(REFRESH_URL, json={"refresh_token": tokens["refresh_token"]},
+                      timeout=60)
+    if r.status_code != 200:
+        raise RuntimeError(f"token refresh failed ({r.status_code}); not logging in again")
+    body = r.json()
+    if not body.get("access_token"):
+        raise RuntimeError("refresh returned 200 but no access_token")
+    return {**tokens, "access_token": body["access_token"],
+            "refresh_token": body.get("refresh_token", tokens["refresh_token"])}
+
+
+def logout(tokens: dict | None) -> None:
+    # end the session, as mdapi.py does; failure here costs nothing
+    if not tokens:
+        return
+    try:
+        requests.post(LOGOUT_URL, json={"username": tokens["username"]}, timeout=10)
+    except requests.RequestException:
+        pass
 
 
 def download(entry: dict, token: str, out_dir: Path = RAW_DIR) -> Path | None:
@@ -172,7 +229,10 @@ def download(entry: dict, token: str, out_dir: Path = RAW_DIR) -> Path | None:
         try:
             detail = r.json()
         except ValueError:
-            detail = r.text[:200]
+            detail = {"text": r.text[:200]}
+        if r.status_code == 401 and isinstance(detail, dict) and \
+                detail.get("code") == "INVALID_TOKEN":
+            raise TokenExpired(f"token expired before {name}")
         raise RuntimeError(f"download failed for {name} ({r.status_code}): {detail}")
 
     tmp = dest.with_suffix(dest.suffix + ".part")

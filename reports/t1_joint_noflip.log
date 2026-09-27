@@ -1,0 +1,67 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+==============================================================================
+CHAKRAVAT T1 - detection and centre-fixing  [cuda]  sources joint  augmentation shift
+==============================================================================
+  gridsat  train    921 scenes  seasons [np.int64(2005), np.int64(2006), np.int64(2007), np.int64(2008), np.int64(2009), np.int64(2010), np.int64(2011), np.int64(2012), np.int64(2013), np.int64(2014), np.int64(2015), np.int64(2016), np.int64(2017), np.int64(2018)]
+  gridsat  val      158 scenes  seasons [np.int64(2019), np.int64(2020)]
+  gridsat  test     354 scenes  seasons [np.int64(2021), np.int64(2022), np.int64(2023), np.int64(2024), np.int64(2025)]
+  insat    train    290 scenes  seasons [np.int64(2014), np.int64(2015), np.int64(2016), np.int64(2017), np.int64(2018)]
+  insat    val      108 scenes  seasons [np.int64(2019), np.int64(2020)]
+  insat    test     314 scenes  seasons [np.int64(2021), np.int64(2022), np.int64(2023), np.int64(2024), np.int64(2025)]
+  training scenes 1,211   validation scenes 266
+
+parameters: 11,410,945
+training ...
+  epoch  1  train  1.532  val  1.394  (23s)  *
+  epoch  2  train  0.960  val  1.144  (19s)  *
+  epoch  3  train  0.732  val  1.174  (22s)
+  epoch  4  train  0.598  val  1.095  (20s)  *
+  epoch  5  train  0.476  val  1.072  (24s)  *
+  epoch  6  train  0.387  val  1.249  (26s)
+  epoch  7  train  0.310  val  1.233  (29s)
+  epoch  8  train  0.255  val  1.223  (37s)
+  epoch  9  train  0.206  val  1.352  (34s)
+  epoch 10  train  0.184  val  1.366  (26s)
+  epoch 11  train  0.152  val  1.592  (33s)
+  epoch 12  train  0.126  val  1.657  (31s)
+  epoch 13  train  0.096  val  1.595  (42s)
+  epoch 14  train  0.076  val  1.690  (25s)
+  epoch 15  train  0.070  val  1.813  (24s)
+  early stop at epoch 15
+
+tuning the peak threshold on validation ...
+    threshold 0.10  F1 0.548  P 0.442  R 0.721
+    threshold 0.15  F1 0.625  P 0.565  R 0.698
+    threshold 0.20  F1 0.630  P 0.619  R 0.641
+    threshold 0.25  F1 0.613  P 0.658  R 0.575
+    threshold 0.30  F1 0.630  P 0.728  R 0.555
+    threshold 0.40  F1 0.627  P 0.841  R 0.500
+    threshold 0.50  F1 0.561  P 0.883  R 0.411
+  chosen: 0.20
+
+evaluating on held-out seasons ...
+  gridsat  all systems F1 0.569 (P 0.580 R 0.558) median fix 73 km  |  34 kt+ F1 0.626 R 0.675 median fix 58 km  |  scenes 354
+  insat    all systems F1 0.533 (P 0.488 R 0.588) median fix 82 km  |  34 kt+ F1 0.675 R 0.776 median fix 77 km  |  scenes 314
+
+==============================================================================
+T1 RESULTS - held-out seasons, GridSat
+==============================================================================
+  scenes 354   storm fixes 389
+
+  coldest-pixel baseline   F1 0.123   median fix 98 km
+  chakravat heatmap        F1 0.569   median fix 73 km
+    precision 0.580  recall 0.558  mean fix 76 km  (threshold 0.20)
+
+  recall by IMD intensity - detection is not equally hard across these
+    D <28      n= 218  recall 0.454  #########
+    DD 28-33   n=  88  recall 0.705  ##############
+    CS 34-47   n=  49  recall 0.633  #############
+    SCS+ 48+   n=  34  recall 0.735  ###############
+
+  scored on Cyclonic Storm and above (34 kt+), which IMD names
+    n=83  F1 0.626  precision 0.583  recall 0.675  median fix 58 km
+
+  targets: F1 >= 0.90, centre-fix <= 40 km
+
+Saved C:\Users\Rishi Pathak\workspace\Projects\Chakravat-cycldtc\artifacts\detector_joint_noflip.pt
+Wrote C:\Users\Rishi Pathak\workspace\Projects\Chakravat-cycldtc\reports\candidates\t1_detection_joint_noflip.json

@@ -26,6 +26,50 @@ BT_MIN, BT_MAX = 180.0, 310.0
 IMAGENET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 IMAGENET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 
+# how a patch is put on the scale the trunk expects.
+#   "imagenet" - fixed constants. absolute brightness reaches the network, which
+#                is what you want when the number being predicted is a
+#                temperature-driven one.
+#   "patch"    - each channel standardised by its own mean and spread, then put
+#                back on the ImageNet scale. removes any constant offset between
+#                two sensors, and removes absolute brightness with it.
+NORMALISATIONS = ("imagenet", "patch")
+
+
+def normalise(a: np.ndarray, mode: str = "imagenet") -> np.ndarray:
+    # a is (channel, row, col), already in [0, 1]
+    if mode == "patch":
+        mu = a.mean(axis=(1, 2), keepdims=True)
+        sd = a.std(axis=(1, 2), keepdims=True)
+        a = (a - mu) / np.maximum(sd, 1e-6)
+        return a * IMAGENET_STD[:, None, None] + IMAGENET_MEAN[:, None, None]
+    if mode != "imagenet":
+        raise ValueError(f"unknown normalisation {mode!r}")
+    return (a - IMAGENET_MEAN[:, None, None]) / IMAGENET_STD[:, None, None]
+
+
+
+AUGMENTATIONS = ("reflect", "rotate")
+
+
+def augment(a: np.ndarray, mode: str = "reflect") -> np.ndarray:
+    # training-time view change for an (H, W, C) patch
+    #
+    # cyclones have no canonical orientation, so a quarter turn is free signal.
+    # "reflect" is the original scheme: it also mirrored half the patches and
+    # paired the mirror with a 180 degree turn, believing that kept the storm
+    # cyclonic. it doesn't. mirror then half turn is a vertical flip, and any
+    # reflection reverses the sense of rotation, so half the training storms
+    # spun the southern hemisphere way. "rotate" keeps quarter turns only,
+    # which never change the spin. both stay selectable so old runs reproduce.
+    if mode not in AUGMENTATIONS:
+        raise ValueError(f"unknown augmentation {mode!r}")
+    r = np.random.randint(4)
+    if r:
+        a = np.rot90(a, r, axes=(0, 1))
+    if mode == "reflect" and np.random.rand() < 0.5:
+        a = np.rot90(a[:, ::-1], 2, axes=(0, 1))
+    return a
 
 
 def gridsat_path(root: Path, when: pd.Timestamp) -> Path:
@@ -112,6 +156,12 @@ def build_cache(adt_csv: Path, gridsat_root: Path, out_dir: Path,
     np.save(out_dir / "patches.npy", arr)
     meta = pd.DataFrame(rows)
     meta.to_csv(out_dir / "patches.csv", index=False)
+    # what the build saw, so a later run can tell "more imagery arrived" from
+    # "the same scenes, minus the few that always sit too near the edge"
+    import json
+    (out_dir / "build.json").write_text(json.dumps(
+        {"with_imagery": int(len(arr) + edge), "built": int(len(arr)),
+         "skipped_edge": int(edge), "skipped_no_imagery": int(missing)}, indent=1))
     print(f"  built {len(arr):,} patches  {arr.nbytes/1e6:.0f} MB")
     print(f"  skipped: {missing:,} without imagery, {edge:,} too near the edge")
     return meta
@@ -138,9 +188,11 @@ def storm_split(meta: pd.DataFrame, val_frac: float = 0.15,
 
 class ScenePatches(Dataset):
     def __init__(self, patches: np.ndarray, meta: pd.DataFrame,
-                 idx: np.ndarray, classes: list[str], train: bool = False):
+                 idx: np.ndarray, classes: list[str], train: bool = False,
+                 aug: str = "reflect", norm: str = "imagenet"):
         self.patches, self.meta, self.idx = patches, meta, idx
-        self.classes, self.train = classes, train
+        self.classes, self.train, self.aug = classes, train, aug
+        self.norm = norm
         self.lookup = {c: i for i, c in enumerate(classes)}
 
     def __len__(self) -> int:
@@ -150,15 +202,8 @@ class ScenePatches(Dataset):
         i = self.idx[k]
         a = self.patches[i].astype(np.float32) / 255.0
         if self.train:
-            # cyclones have no canonical orientation, so rotation is free
-            # signal. A plain mirror would reverse the sense of rotation, so
-            # it is paired with a 180-degree turn to keep the storm cyclonic.
-            r = np.random.randint(4)
-            if r:
-                a = np.rot90(a, r, axes=(0, 1))
-            if np.random.rand() < 0.5:
-                a = np.rot90(a[:, ::-1], 2, axes=(0, 1))
+            a = augment(a, self.aug)
         a = np.ascontiguousarray(a.transpose(2, 0, 1))
-        a = (a - IMAGENET_MEAN[:, None, None]) / IMAGENET_STD[:, None, None]
+        a = normalise(a, self.norm)
         y = self.lookup[self.meta.iloc[i]["scene"]]
         return torch.from_numpy(a), torch.tensor(y, dtype=torch.long)

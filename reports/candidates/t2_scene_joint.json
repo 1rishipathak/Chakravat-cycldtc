@@ -1,0 +1,54 @@
+{
+  "backbone": "convnext_tiny",
+  "classes": [
+    "EYE",
+    "CRVBND",
+    "SHEAR",
+    "EMBC",
+    "IRRCDO"
+  ],
+  "augmentation": "reflect",
+  "sources": "joint",
+  "by_sensor": {
+    "gridsat": {
+      "n": 123,
+      "hybrid_macro_f1": 0.6945519265885399,
+      "accuracy": 0.7235772357723578
+    },
+    "insat": {
+      "n": 64,
+      "hybrid_macro_f1": 0.3985155195681511,
+      "accuracy": 0.46875
+    }
+  },
+  "patches": 1479,
+  "storms": 114,
+  "majority": {
+    "macro_f1": 0.14983277591973243,
+    "accuracy": 0.5989304812834224
+  },
+  "cold_cloud_stats": {
+    "macro_f1": 0.4100726636394839,
+    "accuracy": 0.48663101604278075
+  },
+  "cnn": {
+    "macro_f1": 0.6082132074669387,
+    "accuracy": 0.6363636363636364
+  },
+  "stats_logistic": {
+    "macro_f1": 0.4452509691029746
+  },
+  "hybrid": {
+    "macro_f1": 0.6001640684852502,
+    "accuracy": 0.6363636363636364,
+    "blend": 0.5,
+    "per_class_f1": {
+      "EYE": 0.7999999999999999,
+      "CRVBND": 0.659217877094972,
+      "SHEAR": 0.6779661016949152,
+      "EMBC": 0.5000000000000001,
+      "IRRCDO": 0.36363636363636365
+    }
+  },
+  "served": "hybrid"
+}

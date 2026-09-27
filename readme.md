@@ -39,7 +39,7 @@ that, but you'll need the ~9 GB of source data first via `src/ingest/`.
 ## building a different frontend
 
 `fixtures/` is the contract. it has a real captured response from every
-endpoint, 15 files and 70 KB total, so the whole UI can be built with no
+endpoint, 23 files and 142 KB total, so the whole UI can be built with no
 backend, no dataset and no GPU. the filenames say which endpoint each came
 from:
 
@@ -49,7 +49,10 @@ from:
 | `storm_amphan.json` | `/api/storm/{sid}` |
 | `forecast_amphan_05/067/09.json` | `/api/storm/{sid}/forecast?level=`, all three levels |
 | `landfall_lands.json`, `landfall_none.json` | `/api/storm/{sid}/landfall`, both branches |
-| `bulletin_amphan.txt` | `/api/storm/{sid}/bulletin`, plain text not json |
+| `bulletin_amphan.txt`, `bulletin_amphan_hi.txt` | `/api/storm/{sid}/bulletin?lang=`, plain text not json |
+| `exposure_amphan.json` | `/api/storm/{sid}/exposure`, places in the threat zone |
+| `cap_amphan.xml` | `/api/storm/{sid}/cap.xml`, a CAP 1.2 alert |
+| `live_status.json` | `/api/live/status`, what the live INSAT feed holds |
 | `scene_amphan.json`, `intensity_amphan.json` | T2 and T3 on one patch |
 | `pipeline.json` | `/api/vision/pipeline`, the whole chain |
 | `vision_status.json`, `scene_meta.json`, `skill.json` | status, scene bounds, all metrics |
@@ -65,33 +68,67 @@ CORS is already open, so a dev server on another port works without a proxy.
 
 ## results
 
-| task | ours | baseline it beats |
+| task | ours | what it is measured against |
 |---|---|---|
 | T1 detection, all systems | F1 0.586, 74 km fix | coldest pixel: F1 0.123, 98 km |
 | T1 detection, 34 kt and up | F1 0.700, recall 0.759, 71 km | - |
-| T2 dvorak scene | macro-F1 0.689, acc 0.764 | cold cloud stats: 0.563 |
-| T3 intensity from image | RMSE 10.95 kt, MAE 7.36 | cold cloud stats: 21.06 kt |
-| T4 track + intensity @ 24 h | 121.9 km / 6.92 kt | CLIPER: 142.1 km / 9.04 kt |
+| T2 dvorak scene | macro-F1 0.710 (0.672-0.741) | cold cloud stats: 0.650, CNN alone: 0.664 |
+| T3 intensity from image | RMSE 12.96 kt (11.5-14.4) | ADT on the same scenes: 13.95 kt |
+| T4 track + intensity @ 24 h | 126 km / 7.3 kt | CLIPER: 142 km / 9.0 kt |
+
+two things about that table.
+
+**the intervals are the point.** T2 and T3 are scored by 5-fold cross-validation
+grouped by storm - every patch predicted by a model that never saw its storm -
+and every number carries a 95% interval from resampling whole storms. a single
+held-out split of 14 storms moves further between draws than most of the
+differences anyone argues about, which we learned by believing one: it had said
+T2 beat its baseline 0.689 to 0.563, and the truth is 0.664 to 0.650, a tie.
+what serves now is the average of the two, which beats either.
+
+**T3's truth is IMD best track**, interpolated to the scene time. it used to be
+ADT's own estimate, which is a 1-minute wind sitting 7.6 kt above IMD's
+3-minute one. ADT is now the benchmark rather than the target, and on it the
+two are level while ours is the unbiased one.
 
 T1 gets reported twice on purpose. the pooled number includes depressions that
 often have no organised signature in infrared at all. the 34 kt+ number is the
 storms IMD actually names and warns on. neither one alone is the honest answer.
+
+the forecast numbers are the ones the API serves, not the best row in the
+selection table, and they carry intervals too: +11.2% on track at 24 h
+(+8.3 to +14.4) and +19.5% on intensity (+10.0 to +27.3). at 72 h the interval
+crosses zero, so we don't claim skill that far out.
 
 ### forecast skill vs CLIPER
 
 CLIPER is climatology plus persistence, it's the benchmark operational centres
 score skill against. beating it is the thing that matters, not beating zero.
 
-| lead | track | ours | skill | intensity | ours | skill |
-|---|---|---|---|---|---|---|
-| 6 h | 35.6 km | 33.6 | +5.7% | 3.06 kt | 2.78 | +9.2% |
-| 12 h | 69.1 km | 60.2 | +12.8% | 5.37 kt | 4.50 | +16.3% |
-| 24 h | 142.1 km | 121.9 | +14.2% | 9.04 kt | 6.92 | +23.5% |
-| 48 h | 285.6 km | 254.0 | +11.1% | 13.96 kt | 11.89 | +14.9% |
-| 72 h | 405.2 km | 379.1 | +6.4% | 16.42 kt | 15.01 | +8.6% |
+| lead | CLIPER | ours | skill | 95% interval |
+|---|---|---|---|---|
+| 6 h | 35.6 km | 33.5 | +5.6% | +4.1 to +7.2% |
+| 12 h | 69.1 km | 62.2 | +9.9% | +7.8 to +12.4% |
+| 24 h | 142.1 km | 126.2 | +11.2% | +8.3 to +14.4% |
+| 48 h | 285.6 km | 259.2 | +9.2% | +4.9 to +13.8% |
+| 72 h | 406.5 km | 388.3 | +4.5% | -1.4 to +11.3% |
 
-skill is positive everywhere and peaks at 24 h, which is the lead time an
-evacuation call actually gets made on.
+| lead | CLIPER | ours | skill | 95% interval |
+|---|---|---|---|---|
+| 6 h | 3.05 kt | 2.71 | +11.4% | +5.0 to +16.5% |
+| 12 h | 5.37 kt | 4.31 | +19.8% | +12.9 to +25.2% |
+| 24 h | 9.03 kt | 7.26 | +19.5% | +10.0 to +27.3% |
+| 48 h | 13.92 kt | 11.90 | +14.5% | +5.0 to +22.4% |
+| 72 h | 16.41 kt | 15.22 | +7.3% | -1.4 to +15.4% |
+
+skill peaks at 24 h, which is the lead time an evacuation call actually gets
+made on, and the interval stays clear of zero through 48 h. at 72 h it doesn't,
+so that row is a number we have rather than a claim we make.
+
+these are the forecasts the API serves - the ensemble mean. the selection table
+in `reports/final_results.json` has a blend that scores 121.9 km at 24 h, but
+nothing calls it, and quoting a number nobody can reproduce through the API
+would be quoting the wrong thing.
 
 ### cone coverage
 
@@ -133,16 +170,24 @@ a 10% improvement on the base rate.
 |---|---|---|
 | GridSat-B1 (NOAA) | global IR + water vapour, 8 km, 3-hourly | no auth |
 | CIMSS ADT archive | dvorak scene labels, 8212 of them | no auth |
-| IBTrACS | best track, our ground truth | no auth |
+| IBTrACS | best track, our ground truth and the wind radii | no auth |
 | ERA5 (copernicus) | shear, humidity, SST, steering flow | free account |
 | digital typhoon | pretraining frames for T3 | kaggle account |
-| INSAT-3DR (MOSDAC) | 4 km imagery | approved account |
+| INSAT-3D and 3DR (MOSDAC) | 1,207 full-sector scans, 2014-2025, on our grid | approved account |
+| INSAT-3DS (MOSDAC) | the live feed, a scan every 3 h about an hour behind | approved account |
+| natural earth | coastline, india point-of-view boundaries, populated places | no auth |
 
-MOSDAC approval came through late and it turned out we never needed it. GridSat
-and the ADT archive cover T1 and T2 with no authentication at all, so every
-number above was produced without INSAT. `src/verify_insat.py` shows INSAT
-imagery running through the trained models unretrained, which is the point:
-switching sensors is a data loader change, not a rebuild.
+the order matters. everything was built on GridSat first, because it needs no
+approval and a system that depends on one you don't control isn't a system.
+MOSDAC access then came through, and `src/ingest/insat_archive.py` mirrors the
+INSAT archive onto the same grid at the same 3-hourly slots, so the two sensors
+can be compared storm for storm. T2 and T3 now train on both; detection is
+still being decided.
+
+the one thing to know about the INSAT archive: only two granules an hour are
+the full sector. the rest are rapid-scan strips ISRO runs over an active storm,
+and picking the granule nearest the hour gets you a strip every time. 3DR scans
+the sector at :15 and :45, 3D and 3DS at :00 and :30.
 
 see attribution.md for licences. ERA5 has one that has to be reproduced word
 for word.
@@ -152,9 +197,12 @@ for word.
 read limitations.md, it's the honest list. short version:
 
 - detection misses about 6 in 10 depressions
-- T3 still reads severe storms ~12 kt low in the 64-89 kt band
+- intensity still reads the strongest storms low: -8 kt at 64-90, -13 at 90+
+- scene typing is much weaker on INSAT imagery (0.61) than on GridSat (0.72),
+  and the live feed is INSAT
 - RI is barely skilful
-- IRRCDO scene class is basically not learned, 7 test examples
+- IRRCDO is the weakest scene class, F1 0.53
+- 72 h forecast skill is positive but its interval crosses zero
 - test sets are small because the basin only makes ~5 storms a year
 
 ## a few things worth knowing
@@ -176,13 +224,16 @@ to 266 storms and moved RI skill from +0.055 to +0.096.
 ## layout
 
 ```
-src/ingest/     downloading and parsing each data source
+src/ingest/     downloading and parsing each data source, INSAT archive and live
 src/features/   feature engineering, ERA5 environment
-src/models/     CLIPER, residual booster, ensemble, RI, landfall, coastline
-src/vision/     patch extraction, detection dataset
+src/models/     CLIPER, residual booster, ensemble, RI, landfall, coastline, impact
+src/vision/     patch extraction, detection dataset, best-track crosswalk
 src/train_*.py  one script per model
+src/cv_*.py     cross-validation by storm: model choices are made here
+src/eval/       metrics, splits, confidence intervals, headline_numbers.py
 src/pipeline.py imagery in, forecasts out, the whole chain
-api/            fastapi server
-web/            dashboard
+src/smoke_api.py   hits every endpoint and checks the shape of the answer
+api/            fastapi server, alerts and delivery
+web/            dashboard and live alert page
 reports/        every verified number, as json
 ```

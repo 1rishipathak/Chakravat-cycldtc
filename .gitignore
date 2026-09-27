@@ -10,6 +10,7 @@ data/*
 !data/static/
 data/static/*
 !data/static/coastline_nio.geojson
+!data/static/places_nio.geojson
 
 # Trained weights. Regenerate with the train_*.py scripts; the reports/ JSON
 # files carry the verified numbers and are committed.

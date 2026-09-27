@@ -7,158 +7,167 @@ keep the current artifact until a replacement beats it on the same held out
 set, and if a regression survives it goes in limitations.md rather than
 getting reverted quietly.
 
-| # | what | why now | effort |
-|---|---|---|---|
-| 1 | landfall land mask | done, see below | - |
-| 2 | INSAT-3D fine tune | MOSDAC unblocked it | 1-2 days |
-| ~~3~~ | ~~RI scene features~~ | not viable, measured | - |
-| ~~4~~ | ~~T2 IRRCDO~~ | not measurable, measured | - |
+| # | what | state |
+|---|---|---|
+| 1 | landfall land mask | done |
+| 2 | INSAT, archive and live | done |
+| 3 | say what the numbers actually measure | done |
+| ~~4~~ | ~~RI scene features~~ | not viable, measured |
+| ~~5~~ | ~~T2 IRRCDO by class balancing~~ | not measurable; fixed another way |
+| 6 | before submission | below |
 
 ## 1. landfall land mask - done
 
 the model regressed a landfall lat/lon with no coastline in its inputs, so
 nothing pulled the answer onto land. 256 km mean error, worse than the 122 km
-24 h track error, which is the diagnostic.
+24 h track error, which is the diagnostic. fixed by taking the point where the
+forecast track crosses the coastline, which is what landfall means: 184 km
+mean, 114 km median, timing unchanged at 9.0 h.
 
-three options were on the table:
+## 2. INSAT, archive and live - done
 
-- snap the prediction to the nearest coast point. cheap, fixes "not on land"
-  but not "wrong bit of coast", which is most of the error.
-- reparameterise the target as distance along the coastline. principled but
-  needs a full retrain.
-- intersect the forecast track with the coastline. landfall *is* where the
-  track meets land, so this inherits the track forecast's 122 km error instead
-  of accumulating a separate one, and it removes a model rather than adding
-  one.
+### what we got wrong first
 
-went with the third, with snapping as fallback when the track never reaches
-land inside 72 h.
+we believed an INSAT granule was a latitude strip that moved between campaigns,
+and designed around it. the strips are real - they are the rapid-scan sectors
+ISRO runs over an active storm - but the full sector is scanned every half
+hour, 3DR at :15 and :45, 3D and 3DS at :00 and :30, covering 9.5S to 43.6N.
+picking the granule nearest the hour picked a strip every time. that one line
+is what made the whole archive usable.
 
-results: 256 km to 184 km mean, 211 km to 114 km median. timing stayed at
-9.04 h so nothing regressed. coastline is natural earth 1:10m clipped to the
-basin and vendored at `data/static/coastline_nio.geojson`, 550 KB, so the demo
-never needs a network for it.
+### what exists now
 
-## 2. INSAT-3D fine tune
+1,207 full-sector scans, INSAT-3D 2014-2016 and 3DR 2017-2025, regridded onto
+the GridSat grid at the same 3-hourly slots with the same file naming, so every
+model and endpoint reads either sensor unchanged. 505 storm patches paired with
+their GridSat twins. `src/ingest/insat_archive.py` builds the archive from a
+manifest and survives token expiry, `src/ingest/insat_grid.py` regrids it, and
+`src/ingest/insat_live.py` keeps the last 48 h of INSAT-3DS on disk for the
+live tab.
 
-### what we already proved
+### what it changed
 
-`src/ingest/insat.py` authenticates against MOSDAC and pulls granules. one auth
-attempt only, no retries, because three consecutive failures locks the account
-for an hour.
-
-`src/ingest/insat_regrid.py` puts a granule on the GridSat grid so downstream
-code can't tell the difference. `src/verify_insat.py` runs the existing models
-on INSAT imagery with no retraining and gets sane numbers on amphan.
-
-channels map straight across, TIR1 is our IR and WV is our WV, so the three
-channel input carries over unchanged. this is a data problem not a modelling
-one.
-
-### two traps in the data
-
-**count 1023 is a fill value and the lookup table is inverted.** LUT[0] is
-340.1 K and LUT[1023] is 179.9 K, so no-data converts to the *coldest*
-temperature. about 70% of a granule is fill. left alone the detector would see
-a basin sized sheet of deep convection and find storms everywhere, with a
-perfectly healthy loss curve. found this by checking a known clear sky point
-rather than trusting the sector mean.
-
-**a granule is a strip, not the whole sector.** typically 17-19 degrees of
-latitude, and ISRO moves it between campaigns. we measured 2.2-19.7N one
-morning in may 2020 and 7.7-26.1N that same afternoon. the catalogue doesn't
-expose it so you have to read it off the array.
-
-### budget
-
-| | named storms only | everything |
+| | GridSat-trained | trained on both |
 |---|---|---|
-| storm days | 189 | 477 |
-| granules at ~5 usable slots/day | ~945 | ~2385 |
-| download | ~6 GB | ~15 GB |
-| transfer at 6.6 MB/s | 15-25 min | 40-60 min |
+| T3 on GridSat | 13.16 kt | 12.96 kt |
+| T3 on INSAT | 15.11 kt, bias -4.7 | 13.77 kt, bias -0.7 |
+| T1 on GridSat, named F1 | 0.700 | 0.626 |
+| T1 on INSAT, named F1 | 0.408 | 0.675 |
+| T2 on GridSat | 0.722 | 0.713 |
+| T2 on INSAT | 0.601 | 0.612 |
 
-MOSDAC caps at 5000 files/day/user so either fits. add ~40 min to rebuild the
-patch cache and 3-6 h to fine tune the three models. call it a working day.
+so: T3 trains on both and serves everywhere. T1 keeps two checkpoints, because
+the joint detector is much better on INSAT and clearly worse on GridSat, and
+the imagery source decides which one answers. T2 stays GridSat-trained because
+joint training moved it nowhere on either sensor.
 
-### the actual risk
+## 3. say what the numbers actually measure - done
 
-T2's training data halves. only 483 of 974 patches are in the INSAT era and
-every class roughly halves, CRVBND 377 to 185, EYE 141 to 77, IRRCDO 97 to 54.
-T2 is already sensitive to dataset changes (that's the 0.723 to 0.689 episode)
-so fine tuning on half the data at higher resolution is not obviously a win.
+T3 had been trained and scored against ADT's own wind estimate while calling it
+best track. the whole story is in the engineering log; the short version is that
+ADT reports a 1-minute wind and IMD a 3-minute one, 7.6 kt apart, and the model
+had learned ADT's scale.
 
-T3's expected gain is low because we already proved resolution wasn't its
-binding constraint, calibration was.
+that led to the rest of it. single held-out splits of 14 storms turned out to
+move further between draws than the differences we were reading off them, so T2
+and T3 are now scored by 5-fold cross-validation grouped by storm, and every
+headline number carries a 95% interval from resampling whole storms. that is
+also how we learned the T2 CNN had never beaten its physics baseline, and that
+averaging the two beats both.
 
-and 10-20% of fixes fall outside whatever strip that year's campaign used.
+## 4. RI scene features - not viable
 
-### rule
+the RI model never sees the satellite scene even though a CDO tightening into
+an eye is what intensification looks like. it cannot be done on this data:
+scene patches are keyed by ADT storm id at ADT analysis times and the forecast
+dataset by IBTrACS SID at synoptic hours, and even with a perfect crosswalk the
+974 patches would carry about six positive RI cases in test. six cases cannot
+move a brier skill score. revisit if the patch archive grows an order of
+magnitude.
 
-keep the GridSat checkpoints. only serve an INSAT model where it wins on a
-common held out set. if it wins on some tasks and loses on others, serve per
-task winners and say so.
+## 5. T2 IRRCDO - not measurable as planned, improved anyway
 
-### the part that actually matters for a demo
+the plan was class-balanced sampling scored on macro-F1, and with 7 test
+examples we could have trained it but not honestly claimed it improved
+anything. cross-validation gave the class 97 examples to be measured on, and
+the hybrid took it from 0.33 to 0.53 without anyone targeting it: the
+cold-cloud half is better at IRRCDO than the CNN is.
 
-INSAT-3DR is a live feed. right now the honest answer to "could this run
-tomorrow" is no, because GridSat is a delayed archive. one recent scene through
-the pipeline changes that answer. worth more to a panel than a decimal place.
+## 6. before submission
 
-## 3. RI scene features - not viable
+- ~~rebuild the deck from `reports/` and export the PDF~~ done. six slides,
+  every figure read from a report file, rendered and checked for overflow.
+- ~~check every number in the deck against `src/eval/headline_numbers.py`~~ done,
+  and it found five stale figures and a bug. the arbiter was itself reporting a
+  model that no longer serves; both are fixed and the story is in the log.
+- retake the deck screenshot. the dashboard now displays IST and the shot on
+  slide 2 still shows UTC, so the caption ("19 May 2020 00:00 UTC") and the
+  image have to move together. `Chakravat-deck/shoot.py` points at port 8010.
+- a short demo video, since the panel sees a PDF and not a running system
+- freeze, then rerun `src/smoke_api.py` and `src/eval/headline_numbers.py` one
+  last time
 
-idea was fine. the RI model only sees best track and ERA5, never the satellite
-scene, even though a CDO tightening into an eye is what intensification looks
-like. adding the T2 scene probabilities should help.
+## 7. the last eleven days
 
-it can't be done on this data, for two reasons i measured instead of guessing.
+picked over attempting microwave imagery, which stays in "not doing" below: six
+things that can each be finished and measured, rather than one that might not
+land at all.
 
-**no crosswalk between the datasets.** scene patches are keyed by ADT storm id
-(`200501B`) at ADT analysis times like 01:00 and 11:30. the forecast dataset
-uses IBTrACS SIDs at synoptic hours. exact key overlap is zero rows. `vmax_kt`
-in patches.csv is ADT's own estimate, not a best track join, so there's nothing
-to reuse.
+| | what | why | state |
+|---|---|---|---|
+| 1 | scene typing on INSAT | 0.61 against 0.72 on GridSat, and INSAT is the live feed | not fixed, diagnosed |
+| 2 | depression recall | we miss 6 in 10, and a second operating point costs no retraining | done |
+| 3 | prediction interval on T3 | the severe under-read is invisible in a point estimate | done |
+| 4 | why the forecast said that | T2 and T3 have Grad-CAM, T4 had nothing | done |
+| 5 | SMS-length alert | CAP goes to SACHET and SACHET sends SMS | done |
+| 6 | the live loop actually running | the pipeline on a schedule, storm list maintained | |
 
-**even a perfect crosswalk leaves nothing to learn from:**
+### 1 is closed as a measured failure
 
-| | |
-|---|---|
-| RI positives in the whole dataset | 162 (105 train / 28 test) |
-| GridSat patches, hard ceiling on rows that could carry the feature | 974 = 18% |
-| RI positives among those at the 3.79% base rate | ~36 |
-| split train/test | ~23 train, ~6 test |
+four attempts, none promoted: fitting the cold-cloud half per sensor, adding a
+sensor indicator, per-sensor blend weights, and standardising each patch by its
+own channel statistics. the last made both sensors worse, which was the clue.
+scoring the 505 exactly paired scenes says the gap is the sensor and it lives in
+two classes - EMBC 0.69 to 0.47 and IRRCDO 0.58 to 0.39 - while EYE is untouched
+at 0.76 against 0.75. a geometric feature transfers between instruments and a
+temperature-texture judgement does not.
 
-six positive test cases can't move a brier skill score in any meaningful way.
-not attempted. revisit if the patch archive ever grows an order of magnitude.
+what shipped instead is honesty at the point of use: `/scene` returns the
+measured F1 for the class it just predicted on the sensor it just read, and the
+dashboard flags the weak ones. `src/eval_t2_sensors.py` and
+`src/eval_t2_stat_variants.py` regenerate every number above.
 
-## 4. T2 IRRCDO - not measurable
+### 2 and 3 both turned into "say what it costs"
 
-F1 0.333, rarest and most ambiguous class. plan was class balanced sampling
-scored on macro-F1.
+the detector gets a second, more sensitive operating point chosen on validation
+by F2, served as `tier=watch`: weak-system recall 0.480 to 0.529 for twice the
+false alarms. the finding underneath it is the control run - at threshold 0.05,
+eight times the false alarm rate, four in ten weak systems are still missed, so
+they are not behind the threshold and no amount of sensitivity will find them.
 
-the counts kill the verification, not the training:
-
-| split | n | IRRCDO |
-|---|---|---|
-| train | 718 | 82 |
-| test | 123 | 7 |
-
-with 7 test examples, moving F1 from 0.333 to 0.5 means getting one more patch
-right. we could train it, we couldn't honestly claim it improved anything. not
-attempted.
+T3 now serves an interval fitted on out-of-fold residuals and verified like the
+cone: 0.500, 0.651 and 0.875 measured against 0.50, 0.67 and 0.90 targets, and
+uniform across bands. binned on the prediction rather than the truth, which is
+the only honest way to condition it and also the reason the number differs from
+the -12.7 kt in limitations.
 
 ## not doing
 
 - **more GridSat years.** 4x the data moved T1 F1 from 0.461 to 0.518. sample
   count isn't the constraint.
-- **chasing the 24 h track target.** 121.9 km against a 120 km goal, down from
-  141 before ERA5. closing 2 km with more capacity on 183 training storms is
-  overfitting.
+- **chasing the 24 h track target.** 126 km against a 120 km goal. closing 6 km
+  with more capacity on 183 training storms is overfitting.
 - **beating IMD.** not the claim.
+- **microwave imagery.** 89 GHz sees the eyewall through the cirrus that hides
+  it from infrared, and it is the obvious next sensor for intensity. it is also
+  a new dataset, a new geometry and a new set of failure modes, and there are
+  twelve days. it is the first thing i would do next.
 
 ## what this leaves
 
-INSAT is the only remaining work with real headroom, and both of the dead items
-above point the same way: the constraint across this project is data volume now,
-not modelling. that's a better closing argument than two unmeasurable
-experiments would have been.
+the honest closing position is that the constraint is not modelling capacity.
+it is how much of this basin has been observed at all: about five named storms a
+year, 943 labelled scenes, 51 held-out storms. that is why the last week went
+into measuring what we have properly - cross-validation, intervals, a benchmark
+against ADT, the same storms through two sensors - rather than into another
+model.

@@ -78,11 +78,12 @@ class BasinScenes(Dataset):
     def __init__(self, index: pd.DataFrame, track: pd.DataFrame,
                  root: Path, train: bool = False,
                  cache: np.ndarray | None = None,
-                 cache_offset: int = 0):
+                 cache_offset: int = 0, aug: str = "flip"):
         self.index = index.reset_index(drop=True)
         self.track = track
         self.root = Path(root)
         self.train = train
+        self.aug = aug
         self.cache = cache
         self.cache_offset = cache_offset
         self._geo: tuple[np.ndarray, np.ndarray] | None = None
@@ -154,7 +155,7 @@ class BasinScenes(Dataset):
         heat_t = torch.from_numpy(heat).unsqueeze(0)
         w_t = torch.from_numpy(wmap).unsqueeze(0)
         if self.train:
-            t, heat_t, w_t = self._augment(t, heat_t, w_t)
+            t, heat_t, w_t = self._augment(t, heat_t, w_t, flips=(self.aug == "flip"))
         return t, heat_t, w_t, torch.tensor(len(targets), dtype=torch.long)
 
     @staticmethod
@@ -175,12 +176,17 @@ class BasinScenes(Dataset):
         sub_i[closer] = g[closer]
 
     @staticmethod
-    def _augment(img: torch.Tensor, heat: torch.Tensor, wmap: torch.Tensor):
+    def _augment(img: torch.Tensor, heat: torch.Tensor, wmap: torch.Tensor,
+                 flips: bool = True):
         # flips, shifts and brightness jitter, applied to image and target alike
-        if torch.rand(1).item() < 0.5:
+        #
+        # a flip of a whole basin scene is a reflection: every storm spins the
+        # southern hemisphere way and land ends up where sea was. flips=False
+        # ("shift" augmentation) keeps shifts and jitter only.
+        if flips and torch.rand(1).item() < 0.5:
             img, heat, wmap = (torch.flip(img, [-1]), torch.flip(heat, [-1]),
                                torch.flip(wmap, [-1]))
-        if torch.rand(1).item() < 0.5:
+        if flips and torch.rand(1).item() < 0.5:
             img, heat, wmap = (torch.flip(img, [-2]), torch.flip(heat, [-2]),
                                torch.flip(wmap, [-2]))
 

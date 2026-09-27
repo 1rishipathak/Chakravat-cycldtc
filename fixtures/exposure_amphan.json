@@ -1,0 +1,964 @@
+{
+  "sid": "2020136N10088",
+  "issued_at": "2020-05-19 00:00:00",
+  "cone_level": 0.67,
+  "places": [
+    {
+      "name": "Puri",
+      "country": "India",
+      "region": "Orissa",
+      "population": 201026,
+      "lat": 19.82,
+      "lon": 85.9,
+      "first_inside_h": 14.5,
+      "closest_approach_km": 266
+    },
+    {
+      "name": "Bhubaneswar",
+      "country": "India",
+      "region": "Orissa",
+      "population": 844000,
+      "lat": 20.272,
+      "lon": 85.825,
+      "first_inside_h": 17.0,
+      "closest_approach_km": 293
+    },
+    {
+      "name": "Cuttack",
+      "country": "India",
+      "region": "Orissa",
+      "population": 580000,
+      "lat": 20.47,
+      "lon": 85.89,
+      "first_inside_h": 18.0,
+      "closest_approach_km": 295
+    },
+    {
+      "name": "Brahmapur",
+      "country": "India",
+      "region": "Orissa",
+      "population": 324726,
+      "lat": 19.32,
+      "lon": 84.8,
+      "first_inside_h": 19.5,
+      "closest_approach_km": 350
+    },
+    {
+      "name": "Haldia",
+      "country": "India",
+      "region": "West Bengal",
+      "population": 200762,
+      "lat": 22.026,
+      "lon": 88.058,
+      "first_inside_h": 21.5,
+      "closest_approach_km": 156
+    },
+    {
+      "name": "Kolkata",
+      "country": "India",
+      "region": "West Bengal",
+      "population": 14787000,
+      "lat": 22.497,
+      "lon": 88.323,
+      "first_inside_h": 23.5,
+      "closest_approach_km": 152
+    },
+    {
+      "name": "Medinipur",
+      "country": "India",
+      "region": "West Bengal",
+      "population": 169127,
+      "lat": 22.33,
+      "lon": 87.15,
+      "first_inside_h": 23.5,
+      "closest_approach_km": 256
+    },
+    {
+      "name": "Haora",
+      "country": "India",
+      "region": "West Bengal",
+      "population": 4841638,
+      "lat": 22.58,
+      "lon": 88.33,
+      "first_inside_h": 24.0,
+      "closest_approach_km": 155
+    },
+    {
+      "name": "Bhatpara",
+      "country": "India",
+      "region": "West Bengal",
+      "population": 483129,
+      "lat": 22.85,
+      "lon": 88.52,
+      "first_inside_h": 25.0,
+      "closest_approach_km": 148
+    },
+    {
+      "name": "Khulna",
+      "country": "Bangladesh",
+      "region": "Khulna",
+      "population": 1553000,
+      "lat": 22.842,
+      "lon": 89.558,
+      "first_inside_h": 26.0,
+      "closest_approach_km": 50
+    },
+    {
+      "name": "Barishal",
+      "country": "Bangladesh",
+      "region": "Barisal",
+      "population": 202242,
+      "lat": 22.7,
+      "lon": 90.375,
+      "first_inside_h": 26.0,
+      "closest_approach_km": 29
+    },
+    {
+      "name": "Barddhaman",
+      "country": "India",
+      "region": "West Bengal",
+      "population": 301725,
+      "lat": 23.25,
+      "lon": 87.865,
+      "first_inside_h": 27.0,
+      "closest_approach_km": 227
+    },
+    {
+      "name": "Jashore",
+      "country": "Bangladesh",
+      "region": "Khulna",
+      "population": 243987,
+      "lat": 23.17,
+      "lon": 89.2,
+      "first_inside_h": 27.0,
+      "closest_approach_km": 98
+    },
+    {
+      "name": "Krishnanagar",
+      "country": "India",
+      "region": "West Bengal",
+      "population": 145926,
+      "lat": 23.38,
+      "lon": 88.53,
+      "first_inside_h": 27.0,
+      "closest_approach_km": 170
+    },
+    {
+      "name": "Chattogram",
+      "country": "Bangladesh",
+      "region": "Chittagong",
+      "population": 4529000,
+      "lat": 22.332,
+      "lon": 91.798,
+      "first_inside_h": 28.0,
+      "closest_approach_km": 68
+    },
+    {
+      "name": "Jamshedpur",
+      "country": "India",
+      "region": "Jharkhand",
+      "population": 1300000,
+      "lat": 22.789,
+      "lon": 86.196,
+      "first_inside_h": 28.0,
+      "closest_approach_km": 366
+    },
+    {
+      "name": "Sittwe",
+      "country": "Myanmar",
+      "region": "Rakhine",
+      "population": 179032,
+      "lat": 20.14,
+      "lon": 92.88,
+      "first_inside_h": 29.0,
+      "closest_approach_km": 324
+    },
+    {
+      "name": "Dhaka",
+      "country": "Bangladesh",
+      "region": "Dhaka",
+      "population": 12797394,
+      "lat": 23.725,
+      "lon": 90.407,
+      "first_inside_h": 30.0,
+      "closest_approach_km": 85
+    },
+    {
+      "name": "Asansol",
+      "country": "India",
+      "region": "West Bengal",
+      "population": 1328000,
+      "lat": 23.685,
+      "lon": 86.981,
+      "first_inside_h": 30.0,
+      "closest_approach_km": 329
+    },
+    {
+      "name": "Comilla",
+      "country": "Bangladesh",
+      "region": "Chittagong",
+      "population": 389411,
+      "lat": 23.47,
+      "lon": 91.17,
+      "first_inside_h": 30.0,
+      "closest_approach_km": 57
+    },
+    {
+      "name": "Narayanganj",
+      "country": "Bangladesh",
+      "region": "Dhaka",
+      "population": 223622,
+      "lat": 23.62,
+      "lon": 90.5,
+      "first_inside_h": 30.0,
+      "closest_approach_km": 73
+    },
+    {
+      "name": "Pabna",
+      "country": "Bangladesh",
+      "region": "Rajshahi",
+      "population": 137888,
+      "lat": 24.0,
+      "lon": 89.25,
+      "first_inside_h": 30.0,
+      "closest_approach_km": 147
+    },
+    {
+      "name": "Dhanbad",
+      "country": "India",
+      "region": "Jharkhand",
+      "population": 1246000,
+      "lat": 23.802,
+      "lon": 86.418,
+      "first_inside_h": 31.0,
+      "closest_approach_km": 387
+    },
+    {
+      "name": "Rajshahi",
+      "country": "Bangladesh",
+      "region": "Rajshahi",
+      "population": 810000,
+      "lat": 24.377,
+      "lon": 88.603,
+      "first_inside_h": 31.0,
+      "closest_approach_km": 222
+    },
+    {
+      "name": "Raurkela",
+      "country": "India",
+      "region": "Orissa",
+      "population": 625831,
+      "lat": 22.23,
+      "lon": 84.83,
+      "first_inside_h": 31.0,
+      "closest_approach_km": 472
+    },
+    {
+      "name": "Agartala",
+      "country": "India",
+      "region": "Tripura",
+      "population": 203264,
+      "lat": 23.835,
+      "lon": 91.28,
+      "first_inside_h": 31.0,
+      "closest_approach_km": 98
+    },
+    {
+      "name": "Tangail",
+      "country": "Bangladesh",
+      "region": "Dhaka",
+      "population": 180144,
+      "lat": 24.25,
+      "lon": 89.92,
+      "first_inside_h": 31.0,
+      "closest_approach_km": 145
+    },
+    {
+      "name": "Nawabganj",
+      "country": "Bangladesh",
+      "region": "Rajshahi",
+      "population": 142361,
+      "lat": 24.58,
+      "lon": 88.35,
+      "first_inside_h": 32.0,
+      "closest_approach_km": 256
+    },
+    {
+      "name": "Ranchi",
+      "country": "India",
+      "region": "Jharkhand",
+      "population": 1044000,
+      "lat": 23.372,
+      "lon": 85.328,
+      "first_inside_h": 33.0,
+      "closest_approach_km": 472
+    },
+    {
+      "name": "Mymensingh",
+      "country": "Bangladesh",
+      "region": "Dhaka",
+      "population": 330126,
+      "lat": 24.75,
+      "lon": 90.38,
+      "first_inside_h": 33.0,
+      "closest_approach_km": 199
+    },
+    {
+      "name": "Jamalpur",
+      "country": "Bangladesh",
+      "region": "Dhaka",
+      "population": 167900,
+      "lat": 24.9,
+      "lon": 89.95,
+      "first_inside_h": 33.0,
+      "closest_approach_km": 216
+    },
+    {
+      "name": "Aizawl",
+      "country": "India",
+      "region": "Mizoram",
+      "population": 283021,
+      "lat": 23.71,
+      "lon": 92.72,
+      "first_inside_h": 34.0,
+      "closest_approach_km": 111
+    },
+    {
+      "name": "Bhagalpur",
+      "country": "India",
+      "region": "Bihar",
+      "population": 361548,
+      "lat": 25.23,
+      "lon": 86.98,
+      "first_inside_h": 36.0,
+      "closest_approach_km": 408
+    },
+    {
+      "name": "Rangpur",
+      "country": "Bangladesh",
+      "region": "Rajshahi",
+      "population": 285564,
+      "lat": 25.75,
+      "lon": 89.28,
+      "first_inside_h": 36.0,
+      "closest_approach_km": 322
+    },
+    {
+      "name": "Sylhet",
+      "country": "Bangladesh",
+      "region": "Sylhet",
+      "population": 237000,
+      "lat": 24.904,
+      "lon": 91.874,
+      "first_inside_h": 36.0,
+      "closest_approach_km": 218
+    },
+    {
+      "name": "Saidpur",
+      "country": "Bangladesh",
+      "region": "Rajshahi",
+      "population": 232209,
+      "lat": 25.8,
+      "lon": 89.0,
+      "first_inside_h": 36.0,
+      "closest_approach_km": 336
+    },
+    {
+      "name": "Purnia",
+      "country": "India",
+      "region": "Bihar",
+      "population": 198453,
+      "lat": 25.785,
+      "lon": 87.48,
+      "first_inside_h": 37.0,
+      "closest_approach_km": 414
+    },
+    {
+      "name": "Silchar",
+      "country": "India",
+      "region": "Assam",
+      "population": 152393,
+      "lat": 24.79,
+      "lon": 92.79,
+      "first_inside_h": 37.0,
+      "closest_approach_km": 220
+    },
+    {
+      "name": "Shillong",
+      "country": "India",
+      "region": "Meghalaya",
+      "population": 375527,
+      "lat": 25.57,
+      "lon": 91.88,
+      "first_inside_h": 38.0,
+      "closest_approach_km": 292
+    },
+    {
+      "name": "Guwahati",
+      "country": "India",
+      "region": "Assam",
+      "population": 983000,
+      "lat": 26.162,
+      "lon": 91.768,
+      "first_inside_h": 39.0,
+      "closest_approach_km": 358
+    },
+    {
+      "name": "Alipur Duar",
+      "country": "India",
+      "region": "West Bengal",
+      "population": 127342,
+      "lat": 26.484,
+      "lon": 89.567,
+      "first_inside_h": 39.0,
+      "closest_approach_km": 396
+    },
+    {
+      "name": "Siliguri",
+      "country": "India",
+      "region": "West Bengal",
+      "population": 515574,
+      "lat": 26.72,
+      "lon": 88.455,
+      "first_inside_h": 40.0,
+      "closest_approach_km": 451
+    },
+    {
+      "name": "Sambalpur",
+      "country": "India",
+      "region": "Orissa",
+      "population": 310852,
+      "lat": 21.47,
+      "lon": 83.97,
+      "first_inside_h": 40.0,
+      "closest_approach_km": 522
+    },
+    {
+      "name": "Imphal",
+      "country": "India",
+      "region": "Manipur",
+      "population": 264986,
+      "lat": 24.8,
+      "lon": 93.95,
+      "first_inside_h": 40.0,
+      "closest_approach_km": 285
+    },
+    {
+      "name": "Pakokku",
+      "country": "Myanmar",
+      "region": "Magway",
+      "population": 126938,
+      "lat": 21.332,
+      "lon": 95.087,
+      "first_inside_h": 40.0,
+      "closest_approach_km": 363
+    },
+    {
+      "name": "Yaynangyoung",
+      "country": "Myanmar",
+      "region": "Magway",
+      "population": 110553,
+      "lat": 20.461,
+      "lon": 94.881,
+      "first_inside_h": 40.0,
+      "closest_approach_km": 404
+    },
+    {
+      "name": "Gaya",
+      "country": "India",
+      "region": "Bihar",
+      "population": 423692,
+      "lat": 24.8,
+      "lon": 85.0,
+      "first_inside_h": 41.0,
+      "closest_approach_km": 562
+    },
+    {
+      "name": "Monywa",
+      "country": "Myanmar",
+      "region": "Sagaing",
+      "population": 226222,
+      "lat": 22.105,
+      "lon": 95.15,
+      "first_inside_h": 41.0,
+      "closest_approach_km": 334
+    },
+    {
+      "name": "Biratnagar",
+      "country": "Nepal",
+      "region": "Bhojpur",
+      "population": 182324,
+      "lat": 26.484,
+      "lon": 87.283,
+      "first_inside_h": 41.0,
+      "closest_approach_km": 487
+    },
+    {
+      "name": "Magway",
+      "country": "Myanmar",
+      "region": "Magway",
+      "population": 125973,
+      "lat": 20.145,
+      "lon": 94.92,
+      "first_inside_h": 41.0,
+      "closest_approach_km": 432
+    },
+    {
+      "name": "Myingyan",
+      "country": "Myanmar",
+      "region": "Mandalay",
+      "population": 163812,
+      "lat": 21.462,
+      "lon": 95.391,
+      "first_inside_h": 42.0,
+      "closest_approach_km": 384
+    },
+    {
+      "name": "Patna",
+      "country": "India",
+      "region": "Bihar",
+      "population": 2158000,
+      "lat": 25.627,
+      "lon": 85.128,
+      "first_inside_h": 43.0,
+      "closest_approach_km": 589
+    },
+    {
+      "name": "Muzaffarpur",
+      "country": "India",
+      "region": "Bihar",
+      "population": 333200,
+      "lat": 26.12,
+      "lon": 85.38,
+      "first_inside_h": 44.0,
+      "closest_approach_km": 596
+    },
+    {
+      "name": "Mandalay",
+      "country": "Myanmar",
+      "region": "Mandalay",
+      "population": 1300000,
+      "lat": 21.972,
+      "lon": 96.083,
+      "first_inside_h": 45.0,
+      "closest_approach_km": 431
+    },
+    {
+      "name": "Dibrugarh",
+      "country": "India",
+      "region": "Assam",
+      "population": 166366,
+      "lat": 27.483,
+      "lon": 94.9,
+      "first_inside_h": 51.0,
+      "closest_approach_km": 582
+    },
+    {
+      "name": "Pyay",
+      "country": "Myanmar",
+      "region": "Bago",
+      "population": 135308,
+      "lat": 18.816,
+      "lon": 95.211,
+      "first_inside_h": 51.0,
+      "closest_approach_km": 566
+    },
+    {
+      "name": "Naypyidaw",
+      "country": "Myanmar",
+      "region": "Mandalay",
+      "population": 930000,
+      "lat": 19.769,
+      "lon": 96.117,
+      "first_inside_h": 52.0,
+      "closest_approach_km": 552
+    },
+    {
+      "name": "Taunggyi",
+      "country": "Myanmar",
+      "region": "Shan",
+      "population": 160115,
+      "lat": 20.782,
+      "lon": 97.038,
+      "first_inside_h": 55.0,
+      "closest_approach_km": 571
+    },
+    {
+      "name": "Myitkyina",
+      "country": "Myanmar",
+      "region": "Kachin",
+      "population": 139100,
+      "lat": 25.36,
+      "lon": 97.393,
+      "first_inside_h": 57.0,
+      "closest_approach_km": 607
+    },
+    {
+      "name": "Taungoo",
+      "country": "Myanmar",
+      "region": "Bago",
+      "population": 106945,
+      "lat": 18.948,
+      "lon": 96.418,
+      "first_inside_h": 59.0,
+      "closest_approach_km": 637
+    },
+    {
+      "name": "Hinthada",
+      "country": "Myanmar",
+      "region": "Ayeyarwady",
+      "population": 180728,
+      "lat": 17.648,
+      "lon": 95.468,
+      "first_inside_h": 62.0,
+      "closest_approach_km": 690
+    },
+    {
+      "name": "Lhasa",
+      "country": "China",
+      "region": "Xizang",
+      "population": 219599,
+      "lat": 29.645,
+      "lon": 91.1,
+      "first_inside_h": 63.0,
+      "closest_approach_km": 744
+    },
+    {
+      "name": "Letpadan",
+      "country": "Myanmar",
+      "region": "Bago",
+      "population": 176571,
+      "lat": 17.782,
+      "lon": 95.741,
+      "first_inside_h": 63.0,
+      "closest_approach_km": 692
+    },
+    {
+      "name": "Tengchong",
+      "country": "China",
+      "region": "Yunnan",
+      "population": 126058,
+      "lat": 25.033,
+      "lon": 98.467,
+      "first_inside_h": 65.0,
+      "closest_approach_km": 695
+    },
+    {
+      "name": "Pathein",
+      "country": "Myanmar",
+      "region": "Ayeyarwady",
+      "population": 237089,
+      "lat": 16.77,
+      "lon": 94.75,
+      "first_inside_h": 67.0,
+      "closest_approach_km": 724
+    },
+    {
+      "name": "Baoshan",
+      "country": "China",
+      "region": "Yunnan",
+      "population": 1000000,
+      "lat": 25.12,
+      "lon": 99.15,
+      "first_inside_h": 70.0,
+      "closest_approach_km": 763
+    },
+    {
+      "name": "Bago",
+      "country": "Myanmar",
+      "region": "Bago",
+      "population": 284318,
+      "lat": 17.32,
+      "lon": 96.515,
+      "first_inside_h": 72.0,
+      "closest_approach_km": 781
+    }
+  ],
+  "cone_polygon": [
+    [
+      86.315,
+      13.844
+    ],
+    [
+      86.083,
+      13.921
+    ],
+    [
+      85.863,
+      14.026
+    ],
+    [
+      85.659,
+      14.158
+    ],
+    [
+      85.474,
+      14.315
+    ],
+    [
+      85.313,
+      14.493
+    ],
+    [
+      85.176,
+      14.691
+    ],
+    [
+      85.068,
+      14.904
+    ],
+    [
+      84.989,
+      15.13
+    ],
+    [
+      84.941,
+      15.363
+    ],
+    [
+      84.925,
+      15.6
+    ],
+    [
+      84.941,
+      15.837
+    ],
+    [
+      84.97,
+      16.166
+    ],
+    [
+      84.852,
+      16.543
+    ],
+    [
+      84.784,
+      16.873
+    ],
+    [
+      84.623,
+      18.444
+    ],
+    [
+      83.815,
+      21.393
+    ],
+    [
+      83.648,
+      22.173
+    ],
+    [
+      83.592,
+      22.966
+    ],
+    [
+      83.648,
+      23.76
+    ],
+    [
+      83.815,
+      24.54
+    ],
+    [
+      84.091,
+      25.292
+    ],
+    [
+      84.47,
+      26.005
+    ],
+    [
+      84.947,
+      26.667
+    ],
+    [
+      85.512,
+      27.264
+    ],
+    [
+      86.157,
+      27.789
+    ],
+    [
+      87.325,
+      28.618
+    ],
+    [
+      88.164,
+      29.138
+    ],
+    [
+      89.07,
+      29.552
+    ],
+    [
+      90.025,
+      29.853
+    ],
+    [
+      91.015,
+      30.035
+    ],
+    [
+      92.023,
+      30.097
+    ],
+    [
+      93.03,
+      30.035
+    ],
+    [
+      94.02,
+      29.853
+    ],
+    [
+      94.975,
+      29.552
+    ],
+    [
+      95.881,
+      29.138
+    ],
+    [
+      96.72,
+      28.618
+    ],
+    [
+      97.479,
+      28.001
+    ],
+    [
+      98.144,
+      27.298
+    ],
+    [
+      98.705,
+      26.52
+    ],
+    [
+      99.151,
+      25.681
+    ],
+    [
+      99.476,
+      24.794
+    ],
+    [
+      99.673,
+      23.877
+    ],
+    [
+      99.739,
+      22.943
+    ],
+    [
+      99.673,
+      22.009
+    ],
+    [
+      99.476,
+      21.091
+    ],
+    [
+      99.151,
+      20.205
+    ],
+    [
+      98.705,
+      19.366
+    ],
+    [
+      98.144,
+      18.588
+    ],
+    [
+      97.479,
+      17.884
+    ],
+    [
+      96.72,
+      17.267
+    ],
+    [
+      95.881,
+      16.748
+    ],
+    [
+      94.975,
+      16.334
+    ],
+    [
+      94.02,
+      16.033
+    ],
+    [
+      93.03,
+      15.85
+    ],
+    [
+      92.023,
+      15.789
+    ],
+    [
+      91.015,
+      15.85
+    ],
+    [
+      90.249,
+      15.992
+    ],
+    [
+      89.07,
+      15.166
+    ],
+    [
+      88.779,
+      14.979
+    ],
+    [
+      88.56,
+      14.851
+    ],
+    [
+      88.287,
+      14.493
+    ],
+    [
+      88.126,
+      14.315
+    ],
+    [
+      87.941,
+      14.158
+    ],
+    [
+      87.737,
+      14.026
+    ],
+    [
+      87.517,
+      13.921
+    ],
+    [
+      87.285,
+      13.844
+    ],
+    [
+      87.045,
+      13.798
+    ],
+    [
+      86.8,
+      13.782
+    ],
+    [
+      86.555,
+      13.798
+    ],
+    [
+      86.315,
+      13.844
+    ]
+  ],
+  "note": "Places of 100,000 and up (Natural Earth metro estimates) inside the forecast cone widened by the typical gale-force wind radius for the forecast intensity. Says who is in the path, not how badly they will be affected."
+}

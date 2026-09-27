@@ -123,6 +123,12 @@ pre{background:#fbfbf7;border:1px solid var(--rule-2);padding:10px;font-family:v
   border:1px solid rgba(0,0,0,.3)}
 .empty{color:var(--ink-3);font-size:12px;padding:20px 0;text-align:center}
 .maplibregl-popup-content{border:2px solid var(--firebrick);border-radius:0}
+/* no position here: maplibre positions markers absolutely, and overriding it
+   stacks every label down the page in document flow */
+.place{font:10px Arial,sans-serif;color:#2b2b2b;padding-left:7px;
+  pointer-events:none;white-space:nowrap;text-shadow:0 0 2px #fff,0 0 2px #fff}
+.place:before{content:"";position:absolute;left:0;top:50%;width:4px;height:4px;
+  margin-top:-2px;background:#2b2b2b;border-radius:50%;box-shadow:0 0 0 1px #fff}
 </style>
 </head>
 <body>
@@ -139,11 +145,14 @@ pre{background:#fbfbf7;border:1px solid var(--rule-2);padding:10px;font-family:v
     <div class="brand">CHAKRA<span>VAT</span></div>
     <div class="tagline">Tropical Cyclone Identification, Classification and Prediction System
       for North Indian Ocean</div>
-    
+    <div style="margin-top:4px;font-size:11.5px">
+      <a href="/live" style="color:#cfe0ff">Live alert feed &rsaquo;</a>
+    </div>
   </div>
   <div class="controls">
   <select id="season" aria-label="Season"></select>
   <select id="storm" aria-label="Storm"></select>
+  <select id="issue" aria-label="Forecast issued at" title="Rewind: issue the forecast from any earlier fix"></select>
   <div class="lvl" role="group" aria-label="Confidence level">
     <button data-lvl="0.5">50%</button>
     <button data-lvl="0.67" aria-pressed="true">67%</button>
@@ -163,6 +172,7 @@ pre{background:#fbfbf7;border:1px solid var(--rule-2);padding:10px;font-family:v
       <button role="tab" aria-selected="false" data-pane="lf">Landfall</button>
       <button role="tab" aria-selected="false" data-pane="im">Imagery</button>
       <button role="tab" aria-selected="false" data-pane="pl">Pipeline</button>
+      <button role="tab" aria-selected="false" data-pane="lv">Live</button>
       <button role="tab" aria-selected="false" data-pane="bl">Bulletin</button>
       <button role="tab" aria-selected="false" data-pane="sk">Skill</button>
     </div>
@@ -171,6 +181,7 @@ pre{background:#fbfbf7;border:1px solid var(--rule-2);padding:10px;font-family:v
     <div class="pane" id="pane-im"></div>
     <div class="pane" id="pane-pl"></div>
     <div class="pane" id="pane-bl"></div>
+    <div class="pane" id="pane-lv"></div>
     <div class="pane" id="pane-sk"></div>
   </aside>
 </main>
@@ -205,17 +216,47 @@ function circle(lat, lon, km, n=72){
 }
 const src = (id,d) => { const s=map.getSource(id); if(s) s.setData(d); };
 
+/* City names as HTML markers: a symbol layer would need glyph files from a
+   font server, and the map is meant to work with no network. */
+async function addPlaceLabels(){
+  try{
+    const fc = await (await api("/static/vendor/places_labels.geojson")).json();
+    const capital = p => p.capital === "Admin-0 capital";
+    // capitals first, then by population; skip anything crowding a placed
+    // label, so Kolkata wins over Haora and New Delhi over Delhi
+    const cands = fc.features.filter(f => {
+      const p = f.properties, [lon, lat] = f.geometry.coordinates;
+      return lon >= 35 && lon <= 105 && lat >= -12 && lat <= 38 &&
+             (p.pop >= 4e6 || capital(p));
+    }).sort((a, b) => (capital(b.properties) - capital(a.properties)) ||
+                      (b.properties.pop - a.properties.pop));
+    const placed = [];
+    for(const f of cands){
+      const p = f.properties, [lon, lat] = f.geometry.coordinates;
+      if(placed.some(([x, y]) => Math.hypot(x - lon, y - lat) < 1.5)) continue;
+      placed.push([lon, lat]);
+      const el = document.createElement("div");
+      el.className = "place";
+      el.textContent = p.name;
+      new maplibregl.Marker({element:el, anchor:"left"}).setLngLat([lon, lat]).addTo(map);
+    }
+  }catch(e){ /* labels are decoration; the map works without them */ }
+}
+
 function initMap(){
   map = new maplibregl.Map({
     container:"map",
-    style:{version:8, sources:{osm:{type:"raster",
-      tiles:["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
-             "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png"],
-      tileSize:256, attribution:"&copy; OpenStreetMap"}},
-      
+    /* Offline basemap. Boundaries are Natural Earth's India point-of-view
+       edition, so the map shows India's boundary as the Government of India
+       depicts it, and nothing here needs the network. */
+    style:{version:8, sources:{countries:{type:"geojson",
+      data:"/static/vendor/countries_ind.geojson",
+      attribution:"Boundaries: Natural Earth (India point of view)"}},
       layers:[{id:"ground",type:"background",paint:{"background-color":"#dce7f2"}},
-              {id:"osm",type:"raster",source:"osm",
-               paint:{"raster-opacity":.55,"raster-saturation":-.55,"raster-contrast":-.1}}]},
+              {id:"land-f",type:"fill",source:"countries",
+               paint:{"fill-color":"#f7f5ef"}},
+              {id:"borders-l",type:"line",source:"countries",
+               paint:{"line-color":"#8c8c8c","line-width":0.8}}]},
     center:[85,15], zoom:3.6, attributionControl:{compact:true}
   });
   map.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-left");
@@ -250,7 +291,7 @@ function initMap(){
       const p=e.features[0].properties;
       new maplibregl.Popup({closeButton:false}).setLngLat(e.lngLat)
         .setHTML(`<div style="font-family:monospace;font-size:11px;color:#0A1418">
-          detected ${p.time}<br>score ${(+p.score).toFixed(2)}
+          detected ${ist(p.time)}<br>score ${(+p.score).toFixed(2)}
           ${p.scene?`<br>scene ${p.scene}`:""}
           ${p.vmax?`<br>${(+p.vmax).toFixed(0)} kt`:""}</div>`).addTo(map);
     });
@@ -259,12 +300,13 @@ function initMap(){
       new maplibregl.Popup({closeButton:false})
         .setLngLat(e.lngLat)
         .setHTML(`<div style="font-family:monospace;font-size:11px;color:#0A1418">
-          ${p.time}<br>${p.vmax} kt &middot; ${p.cat}</div>`).addTo(map);
+          ${ist(p.time)}<br>${p.vmax} kt &middot; ${p.cat}</div>`).addTo(map);
     });
     map.on("mouseenter","pts-c",()=>map.getCanvas().style.cursor="pointer");
     map.on("mouseleave","pts-c",()=>map.getCanvas().style.cursor="");
     mapReady = true;
-    
+    addPlaceLabels();
+
     if(current) paintCurrent();
   };
   
@@ -334,7 +376,9 @@ function paintCurrent(){
                 {padding:60, duration:700, maxZoom:6});
 }
 
-async function loadStorm(sid){
+/* time = a fix time to issue the forecast from; null means the API's default,
+   the latest fix whose 24 h outcome is known */
+async function loadStorm(sid, time=null){
   const d = await (await api(`/api/storm/${sid}`)).json();
   // Keep the header in step when a storm is loaded programmatically.
   const ss = document.getElementById("season"), st = document.getElementById("storm");
@@ -344,10 +388,17 @@ async function loadStorm(sid){
     st.innerHTML = list.map(s=>`<option value="${s.SID}">${s.name||"Unnamed"} — ${s.peak_kt.toFixed(0)} kt</option>`).join("");
   }
   st.value = sid;
+  const t = time ? `&time=${encodeURIComponent(time)}` : "";
   let fc=null, lf=null;
-  try{ fc = await (await api(`/api/storm/${sid}/forecast?level=${level}`)).json(); }catch(e){}
-  try{ lf = await (await api(`/api/storm/${sid}/landfall`)).json(); }catch(e){}
+  try{ fc = await (await api(`/api/storm/${sid}/forecast?level=${level}${t}`)).json(); }catch(e){}
+  try{ lf = await (await api(`/api/storm/${sid}/landfall?level=${level}${t}`)).json(); }catch(e){}
   current = {d, fc, lf};
+
+  // every fix is a possible issue time: rewinding to before landfall shows
+  // what the system would have said while there was still time to act
+  const iss = document.getElementById("issue");
+  iss.innerHTML = d.track.map(p => `<option value="${p.time}">issued ${ist(p.time)} · ${p.vmax_kt.toFixed(0)} kt</option>`).join("");
+  if(fc) iss.value = fc.issued_at;
 
   paintCurrent();
 
@@ -368,7 +419,7 @@ function render(){
 
   document.getElementById("pane-fc").innerHTML = `
     <h2>${d.name||"Unnamed"}</h2>
-    <div class="sub">${d.sid} &middot; season ${d.season}${fc?` &middot; issued ${fc.issued_at}`:""}</div>
+    <div class="sub">${d.sid} &middot; season ${d.season}${fc?` &middot; issued ${ist(fc.issued_at)}`:""}</div>
     <span class="chip" style="background:${catColor(cur.category)}">${cur.category}</span>
     <dl class="stats">
       <div><dt>Position</dt><dd>${cur.lat.toFixed(1)}N ${cur.lon.toFixed(1)}E</dd></div>
@@ -397,13 +448,15 @@ function render(){
       ${fc.rapid_intensification.definition}.
       ${fc.rapid_intensification.flagged?"<strong>Above watch threshold.</strong>":"Below watch threshold."}
     </div>
+    <div id="fc-why"></div>
     <div class="note">Cone radii and intensity ranges are calibrated to
       ${(100*level).toFixed(0)}% and verified on held-out seasons 2020–2025 —
       the ${(100*level).toFixed(0)}% cone contained about that share of verifying positions.</div>
     ` : `<div class="empty">No forecast available from this storm's last fix.</div>`}`;
+  if(fc) renderWhy(d, fc.issued_at);
 
   document.getElementById("pane-lf").innerHTML = !lf ? `<div class="empty">No landfall assessment.</div>` : `
-    <h2>Landfall</h2><div class="sub">${d.name||d.sid} &middot; issued ${lf.issued_at}</div>
+    <h2>Landfall</h2><div class="sub">${d.name||d.sid} &middot; issued ${ist(lf.issued_at)}</div>
     ${lf.hours_to_landfall!=null ? `
       <dl class="stats">
         <div><dt>Probability &lt;72 h</dt><dd>${(100*lf.probability_within_72h).toFixed(0)}%</dd></div>
@@ -424,28 +477,177 @@ function render(){
         : `The forecast track does not reach land inside 72 h, so position falls
            back to a regressed coordinate snapped to the nearest coast — 234 km
            mean on held-out seasons, and the weakest number here.`}</div>
-    ` : `<div class="alert quiet"><b>No landfall indicated</b>
-        ${(100*lf.probability_within_72h).toFixed(0)}% probability within 72 h.</div>`}`;
+    ` : lf.over_land ? `<div class="alert"><b>Centre over land</b>
+        Landfall has already occurred at this issue time. Pick an earlier issue
+        time in the header to see the forecast made before it.</div>`
+      : `<div class="alert quiet"><b>No landfall indicated</b>
+        ${(100*lf.probability_within_72h).toFixed(0)}% probability within 72 h.</div>`}
+    <h3>Places in the threat zone</h3>
+    <div id="exposure"><div class="empty">Loading…</div></div>`;
+  if(lf) renderExposure(d, lf.issued_at);
 
-  renderImagery(d);
+  renderImagery(d, fc ? fc.issued_at : null);
+  renderBulletin(d, fc ? fc.issued_at : null);
+}
 
-  document.getElementById("pane-bl").innerHTML = `<div class="empty">Loading…</div>`;
-  api(`/api/storm/${d.sid}/bulletin`).then(r=>r.text())
-    .then(t=>document.getElementById("pane-bl").innerHTML=`<pre>${t.replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]))}</pre>`)
-    .catch(()=>document.getElementById("pane-bl").innerHTML=`<div class="empty">Bulletin unavailable.</div>`);
+const esc = s => String(s).replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;","\"":"&quot;"}[c]));
+
+/* Everything the API returns is UTC: best track sits on the synoptic hours and
+   the satellite slots are UTC too. IMD publishes in IST, so that is what the
+   panel shows. Conversion happens here, at the point of display, and is always
+   labelled - anything sent back to the API keeps its UTC string untouched,
+   because the archive is keyed on it. */
+const IST_OFFSET_MIN = 330;
+function ist(t, label = true){
+  if(!t) return "";
+  const d = new Date(String(t).trim().replace(" ", "T").replace(/Z$/, "") + "Z");
+  if(isNaN(d)) return String(t);
+  const p = new Date(d.getTime() + IST_OFFSET_MIN * 60000);
+  const z = n => String(n).padStart(2, "0");
+  return `${p.getUTCFullYear()}-${z(p.getUTCMonth()+1)}-${z(p.getUTCDate())} `
+       + `${z(p.getUTCHours())}:${z(p.getUTCMinutes())}${label ? " IST" : ""}`;
+}
+
+async function renderExposure(d, issued){
+  const el = document.getElementById("exposure");
+  try{
+    const e = await (await api(`/api/storm/${d.sid}/exposure?time=${encodeURIComponent(issued)}&level=${level}`)).json();
+    if(!current || current.d.sid !== d.sid) return;   // a newer storm was picked meanwhile
+    el.innerHTML = !e.places.length
+      ? `<div class="alert quiet"><b>None</b> No place of 100,000 or more inside the zone.</div>`
+      : `<table><thead><tr><th>Place</th><th>Country</th><th>From</th><th>Population</th></tr></thead>
+         <tbody>${e.places.slice(0, 12).map(p => `<tr><td>${esc(p.name)}</td><td>${esc(p.country)}</td>
+           <td class="n">${p.first_inside_h.toFixed(0)} h</td>
+           <td class="n">${(p.population/1e6).toFixed(p.population >= 1e6 ? 1 : 2)} M</td></tr>`).join("")}</tbody></table>
+         <div class="note">${e.places.length} places in all. The zone is the ${(100*level).toFixed(0)}%
+           cone widened by the typical radius of gale-force winds for the forecast
+           intensity (106–201 km, from JTWC wind radii in IBTrACS). It says who is
+           in the path, not how badly they will be hit. Populations are Natural
+           Earth metro estimates.</div>`;
+  }catch(err){ el.innerHTML = `<div class="empty">Places unavailable.</div>`; }
+}
+
+/* The forecast's answer to Grad-CAM: which inputs it rested on, measured by
+   removing them and re-running the ensemble. */
+let whyHorizon = 24;
+function renderWhy(d, issued){
+  /* ~10 s: eighteen groups re-run through the eight-member ensemble. behind a
+     button so the forecast tab stays fast and the measuring is deliberate. */
+  const box = document.getElementById("fc-why");
+  if(!box) return;
+  box.innerHTML = `<h3>Why this forecast</h3>
+    <button class="chip" id="why-go" style="background:var(--navy);color:#fff;border:0;cursor:pointer">
+      Measure what it rested on</button>
+    <div class="note">Removes each input in turn and re-runs the forecast. Takes a
+      few seconds.</div>`;
+  document.getElementById("why-go").onclick = () => measureWhy(d, issued);
+}
+
+async function measureWhy(d, issued){
+  const box = document.getElementById("fc-why");
+  if(!box) return;
+  const q = `time=${encodeURIComponent(issued || "")}&level=${level}&horizon=${whyHorizon}`;
+  box.innerHTML = `<h3>Why this forecast</h3><div class="empty">Measuring…</div>`;
+  let x;
+  try{ x = await (await api(`/api/storm/${d.sid}/explain_forecast?${q}`)).json(); }
+  catch(e){ box.innerHTML = ""; return; }
+  if(!x || !x.track){ box.innerHTML = ""; return; }
+  const max = Math.max(...x.track.map(r => r.track_shift_km), 1);
+  box.innerHTML = `
+    <h3>Why this forecast</h3>
+    <div class="lvl" role="group" aria-label="Horizon" style="display:inline-flex;margin-bottom:8px">
+      ${[6,12,24,48,72].map(h=>`<button data-h="${h}" aria-pressed="${h===whyHorizon}">${h} h</button>`).join("")}
+    </div>
+    <p style="margin:6px 0 10px;line-height:1.5">${esc(x.sentence)}</p>
+    <table><thead><tr><th>Input</th><th>Moves position</th><th>Moves intensity</th></tr></thead>
+    <tbody>${x.track.map(r=>`<tr>
+      <td>${esc(r.label)}</td>
+      <td class="n" style="width:88px">${r.track_shift_km.toFixed(0)} km
+        <div style="background:var(--accent);height:5px;margin-top:2px;
+                    width:${Math.max(2,100*r.track_shift_km/max)}%"></div></td>
+      <td class="n" style="width:70px">${r.intensity_shift_kt>=0?"+":""}${r.intensity_shift_kt.toFixed(1)} kt</td>
+    </tr>`).join("")}</tbody></table>
+    <div class="note">Each row is that input replaced by its median across training,
+      with the forecast re-run. Present position and intensity are held fixed —
+      substituting those describes a different storm, not this one with less
+      information. Correlated inputs are removed together, so time of year moves as
+      a pair and shear as a triple. ${esc(x.caveat)}</div>`;
+  box.querySelectorAll("button[data-h]").forEach(b => b.onclick = () => {
+    whyHorizon = +b.dataset.h; measureWhy(d, issued);
+  });
+}
+
+let bulletinLang = "en";
+async function renderBulletin(d, issued){
+  const el = document.getElementById("pane-bl");
+  const q = `time=${encodeURIComponent(issued || "")}&level=${level}`;
+  el.innerHTML = `
+    <div class="lvl" role="group" aria-label="Bulletin language" style="display:inline-flex;margin-bottom:10px">
+      <button data-lang="en" aria-pressed="${bulletinLang === "en"}">English</button>
+      <button data-lang="hi" aria-pressed="${bulletinLang === "hi"}">हिंदी</button>
+    </div>
+    <a class="chip" style="background:var(--navy);color:#fff;margin-left:8px;text-decoration:none"
+       href="/api/storm/${d.sid}/cap.xml?${q}" download="chakravat_${d.sid}.cap.xml">Download CAP alert</a>
+    <div id="bl-text"><div class="empty">Loading…</div></div>
+    <div id="bl-sms"></div>
+    <div class="note">The CAP file is a Common Alerting Protocol 1.2 alert, the format
+      NDMA's SACHET system carries, with English and Hindi sections and the threat
+      zone as its area. It validates against the OASIS schema and is marked
+      <i>Exercise</i>: a prototype, never a real warning.</div>`;
+  el.querySelectorAll("button[data-lang]").forEach(b => b.onclick = () => {
+    bulletinLang = b.dataset.lang;
+    renderBulletin(d, issued);
+  });
+  try{
+    const t = await (await api(`/api/storm/${d.sid}/bulletin?lang=${bulletinLang}&${q}`)).text();
+    const box = document.getElementById("bl-text");
+    if(box) box.innerHTML = `<pre>${esc(t)}</pre>`;
+  }catch(err){
+    const box = document.getElementById("bl-text");
+    if(box) box.innerHTML = `<div class="empty">Bulletin unavailable.</div>`;
+  }
+  /* the end of the chain: CAP goes to SACHET, SACHET sends SMS, and an SMS is
+     a character budget that depends on the script. */
+  try{
+    const m = await (await api(`/api/storm/${d.sid}/sms?lang=${bulletinLang}&${q}`)).json();
+    const box = document.getElementById("bl-sms");
+    const per = m.segments > 1 ? (m.encoding === "GSM-7" ? 153 : 67) : m.budget;
+    const fill = Math.min(100, 100 * m.units / (m.segments * per));
+    const over = m.segments > 1;
+    if(box) box.innerHTML = `
+      <h3>As an SMS</h3>
+      <pre style="white-space:pre-wrap">${esc(m.text)}</pre>
+      <div style="height:7px;background:var(--panel-3);border:1px solid var(--rule-2);
+                  margin-top:7px">
+        <i style="display:block;height:100%;width:${fill.toFixed(0)}%;
+                  background:${over ? "var(--warn)" : "var(--navy)"}"></i>
+      </div>
+      <div style="font-size:10px;color:var(--ink-3);margin-top:3px;
+                  font-variant-numeric:tabular-nums">
+        ${m.units} of ${m.segments * per} units &middot; ${m.encoding} &middot;
+        ${m.segments} segment${m.segments > 1 ? "s" : ""}
+      </div>
+      <div class="note">${m.encoding === "UCS-2"
+        ? "Devanagari is outside the GSM 03.38 alphabet, so this is sent as UCS-2 and gets 70 units a segment instead of 160. The Hindi alert is written separately rather than translated, because the same advisory does not fit twice."
+        : "Latin text uses the GSM 03.38 alphabet, which packs 160 units into one segment."}
+        Optional detail is dropped first; the landfall time, the instruction and the
+        not-an-IMD-warning line are never cut.</div>`;
+  }catch(err){ /* the SMS panel is a bonus; the bulletin above is the product */ }
 }
 
 /* T1/T2/T3 read the same satellite scene the forecast was issued from. */
-async function renderImagery(d){
+async function renderImagery(d, issued=null){
   const el = document.getElementById("pane-im");
   el.innerHTML = `<div class="empty">Reading satellite scene…</div>`;
+  const t = issued ? `?time=${encodeURIComponent(issued)}` : "";
   const grab = async p => { try { return await (await api(p)).json(); }
                             catch(e){ return {available:false, reason:"request failed"}; } };
   const [scene, inten, status] = await Promise.all([
-    grab(`/api/storm/${d.sid}/scene`),
-    grab(`/api/storm/${d.sid}/intensity_from_image`),
+    grab(`/api/storm/${d.sid}/scene${t}`),
+    grab(`/api/storm/${d.sid}/intensity_from_image${t}`),
     grab(`/api/vision/status`),
   ]);
+  if(!current || current.d.sid !== d.sid) return;   // a newer storm was picked meanwhile
 
   const unavailable = m => `<div class="alert quiet"><b>Not available</b>${m}</div>`;
 
@@ -457,11 +659,17 @@ async function renderImagery(d){
     const rows = Object.entries(scene.probabilities).slice(0,5);
     html += `<span class="chip" style="background:var(--accent)">${scene.scene}</span>
       <span style="font-family:var(--f-mono);font-size:11px;color:var(--ink-3);margin-left:8px">
-      ${(100*scene.confidence).toFixed(0)}% confidence &middot; ${scene.scene_time}</span>
+      ${(100*scene.confidence).toFixed(0)}% confidence &middot; ${ist(scene.scene_time)}</span>
       <table style="margin-top:10px"><tbody>${rows.map(([k,v])=>`<tr>
         <td>${k}</td><td class="n" style="width:52px">${(100*v).toFixed(1)}%</td>
         <td><div style="background:var(--accent);opacity:${0.35+0.65*v};height:7px;width:${Math.max(2,100*v)}%"></div></td>
       </tr>`).join("")}</tbody></table>
+      ${scene.reliability ? `<div class="${scene.reliability.weak_on_this_sensor ? "alert" : "alert quiet"}"
+             style="margin-top:10px"><b>How well this class reads on this sensor</b>
+           ${esc(scene.reliability.note)}
+           ${scene.reliability.weak_on_this_sensor
+             ? " This is one of the two classes that does not survive the change of sensor: an eye is a hole in the cloud and transfers, while how cold and how uniform an overcast is does not. Treat this reading as weak."
+             : ""}</div>` : ""}
       <div class="note">${scene.labels_note||""}</div>`;
   } else html += unavailable(scene.reason||"");
 
@@ -469,14 +677,36 @@ async function renderImagery(d){
   if(inten.available){
     const sign = inten.error_kt>=0 ? "+" : "";
     html += `<dl class="stats">
-      <div><dt>From imagery</dt><dd>${inten.vmax_kt.toFixed(0)} kt</dd></div>
+      <div><dt>From imagery</dt><dd>${inten.vmax_kt.toFixed(0)} kt${inten.interval
+        ? ` <span style="color:var(--ink-3);font-size:.8em">(${inten.interval.lower_kt.toFixed(0)}–${inten.interval.upper_kt.toFixed(0)})</span>`
+        : ""}</dd></div>
       <div><dt>Best track</dt><dd>${inten.best_track_kt.toFixed(0)} kt</dd></div>
       <div><dt>Difference</dt><dd>${sign}${inten.error_kt.toFixed(1)} kt</dd></div>
       <div><dt>Category</dt><dd style="font-size:.86rem">${inten.category}</dd></div>
     </dl>
+    ${inten.interval ? `<div class="alert ${
+        inten.best_track_kt >= inten.interval.lower_kt && inten.best_track_kt <= inten.interval.upper_kt
+          ? "quiet" : ""}"><b>${(100*inten.interval.level).toFixed(0)}% interval</b>
+      ${inten.interval.lower_kt.toFixed(0)}–${inten.interval.upper_kt.toFixed(0)} kt${
+        inten.category_lower !== inten.category_upper
+          ? `, spanning ${esc(inten.category_lower)} to ${esc(inten.category_upper)}` : ""}.
+      ${inten.best_track_kt >= inten.interval.lower_kt && inten.best_track_kt <= inten.interval.upper_kt
+        ? "Best track falls inside it."
+        : "<strong>Best track falls outside it</strong> — one of the cases this level does not cover."}
+      <br>Fitted on ${inten.interval.fitted_on} out-of-fold residuals in the
+      ${esc(inten.interval.band)} kt band; this level contained
+      ${(100*inten.interval.measured_coverage).toFixed(0)}% of held-out truths.</div>` : ""}
     <div class="note">Estimated from the satellite image alone — no best-track
-      history, no position. This is the task the Dvorak technique performs.</div>`;
+      history, no position. This is the task the Dvorak technique performs.
+      The interval is binned on what the model <i>said</i>, not on the truth,
+      because the prediction is all that exists at inference. It reaches further
+      up than down at the top of the scale, which is the severe-storm under-read
+      showing through.</div>`;
   } else html += unavailable(inten.reason||"");
+
+  if(scene.available || inten.available){
+    html += `<h3>Where the models look</h3><div id="cam-box"><div class="empty">Computing attention maps…</div></div>`;
+  }
 
   html += `<h3>Detection (T1)</h3>`;
   html += status.detector
@@ -485,41 +715,75 @@ async function renderImagery(d){
        in the Skill tab.</div>`
     : unavailable("detector not trained yet");
   el.innerHTML = html;
+  if(scene.available || inten.available) renderCams(d, issued);
+}
+
+/* Grad-CAM panels. fetch rather than <img> so the attention share in the
+   response headers can be read and printed under each map. */
+async function renderCams(d, issued){
+  const box = document.getElementById("cam-box");
+  const t = issued ? `&time=${encodeURIComponent(issued)}` : "";
+  const one = async (task, label) => {
+    try{
+      const r = await api(`/api/storm/${d.sid}/explain.png?task=${task}${t}`);
+      const share = parseFloat(r.headers.get("X-Share-In-Core"));
+      const area = parseFloat(r.headers.get("X-Core-Area-Share"));
+      const url = URL.createObjectURL(await r.blob());
+      return `<figure style="margin:0 0 12px">
+        <img src="${url}" alt="${label}: infrared patch and attention map" style="width:100%;border:1px solid var(--rule-2)">
+        <figcaption style="font-size:11px;color:var(--ink-2);margin-top:4px"><b>${label}</b> &middot;
+          ${(100*share).toFixed(0)}% of the attention within 150 km of the centre
+          (the ring), an area that is ${(100*area).toFixed(1)}% of the patch</figcaption></figure>`;
+    }catch(e){ return ""; }
+  };
+  const [a, b] = await Promise.all([one("scene", "Scene type (CNN half)"), one("intensity", "Intensity")]);
+  if(!document.getElementById("cam-box")) return;
+  box.innerHTML = (a + b) || `<div class="empty">Attention maps unavailable.</div>`;
+  box.insertAdjacentHTML("beforeend", `<div class="note">Grad-CAM: the last network
+    stage's features weighted by how much each moved the answer. Left, the
+    infrared patch (cold cloud white); right, the same patch with the regions
+    that drove the answer glowing. Coarse by design, about 55 km a cell. It
+    answers one question: is the model looking at the storm?</div>`);
 }
 
 /* ---- satellite overlay ------------------------------------------------- */
 let satOn = false;
 
-async function setSatellite(on, when){
+let satSource = "gridsat";
+async function setSatellite(on, when, source="gridsat"){
   satOn = on;
+  satSource = source;
   document.getElementById("satToggle").setAttribute("aria-pressed", String(on));
   if(!mapReady) return;   // no layers to hang the imagery on yet
   if(map.getLayer("sat-l")) map.removeLayer("sat-l");
   if(map.getSource("sat")) map.removeSource("sat");
+  // grey boundaries vanish into infrared greys; gold reads on both
+  map.setPaintProperty("borders-l", "line-color", on && when ? "#e0b400" : "#8c8c8c");
   if(!on || !when) return;
   try{
-    const meta = await (await api(`/api/vision/scene_meta?time=${encodeURIComponent(when)}`)).json();
+    const meta = await (await api(`/api/vision/scene_meta?time=${encodeURIComponent(when)}&source=${source}`)).json();
     const b = meta.bounds;
     map.addSource("sat", {type:"image",
-      url:`/api/vision/scene.png?time=${encodeURIComponent(when)}`,
+      url:`/api/vision/scene.png?time=${encodeURIComponent(when)}&source=${source}`,
       coordinates:[[b.west,b.north],[b.east,b.north],[b.east,b.south],[b.west,b.south]]});
-    // Under the storm markers, over the basemap.
+    // Over the land fill, under the boundaries and storm markers.
     map.addLayer({id:"sat-l",type:"raster",source:"sat",
-      paint:{"raster-opacity":0.82}}, "track-l");
+      paint:{"raster-opacity":0.82}}, "borders-l");
   }catch(e){
     document.getElementById("satToggle").setAttribute("aria-pressed","false");
+    map.setPaintProperty("borders-l", "line-color", "#8c8c8c");
     satOn = false;
   }
 }
 
 /* ---- the full chain ---------------------------------------------------- */
-async function runPipeline(when){
-  const el = document.getElementById("pane-pl");
+async function runPipeline(when, source="gridsat", elId="pane-pl"){
+  const el = document.getElementById(elId);
   el.innerHTML = `<div class="empty">Running detection → association → scene → intensity → forecast…<br>
     <span style="font-size:11px">this reads ~9 satellite scenes, give it a moment</span></div>`;
   let res;
   try{
-    res = await (await api(`/api/vision/pipeline?time=${encodeURIComponent(when)}&level=${level}`)).json();
+    res = await (await api(`/api/vision/pipeline?time=${encodeURIComponent(when)}&level=${level}&source=${source}`)).json();
   }catch(e){ el.innerHTML = `<div class="empty">Pipeline failed (${e}).</div>`; return; }
 
   if(!res.available){ el.innerHTML = `<div class="alert quiet"><b>Unavailable</b>${res.reason}</div>`; return; }
@@ -536,8 +800,8 @@ async function runPipeline(when){
   src("dettrack",{type:"FeatureCollection",features:lines});
 
   el.innerHTML = `
-    <h2>Pipeline</h2>
-    <div class="sub">imagery in, storms out &middot; ${res.window_end}</div>
+    <h2>${source === "live" ? "Live chain" : "Pipeline"}</h2>
+    <div class="sub">imagery in, storms out &middot; ${ist(res.window_end)}${source === "live" ? " &middot; INSAT" : ""}</div>
     <dl class="stats">
       <div><dt>Scenes read</dt><dd>${res.scenes_examined}</dd></div>
       <div><dt>Tracks found</dt><dd>${res.tracks_found}</dd></div>
@@ -558,35 +822,107 @@ async function runPipeline(when){
           <td class="n">±${p.radius_km.toFixed(0)} km</td></tr>`).join("")}
       </tbody></table>` : `<div class="alert quiet"><b>No forecast</b>Track too short to derive motion.</div>`}
     `).join("")}
+    ${!res.storms.length ? `<div class="alert quiet"><b>No cyclone detected</b>
+      Nothing in these ${res.scenes_examined} scenes cleared the detection threshold
+      on two or more consecutive scans.</div>` : ""}
     <div class="note">Nothing above was told where a storm is — detection, scene
       typing and intensity all come from the satellite image, and the forecast
       runs off the detected track. Verified on Amphan, Tauktae and Biparjoy:
-      detection within 47–94 km, and 11 of 12 forecast positions fell inside
-      their stated cone. Intensity is the weak link, running 17–26 kt low on
-      the strongest storms.</div>`;
+      centres found within 39–66 km, and 11 of 12 forecast positions fell inside
+      their stated cone. Intensity from the image alone came within 5–6 kt on
+      Amphan and Tauktae and 19 kt low on Biparjoy — reading the strongest
+      storms low is the weak link, and the Skill tab gives it by band.</div>`;
+}
+
+async function renderLive(){
+  const el = document.getElementById("pane-lv");
+  el.innerHTML = `<div class="empty">Checking the live feed…</div>`;
+  let st;
+  try{ st = await (await api("/api/live/status")).json(); }
+  catch(e){ el.innerHTML = `<div class="empty">Live status unavailable.</div>`; return; }
+  if(!st.available){
+    el.innerHTML = `<h2>Live</h2><div class="alert quiet"><b>No live scenes yet</b>
+      Fetch the latest INSAT imagery with <code>${esc(st.refresh)}</code>.</div>`;
+    return;
+  }
+  const last = st.scenes[st.scenes.length - 1];
+  el.innerHTML = `
+    <h2>Live</h2>
+    <div class="sub">${esc(last.satellite)} &middot; full-sector scans from MOSDAC, on the model grid</div>
+    <dl class="stats">
+      <div><dt>Latest scene</dt><dd>${ist(st.latest)}</dd></div>
+      <div><dt>Age</dt><dd>${st.age_hours.toFixed(1)} h</dd></div>
+      <div><dt>Scenes held</dt><dd>${st.scenes.length}</dd></div>
+      <div><dt>Fetched</dt><dd style="font-size:.9rem">${ist(st.fetched_at)}</dd></div>
+    </dl>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
+      <button class="chip" id="lv-show" style="background:var(--navy);color:#fff;border:0;cursor:pointer">Show latest scene</button>
+      <button class="chip" id="lv-run" style="background:var(--firebrick);color:#fff;border:0;cursor:pointer">Run the full chain on it</button>
+    </div>
+    <div id="lv-detect"></div>
+    <div id="lv-out"></div>
+    <div class="note">Showing the live scene hides the selected storm's track and cone;
+      pick a storm in the header to bring them back. The same models as every other tab,
+      fed today's INSAT imagery instead of the GridSat archive. MOSDAC publishes a scan about an hour after
+      it is taken. Refresh with <code>${esc(st.refresh)}</code>.</div>`;
+  const when = st.latest.replace("T", " ");
+  document.getElementById("lv-show").onclick = async () => {
+    // a past storm's track and cone drawn over today's sky would read as a
+    // forecast for today; clear them until a storm is picked again
+    const none = {type:"FeatureCollection", features:[]};
+    for(const id of ["cone","track","fcline","pts","fpts","dettrack"]) src(id, none);
+    map.fitBounds([[40, -2], [100, 30]], {padding:30, duration:600});
+    await setSatellite(true, when, "live");
+    try{
+      const d = await (await api(`/api/vision/detect?time=${encodeURIComponent(when)}&source=live`)).json();
+      const s = d.strongest;
+      document.getElementById("lv-detect").innerHTML = !d.available ? "" :
+        d.detections.length
+          ? `<div class="alert"><b>${d.detections.length} candidate${d.detections.length > 1 ? "s" : ""} in this scene</b>
+             ${d.detections.map(x => `${x.lat.toFixed(1)}N ${x.lon.toFixed(1)}E (score ${x.score.toFixed(2)})`).join(" · ")}</div>`
+          : `<div class="alert quiet"><b>No candidate above ${d.threshold.toFixed(2)}</b>
+             Strongest response ${s.score.toFixed(2)} at ${s.lat.toFixed(1)}N ${s.lon.toFixed(1)}E.</div>`;
+      src("dets", {type:"FeatureCollection", features:d.detections.map(x => ({type:"Feature",
+        geometry:{type:"Point", coordinates:[x.lon, x.lat]},
+        properties:{time:d.scene_time, score:x.score, scene:"", vmax:0}}))});
+    }catch(e){ /* the overlay alone is still useful */ }
+  };
+  document.getElementById("lv-run").onclick = () => runPipeline(when, "live", "lv-out");
 }
 
 async function renderSkill(){
   const el=document.getElementById("pane-sk");
+  const pct = v => `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`;
   try{
     const s=await (await api("/api/skill")).json();
-    const t=(s.final?.results||[]).filter(r=>r.task==="track");
-    const i=(s.final?.results||[]).filter(r=>r.task==="intensity");
+    const ci = s.forecast_ci?.results || [];
+    const t = ci.filter(r => r.task === "track");
+    const i = ci.filter(r => r.task === "intensity");
+    const fcTable = (rows, unit, dp) => `
+      <table><thead><tr><th>Lead</th><th>CLIPER</th><th>Chakravat</th><th>Skill</th><th>95% interval</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr><td class="n">${r.horizon_h} h</td>
+        <td class="n">${r.cliper.toFixed(dp)} ${unit}</td>
+        <td class="n"><strong>${r.served.toFixed(dp)} ${unit}</strong></td>
+        <td class="n" style="color:${r.skill_ci95[0] > 0 ? "var(--good)" : "var(--ink-3)"}">${pct(r.skill_pct)}</td>
+        <td class="n" style="color:var(--ink-3)">${pct(r.skill_ci95[0])} to ${pct(r.skill_ci95[1])}</td></tr>`).join("")}</tbody></table>`;
+
+    const d = s.detection, dn = d?.named_only, cvI = s.cv_intensity, cvS = s.cv_scene;
+    const bench = cvI?.adt_benchmark;
+    const lf = s.landfall;
+
     el.innerHTML=`
       <h2>Verification</h2>
-      <div class="sub">held-out seasons 2020–2025 · 51 storms never seen in training</div>
-      <h3>Track error</h3>
-      <table><thead><tr><th>Lead</th><th>CLIPER</th><th>Chakravat</th><th>Skill</th></tr></thead>
-      <tbody>${t.map(r=>`<tr><td class="n">${r.horizon_h} h</td>
-        <td class="n">${r.cliper.toFixed(0)} km</td>
-        <td class="n"><strong>${r.selected_error.toFixed(0)} km</strong></td>
-        <td class="n" style="color:var(--good)">+${r.skill_vs_cliper_pct.toFixed(1)}%</td></tr>`).join("")}</tbody></table>
-      <h3>Intensity error</h3>
-      <table><thead><tr><th>Lead</th><th>CLIPER</th><th>Chakravat</th><th>Skill</th></tr></thead>
-      <tbody>${i.map(r=>`<tr><td class="n">${r.horizon_h} h</td>
-        <td class="n">${r.cliper.toFixed(2)} kt</td>
-        <td class="n"><strong>${r.selected_error.toFixed(2)} kt</strong></td>
-        <td class="n" style="color:var(--good)">+${r.skill_vs_cliper_pct.toFixed(1)}%</td></tr>`).join("")}</tbody></table>
+      <div class="sub">every number here comes from storms or seasons the model never saw</div>
+
+      <h3>Track error, forecast as served</h3>
+      ${t.length ? fcTable(t, "km", 0) : `<div class="empty">No forecast scores.</div>`}
+      <h3>Intensity error, forecast as served</h3>
+      ${i.length ? fcTable(i, "kt", 2) : ""}
+      <div class="note">CLIPER is climatology plus persistence, the benchmark operational
+        centres score skill against. Intervals come from resampling whole storms 2,000
+        times; where one crosses zero, as at 72 h, the skill is real on this sample but
+        not established.</div>
+
       <h3>Cone coverage</h3>
       <table><thead><tr><th>Lead</th><th>50%</th><th>67%</th><th>90%</th></tr></thead>
       <tbody>${(s.cone?.coverage||[]).filter(r=>r.task==="track").map(r=>`<tr>
@@ -594,29 +930,103 @@ async function renderSkill(){
         <td class="n">${(100*r.coverage_50).toFixed(0)}%</td>
         <td class="n">${(100*r.coverage_67).toFixed(0)}%</td>
         <td class="n">${(100*r.coverage_90).toFixed(0)}%</td></tr>`).join("")}</tbody></table>
-      ${s.detection ? `<h3>Detection &amp; centre-fixing (T1)</h3>
-      <table><thead><tr><th></th><th>F1</th><th>Median fix</th></tr></thead><tbody>
+      <div class="note">A 67% cone should contain about 67% of verifying positions. Ours
+        runs slightly tight at short leads and slightly generous at long ones.</div>
+
+      ${lf ? `<h3>Landfall</h3>
+      <table><thead><tr><th></th><th>Chakravat</th><th>Baseline</th></tr></thead><tbody>
+        <tr><td>timing</td><td class="n"><strong>${lf.timing.model_mae_h.toFixed(1)} h</strong></td>
+            <td class="n">${lf.timing.baseline_mae_h.toFixed(1)} h</td></tr>
+        <tr><td>position, mean</td><td class="n"><strong>${lf.position.hybrid_mean_km.toFixed(0)} km</strong></td>
+            <td class="n">${lf.position.baseline_mean_km.toFixed(0)} km</td></tr>
+        <tr><td>intensity at coast</td><td class="n"><strong>${lf.intensity.model_mae_kt.toFixed(1)} kt</strong></td>
+            <td class="n">${lf.intensity.baseline_mae_kt.toFixed(1)} kt</td></tr>
+        <tr><td>will it land in 72 h</td>
+            <td class="n"><strong>POD ${lf.will_land.pod.toFixed(2)}</strong></td>
+            <td class="n">FAR ${lf.will_land.far.toFixed(2)}</td></tr>
+      </tbody></table>` : ""}
+
+      ${d ? `<h3>Detection and centre-fixing (T1)</h3>
+      <table><thead><tr><th></th><th>F1</th><th>Recall</th><th>Median fix</th></tr></thead><tbody>
         <tr><td>coldest-pixel baseline</td>
-            <td class="n">${s.detection.baseline_f1.toFixed(3)}</td>
-            <td class="n">${s.detection.baseline_median_km.toFixed(0)} km</td></tr>
-        <tr><td>chakravat</td>
-            <td class="n"><strong>${s.detection.f1.toFixed(3)}</strong></td>
-            <td class="n"><strong>${s.detection.median_km.toFixed(0)} km</strong></td></tr>
-      </tbody></table>` : ""}
-      ${s.scene ? `<h3>Dvorak scene (T2)</h3>
-      <table><thead><tr><th></th><th>macro-F1</th><th>accuracy</th></tr></thead><tbody>
+            <td class="n">${d.baseline_f1.toFixed(3)}</td><td class="n">—</td>
+            <td class="n">${d.baseline_median_km.toFixed(0)} km</td></tr>
+        <tr><td>all systems, including depressions</td>
+            <td class="n"><strong>${d.f1.toFixed(3)}</strong></td>
+            <td class="n">${d.recall.toFixed(3)}</td>
+            <td class="n">${d.median_km.toFixed(0)} km</td></tr>
+        ${dn ? `<tr><td>34 kt and above, the ones IMD names</td>
+            <td class="n"><strong>${dn.f1.toFixed(3)}</strong></td>
+            <td class="n">${dn.recall.toFixed(3)}</td>
+            <td class="n">${dn.median_km.toFixed(0)} km</td></tr>` : ""}
+      </tbody></table>
+      <div class="note">Reported twice on purpose: 79% of test fixes are depressions, which
+        often have no organised infrared signature at all, and pooling over them hides how
+        the system does on the storms that carry warning value.</div>` : ""}
+
+      ${cvS ? `<h3>Dvorak scene (T2)</h3>
+      <table><thead><tr><th></th><th>macro-F1</th><th>95% interval</th><th>accuracy</th></tr></thead><tbody>
         <tr><td>cold-cloud statistics</td>
-            <td class="n">${s.scene.cold_cloud_stats.macro_f1.toFixed(3)}</td>
-            <td class="n">${s.scene.cold_cloud_stats.accuracy.toFixed(3)}</td></tr>
+            <td class="n">${cvS.cold_cloud_logistic.macro_f1.toFixed(3)}</td>
+            <td class="n" style="color:var(--ink-3)">${cvS.cold_cloud_logistic.macro_f1_ci95.map(v=>v.toFixed(3)).join(" to ")}</td>
+            <td class="n">${cvS.cold_cloud_logistic.accuracy.toFixed(3)}</td></tr>
+        <tr><td>CNN alone</td>
+            <td class="n">${cvS.cnn.macro_f1.toFixed(3)}</td>
+            <td class="n" style="color:var(--ink-3)">${cvS.cnn.macro_f1_ci95.map(v=>v.toFixed(3)).join(" to ")}</td>
+            <td class="n">${cvS.cnn.accuracy.toFixed(3)}</td></tr>
+        <tr><td>hybrid, what serves</td>
+            <td class="n"><strong>${cvS.hybrid.macro_f1.toFixed(3)}</strong></td>
+            <td class="n" style="color:var(--ink-3)">${cvS.hybrid.macro_f1_ci95.map(v=>v.toFixed(3)).join(" to ")}</td>
+            <td class="n"><strong>${cvS.hybrid.accuracy.toFixed(3)}</strong></td></tr>
+      </tbody></table>
+      <table style="margin-top:8px"><thead><tr><th>Class</th>${Object.keys(cvS.hybrid.per_class_f1).map(c=>`<th>${c}</th>`).join("")}</tr></thead>
+      <tbody><tr><td>F1</td>${Object.values(cvS.hybrid.per_class_f1).map(v=>`<td class="n">${v.toFixed(2)}</td>`).join("")}</tr>
+      <tr><td>patches</td>${Object.values(cvS.support).map(v=>`<td class="n">${v}</td>`).join("")}</tr></tbody></table>
+      <div class="note">${cvS.folds}-fold cross-validation grouped by storm over all
+        ${cvS.patches} labelled patches, so every patch is scored by a model that never saw
+        its storm. The CNN and the temperature statistics fail on different scenes, and
+        averaging them beats either alone by
+        ${cvS.hybrid_minus_cnn_ci95.map(v=>v.toFixed(3)).join(" to ")} macro-F1.
+        Labels are CIMSS ADT scene types: algorithm output, not an analyst's.</div>` : ""}
+
+      ${cvI ? `<h3>Intensity from one image (T3)</h3>
+      <table><thead><tr><th></th><th>RMSE</th><th>95% interval</th><th>Bias</th><th>IMD category</th></tr></thead><tbody>
+        <tr><td>predict the mean</td>
+            <td class="n">${cvI.predict_the_mean.rmse.toFixed(2)} kt</td>
+            <td class="n" style="color:var(--ink-3)">${cvI.predict_the_mean.rmse_ci95.map(v=>v.toFixed(1)).join(" to ")}</td>
+            <td class="n">${cvI.predict_the_mean.bias.toFixed(1)}</td>
+            <td class="n">${(100*cvI.predict_the_mean.imd_category_exact).toFixed(0)}%</td></tr>
+        <tr><td>cold-cloud statistics</td>
+            <td class="n">${cvI.cold_cloud.rmse.toFixed(2)} kt</td>
+            <td class="n" style="color:var(--ink-3)">${cvI.cold_cloud.rmse_ci95.map(v=>v.toFixed(1)).join(" to ")}</td>
+            <td class="n">${cvI.cold_cloud.bias.toFixed(1)}</td>
+            <td class="n">${(100*cvI.cold_cloud.imd_category_exact).toFixed(0)}%</td></tr>
+        ${bench ? `<tr><td>ADT, the operational objective method</td>
+            <td class="n">${bench.adt.rmse.toFixed(2)} kt</td>
+            <td class="n" style="color:var(--ink-3)">${bench.adt.rmse_ci95.map(v=>v.toFixed(1)).join(" to ")}</td>
+            <td class="n">${bench.adt.bias.toFixed(1)}</td>
+            <td class="n">${(100*bench.adt.imd_category_exact).toFixed(0)}%</td></tr>` : ""}
         <tr><td>chakravat</td>
-            <td class="n"><strong>${s.scene.cnn.macro_f1.toFixed(3)}</strong></td>
-            <td class="n"><strong>${s.scene.cnn.accuracy.toFixed(3)}</strong></td></tr>
-      </tbody></table>` : ""}
-      <div class="note">CLIPER is the operational climatology-and-persistence
-        benchmark. Coverage should land near the nominal level — that is what
-        makes the cone trustworthy rather than decorative.
-        <br><br>Not an IMD product. Official warnings are issued by RSMC New Delhi.</div>`;
-  }catch(e){ el.innerHTML=`<div class="empty">Verification data unavailable.</div>`; }
+            <td class="n"><strong>${cvI.cnn_raw.rmse.toFixed(2)} kt</strong></td>
+            <td class="n" style="color:var(--ink-3)">${cvI.cnn_raw.rmse_ci95.map(v=>v.toFixed(1)).join(" to ")}</td>
+            <td class="n"><strong>${cvI.cnn_raw.bias.toFixed(1)}</strong></td>
+            <td class="n"><strong>${(100*cvI.cnn_raw.imd_category_exact).toFixed(0)}%</strong></td></tr>
+      </tbody></table>
+      <table style="margin-top:8px"><thead><tr><th>Truth band</th>${Object.keys(cvI.cnn_raw.bands).map(b=>`<th>${b}</th>`).join("")}</tr></thead>
+      <tbody><tr><td>bias (kt)</td>${Object.values(cvI.cnn_raw.bands).map(b=>`<td class="n">${b.bias==null?"—":b.bias.toFixed(1)}</td>`).join("")}</tr>
+      <tr><td>patches</td>${Object.values(cvI.cnn_raw.bands).map(b=>`<td class="n">${b.n}</td>`).join("")}</tr></tbody></table>
+      <div class="note">Truth is IMD's best-track wind, interpolated to the scene time.
+        ${bench ? `ADT is scored on the same ${bench.n} scenes it covers; the difference
+        between it and Chakravat is ${cvI.adt_benchmark.cnn_raw_minus_adt_rmse_ci95.map(v=>v.toFixed(1)).join(" to ")} kt,
+        so on this data the two are level while ADT reads ${bench.adt.bias.toFixed(1)} kt high
+        and ours ${cvI.cnn_raw.bias.toFixed(1)}.` : ""}
+        The band table is the part to read: a single RMSE hides that weak systems come out
+        too strong and the strongest too weak.</div>` : ""}
+
+      <div class="note">Splits are by storm or by season, never by row: consecutive fixes of
+        one cyclone are near identical, and a random split would put the same storm on both
+        sides. <br><br>Not an IMD product. Official warnings are issued by RSMC New Delhi.</div>`;
+  }catch(e){ el.innerHTML=`<div class="empty">Verification data unavailable (${e}).</div>`; }
 }
 
 async function boot(){
@@ -635,16 +1045,19 @@ async function loadSeason(season){
 
 document.getElementById("season").onchange=e=>loadSeason(e.target.value);
 document.getElementById("storm").onchange=e=>loadStorm(e.target.value);
-document.querySelectorAll(".lvl button").forEach(b=>b.onclick=()=>{
-  document.querySelectorAll(".lvl button").forEach(x=>x.setAttribute("aria-pressed","false"));
+document.getElementById("issue").onchange=e=>{ if(current) loadStorm(current.d.sid, e.target.value); };
+// data-lvl only: the Satellite button shares the .lvl styling but is not a level
+document.querySelectorAll(".lvl button[data-lvl]").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".lvl button[data-lvl]").forEach(x=>x.setAttribute("aria-pressed","false"));
   b.setAttribute("aria-pressed","true"); level=parseFloat(b.dataset.lvl);
-  if(current) loadStorm(current.d.sid);
+  if(current) loadStorm(current.d.sid, current.fc ? current.fc.issued_at : null);
 });
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected","false"));
   document.querySelectorAll(".pane").forEach(p=>p.classList.remove("on"));
   b.setAttribute("aria-selected","true");
   document.getElementById("pane-"+b.dataset.pane).classList.add("on");
+  if(b.dataset.pane==="lv") renderLive();
   // The chain reads several scenes, so only run it when actually opened.
   if(b.dataset.pane==="pl" && current && !document.getElementById("pane-pl").dataset.ran){
     document.getElementById("pane-pl").dataset.ran = "1";

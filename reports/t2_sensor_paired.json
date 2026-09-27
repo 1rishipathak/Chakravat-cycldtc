@@ -1,0 +1,56 @@
+{
+  "paired_scenes": 505,
+  "note": "every INSAT patch has a GridSat twin at the same storm and time with the same ADT label, so the sensor is the only thing that differs",
+  "agreement": {
+    "same_prediction": 0.6673267326732674,
+    "both_right": 0.5366336633663367,
+    "gridsat_right_insat_wrong": 0.19801980198019803,
+    "insat_right_gridsat_wrong": 0.08118811881188119,
+    "both_wrong": 0.18415841584158416
+  },
+  "gridsat": {
+    "hybrid_macro_f1": 0.7250097763678165,
+    "hybrid_macro_f1_ci95": [
+      0.673271706335656,
+      0.7713597784398932
+    ],
+    "cnn_macro_f1": 0.6733766740713045,
+    "cnn_macro_f1_ci95": [
+      0.6153276965968765,
+      0.7222066449272304
+    ],
+    "per_class_f1": {
+      "EYE": 0.7564102564102564,
+      "CRVBND": 0.7534626038781164,
+      "SHEAR": 0.84472049689441,
+      "EMBC": 0.6919431279620852,
+      "IRRCDO": 0.578512396694215
+    }
+  },
+  "insat": {
+    "hybrid_macro_f1": 0.6010919694354969,
+    "hybrid_macro_f1_ci95": [
+      0.5388182870864712,
+      0.6515828799351283
+    ],
+    "cnn_macro_f1": 0.5874437458625852,
+    "cnn_macro_f1_ci95": [
+      0.5283459889244663,
+      0.6365732477408165
+    ],
+    "per_class_f1": {
+      "EYE": 0.7515151515151515,
+      "CRVBND": 0.6384180790960452,
+      "SHEAR": 0.7593582887700534,
+      "EMBC": 0.4685714285714286,
+      "IRRCDO": 0.3875968992248062
+    }
+  },
+  "support": {
+    "EYE": 83,
+    "CRVBND": 190,
+    "SHEAR": 76,
+    "EMBC": 101,
+    "IRRCDO": 55
+  }
+}

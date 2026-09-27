@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<!--
+  the public alert wall.
+
+  every live INSAT fetch and every published CAP alert lands here as it
+  happens, over server-sent events. it is deliberately a separate page from the
+  dashboard: the dashboard is for exploring, this is for watching, and the two
+  want opposite things from a layout.
+
+  it degrades in the right order. if the event stream cannot connect it falls
+  back to polling, and if the API is unreachable entirely it says so instead of
+  showing an empty page that looks calm. an alert wall that looks quiet when it
+  is actually broken is worse than no alert wall.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chakravat Alert Feed</title>
+<style>
+:root{
+  --navy:#000066; --navy-2:#001a80; --band:#c9d6ea;
+  --panel:#ffffff; --panel-2:#f2f5fa; --panel-3:#e8eef7;
+  --ink:#101010; --ink-2:#33415c; --ink-3:#5a6b8c;
+  --rule:#b9c6dd; --rule-2:#8fa3c4;
+  --firebrick:#b22222; --link:#0000cc;
+  --saffron:#ff9933; --green:#138808;
+  --warn:#b06000; --good:#136c3a;
+  --minor:#5C9BC6; --moderate:#D6AE2E; --severe:#EE8C40; --extreme:#C74765;
+  --f-head:"Times New Roman",Times,Georgia,serif;
+  --f-body:Arial,"Helvetica Neue",Helvetica,sans-serif;
+  --f-mono:"Courier New",Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--navy);color:var(--ink);
+  font-family:var(--f-body);font-size:13px}
+
+/* ---- masthead ---------------------------------------------------------- */
+header{background:var(--navy);color:#fff;padding:14px 20px 12px;
+  border-bottom:3px solid var(--saffron)}
+.wrap{max-width:1100px;margin:0 auto}
+h1{font-family:var(--f-head);font-size:25px;margin:0;letter-spacing:.5px}
+h1 small{font-size:13px;font-weight:normal;opacity:.82;letter-spacing:0}
+.sub{font-size:11.5px;opacity:.8;margin-top:3px}
+
+/* the disclaimer is not decoration - it is the thing that keeps this page
+   from being mistaken for a warning, so it sits above the fold and stays */
+.exercise{background:#fff4d6;border-top:1px solid var(--warn);
+  border-bottom:1px solid var(--warn);color:#5a3800;padding:9px 20px;
+  font-size:12px;line-height:1.5}
+.exercise b{color:#7a2b00}
+
+main{max-width:1100px;margin:0 auto;padding:16px 20px 60px}
+.grid{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start}
+@media (max-width:820px){.grid{grid-template-columns:1fr}}
+
+.card{background:var(--panel);border:1px solid var(--rule)}
+.card h2{font-family:var(--f-head);font-size:15px;margin:0;
+  background:var(--panel-3);border-bottom:1px solid var(--rule);
+  padding:7px 11px;font-weight:bold}
+.card .body{padding:11px}
+
+/* ---- live status ------------------------------------------------------- */
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;
+  margin-right:6px;vertical-align:1px;background:var(--ink-3)}
+.dot.on{background:var(--green);box-shadow:0 0 0 3px rgba(19,136,8,.18)}
+.dot.warn{background:var(--warn)}
+.dot.off{background:var(--firebrick)}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:4px 0;
+  border-bottom:1px dotted var(--rule);font-size:12px}
+.kv:last-child{border-bottom:0}
+.kv span:first-child{color:var(--ink-3)}
+.kv span:last-child{font-family:var(--f-mono);text-align:right}
+button{font:inherit;padding:6px 12px;border:1px solid var(--rule-2);
+  background:var(--panel-2);cursor:pointer;width:100%;margin-top:9px}
+button:hover:not(:disabled){background:var(--panel-3)}
+button:disabled{opacity:.55;cursor:default}
+
+/* ---- alerts ------------------------------------------------------------ */
+/* ---- tabs -------------------------------------------------------------- */
+/* live and replayed alerts look alike and mean completely different things,
+   so they do not share a list. one is weather, the other is a rehearsal. */
+.tabs{display:flex;border:1px solid var(--rule);border-bottom:0;
+  background:var(--panel-2)}
+.tabs button{flex:1;width:auto;margin:0;background:var(--panel-2);border:0;
+  border-right:1px solid var(--rule);padding:8px 10px;cursor:pointer;
+  font-size:12.5px;text-align:center;position:relative}
+.tabs button:last-child{border-right:0}
+.tabs button[aria-selected="true"]{background:var(--navy);color:#fff;
+  font-weight:bold}
+.tabs button:hover:not([aria-selected="true"]){background:var(--panel-3)}
+.tabs .n{opacity:.7;font-size:11px;margin-left:3px}
+.tabs .new{display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:var(--firebrick);margin-left:5px;vertical-align:1px}
+
+.alert{border:1px solid var(--rule);border-left:5px solid var(--ink-3);
+  background:var(--panel);margin-bottom:10px}
+.alert.Minor{border-left-color:var(--minor)}
+.alert.Moderate{border-left-color:var(--moderate)}
+.alert.Severe{border-left-color:var(--severe)}
+.alert.Extreme{border-left-color:var(--extreme)}
+.alert.fresh{animation:pop 1.4s ease-out}
+@keyframes pop{0%{background:#fffbe6}100%{background:var(--panel)}}
+.alert .top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  padding:8px 11px;border-bottom:1px solid var(--panel-3)}
+.headline{font-weight:bold;font-size:13.5px;line-height:1.35}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.tag{font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;
+  padding:1px 6px;border:1px solid var(--rule-2);background:var(--panel-2);
+  color:var(--ink-2)}
+.tag.live{background:#e8f5e9;border-color:var(--green);color:var(--good)}
+.tag.sev{background:var(--panel-3)}
+.when{font-family:var(--f-mono);font-size:11px;color:var(--ink-3);
+  white-space:nowrap}
+.alert .why{padding:8px 11px;font-size:12px;line-height:1.5;color:var(--ink-2);
+  background:var(--panel-2)}
+.alert .why b{color:var(--ink)}
+.alert .foot{padding:6px 11px;font-size:11.5px;display:flex;gap:14px;
+  flex-wrap:wrap;border-top:1px solid var(--panel-3)}
+a{color:var(--link)}
+.muted{color:var(--ink-3)}
+.empty{padding:26px 14px;text-align:center;color:var(--ink-3);font-size:12.5px;
+  line-height:1.6}
+.log{font-family:var(--f-mono);font-size:11px;color:var(--ink-3);
+  max-height:150px;overflow:auto;line-height:1.6}
+footer{max-width:1100px;margin:0 auto;padding:0 20px 30px;color:#c9d6ea;
+  font-size:11.5px;line-height:1.6}
+footer a{color:#cfe0ff}
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <h1>Chakravat <small>— live cyclone alert feed</small></h1>
+  <div class="sub">AI/ML identification, classification and prediction of
+    tropical cyclone patterns from multi-source satellite data · SIH 2026,
+    PS 26070 · Team Chakravat (R203-33)</div>
+</div></header>
+
+<div class="exercise"><div class="wrap">
+  <b>EXERCISE ONLY — NOT AN IMD WARNING.</b>
+  Every alert on this page carries CAP <code>status=Exercise</code>. Official
+  cyclone warnings for the North Indian Ocean are issued by the India
+  Meteorological Department as RSMC New Delhi and reach the public through
+  NDMA's channels. This is a student prototype for decision support and must
+  not be acted on. Follow IMD and your State and District Disaster Management
+  Authority.
+</div></div>
+
+<main>
+<div class="grid">
+
+  <div>
+    <div class="card">
+      <h2>Live satellite feed</h2>
+      <div class="body">
+        <div class="kv"><span>Stream</span>
+          <span id="conn"><i class="dot"></i>connecting…</span></div>
+        <div class="kv"><span>Latest scan</span><span id="scan">—</span></div>
+        <div class="kv"><span>Satellite</span><span id="sat">—</span></div>
+        <div class="kv"><span>Scan age</span><span id="age">—</span></div>
+        <div class="kv"><span>Last fetch</span><span id="fetched">—</span></div>
+        <div class="kv"><span>Systems tracked</span><span id="tracks">—</span></div>
+        <div class="kv"><span>Alerts published</span><span id="count">—</span></div>
+        <button id="run">Run the chain on the latest scan</button>
+        <div class="muted" style="margin-top:7px;font-size:11px;line-height:1.5">
+          Fetching new imagery is a separate job
+          (<code>src/ingest/insat_live.py</code>); this runs detection,
+          classification, intensity and forecast on what has already landed,
+          then alerts if anything changed.
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Activity</h2>
+      <div class="body"><div class="log" id="log"></div></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card" style="margin-bottom:14px">
+      <h2>Subscribe</h2>
+      <div class="body" style="font-size:12px;line-height:1.6">
+        Alerts are published as <b>CAP 1.2</b> on an Atom feed — the format
+        NDMA's SACHET carries and every alerting aggregator already parses.
+        Point a reader at
+        <a id="feedlink" href="/api/alerts/feed.atom">/api/alerts/feed.atom</a>,
+        or read the same alerts as JSON at
+        <a id="jsonlink" href="/api/alerts">/api/alerts</a>.
+        <div class="muted" style="margin-top:7px">
+          We publish; we do not broadcast to the public. That last mile belongs
+          to IMD and NDMA, and this prototype should never compete with the
+          warning people are meant to act on.
+        </div>
+      </div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="live" aria-selected="true">
+        Live INSAT<span class="n" id="n-live"></span></button>
+      <button role="tab" data-tab="hist" aria-selected="false">
+        Historical replay<span class="n" id="n-hist"></span></button>
+      <button role="tab" data-tab="all" aria-selected="false">
+        All<span class="n" id="n-all"></span></button>
+    </div>
+    <div id="alerts"></div>
+  </div>
+
+</div>
+</main>
+
+<footer><div class="wrap">
+  Detection and intensity are read from INSAT-3D/3DR/3DS and GridSat-B1
+  infrared imagery; forecasts are cross-validated on storms never seen in
+  training, with 95% intervals from resampling whole storms. Known limits are
+  written down in <code>limitations.md</code> rather than left for you to find.
+</div></footer>
+
+<script>
+// where the API lives.
+//
+// same-origin is the normal case, because the API serves this page. but the
+// file opens just as easily by double-clicking it, and then every relative
+// fetch resolves against file:// and fails with a bare "Failed to fetch" that
+// says nothing about why. so: an explicit ?api= wins, a file:// page assumes
+// the local dev server, and everything else stays same-origin.
+const API = (() => {
+  const q = new URLSearchParams(location.search).get('api');
+  if (q) return q.replace(/\/$/, '');
+  if (location.protocol === 'file:') return 'http://127.0.0.1:8010';
+  return '';
+})();
+const API_LABEL = API || location.origin;
+const $ = id => document.getElementById(id);
+const seen = new Set();
+let alerts = [];
+
+// the chosen tab is a per-viewer convenience, so browser storage is the right
+// home for it - and it can throw in a private window, so it never goes
+// unguarded and the page renders fine when it comes back empty.
+let tab = (() => {
+  try{ return localStorage.getItem('chakravat.tab') || 'live'; }
+  catch(e){ return 'live'; }
+})();
+
+const esc = s => String(s ?? '').replace(/[&<>"]/g,
+  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* Alerts carry UTC with an explicit offset; readers here are in India. */
+function stamp(t){
+  if(!t) return '—';
+  const d = new Date(String(t).trim().replace(' ','T').replace(/(\+00:00|Z)$/,'') + 'Z');
+  if(isNaN(d)) return String(t);
+  const p = new Date(d.getTime() + 330*60000), z = n => String(n).padStart(2,'0');
+  return `${p.getUTCFullYear()}-${z(p.getUTCMonth()+1)}-${z(p.getUTCDate())} `
+       + `${z(p.getUTCHours())}:${z(p.getUTCMinutes())} IST`;
+}
+function ago(hours){
+  if(hours == null) return '—';
+  if(hours < 1) return Math.round(hours*60)+' min';
+  return hours.toFixed(1)+' h';
+}
+function log(msg){
+  const el = $('log');
+  const now = new Date().toISOString().slice(11,19);
+  el.insertAdjacentHTML('afterbegin', `${now}  ${esc(msg)}<br>`);
+}
+function conn(state, text){
+  $('conn').innerHTML = `<i class="dot ${state}"></i>${esc(text)}`;
+}
+
+// which wall an alert belongs on. anything without an origin predates the
+// field and can only be a replay, so it belongs with the historical ones.
+const originOf = a => (a.state && a.state.origin === 'live_insat') ? 'live' : 'hist';
+
+const EMPTY = {
+  live: `<b>No live alerts.</b><br>
+    Nothing is wrong — this is what the page looks like when no system in the
+    basin meets the alerting threshold, which is most days.<br>
+    Run the chain on the latest scan to check the newest INSAT imagery now.`,
+  hist: `<b>No replayed alerts.</b><br>
+    Replay a past storm through the same alerting decision with
+    <code>python src/replay_alerts.py --suite</code>.`,
+  all: `<b>No alerts published yet.</b><br>
+    Nothing is wrong — this is what the page looks like when no system in the
+    basin meets the alerting threshold.<br>
+    Run the chain on the latest scan, or replay a past storm with
+    <code>python src/replay_alerts.py</code>.`,
+};
+
+function counts(){
+  const live = alerts.filter(a => originOf(a) === 'live').length;
+  return {live, hist: alerts.length - live, all: alerts.length};
+}
+
+function render(){
+  const box = $('alerts');
+  const c = counts();
+  for(const k of ['live','hist','all']){
+    $('n-'+k).textContent = c[k] ? ` (${c[k]})` : '';
+  }
+  const list = alerts.filter(a => tab === 'all' || originOf(a) === tab);
+  if(!list.length){
+    box.innerHTML = `<div class="card"><div class="empty">${EMPTY[tab]}</div></div>`;
+    return;
+  }
+  box.innerHTML = list.map(a => {
+    const st = a.state || {};
+    const live = (st.origin === 'live_insat');
+    const fresh = a._fresh ? ' fresh' : '';
+    return `<div class="alert ${esc(a.severity)}${fresh}">
+      <div class="top">
+        <div>
+          <div class="headline">${esc(a.headline)}</div>
+          <div class="tags">
+            <span class="tag">${esc(a.msgType)}</span>
+            <span class="tag sev">${esc(a.severity)}</span>
+            <span class="tag">${esc(a.urgency)}</span>
+            <span class="tag">${esc(a.certainty)}</span>
+            ${live ? '<span class="tag live">live INSAT</span>'
+                   : '<span class="tag">best track</span>'}
+          </div>
+        </div>
+        <div class="when">${stamp(a.sent)}</div>
+      </div>
+      <div class="why"><b>Sent because:</b> ${esc(a.reason)}.</div>
+      <div class="foot">
+        <span class="muted">${esc(a.sid)}</span>
+        <a href="${API}/api/alerts/${encodeURIComponent(a.identifier)}.xml">CAP XML</a>
+        <span class="muted">expires ${stamp(a.expires)}</span>
+        ${a.references ? '<span class="muted">supersedes an earlier alert</span>' : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addAlert(entry, isNew){
+  if(seen.has(entry.identifier)) return;
+  seen.add(entry.identifier);
+  entry._fresh = !!isNew;
+  alerts.unshift(entry);
+  alerts = alerts.slice(0, 60);
+  $('count').textContent = seen.size;
+  // an alert arriving on the tab you are not looking at must not be silent
+  const where = originOf(entry);
+  if(isNew && tab !== where && tab !== 'all') mark(where);
+  render();
+}
+
+function mark(which){
+  const btn = document.querySelector(`.tabs button[data-tab="${which}"]`);
+  if(btn && !btn.querySelector('.new')){
+    btn.insertAdjacentHTML('beforeend', '<span class="new" title="new since you last looked"></span>');
+  }
+}
+
+function selectTab(next){
+  tab = next;
+  try{ localStorage.setItem('chakravat.tab', next); }catch(e){ /* private window */ }
+  document.querySelectorAll('.tabs button').forEach(b => {
+    const on = b.dataset.tab === next;
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
+    if(on) b.querySelector('.new')?.remove();
+  });
+  render();
+}
+
+// a page that cannot reach its API must say so loudly and specifically. the
+// first version logged "could not load alerts: Failed to fetch", which is the
+// browser's way of saying nothing at all - it covers a dead server, a blocked
+// origin and a file:// page equally, and those need completely different fixes.
+function unreachable(detail){
+  if($('trouble')) return;
+  const filey = location.protocol === 'file:';
+  document.querySelector('main').insertAdjacentHTML('afterbegin', `
+    <div class="card" id="trouble" style="border-color:var(--firebrick);
+         border-left:5px solid var(--firebrick);margin-bottom:14px">
+      <h2 style="background:#fdeaea;border-color:var(--firebrick)">
+        Cannot reach the Chakravat API</h2>
+      <div class="body" style="font-size:12.5px;line-height:1.6">
+        Tried <code>${esc(API_LABEL)}</code> and got
+        <code>${esc(detail)}</code>.
+        <div style="margin-top:8px">${filey
+          ? `This page was opened as a <b>local file</b>, so it guessed
+             <code>http://127.0.0.1:8010</code>. Open it through the API
+             instead — <a href="http://localhost:8010/live">http://localhost:8010/live</a>
+             — or start the server:`
+          : `The API is not answering on this origin. If it runs elsewhere,
+             append <code>?api=</code> with its address. To start it locally:`}
+          <div style="font-family:var(--f-mono);background:var(--panel-2);
+               border:1px solid var(--rule);padding:7px;margin-top:6px">
+            python -m uvicorn api.main:app --port 8010
+          </div>
+        </div>
+        <div class="muted" style="margin-top:8px">Nothing is being published or
+          missed while this is showing — the alert store is on the server, and
+          this page will catch up as soon as it can reach it.</div>
+      </div>
+    </div>`);
+}
+
+async function loadExisting(){
+  try{
+    const r = await fetch(`${API}/api/alerts`);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d = await r.json();
+    (d.alerts || []).slice().reverse().forEach(a => addAlert(a, false));
+    $('count').textContent = d.count;
+    log(`loaded ${d.count} published alert(s)`);
+    $('trouble')?.remove();
+  }catch(e){
+    log('could not load alerts: '+e.message);
+    conn('off','API unreachable');
+    unreachable(e.message);
+  }
+}
+
+async function loadStatus(){
+  try{
+    const r = await fetch(`${API}/api/live/status`);
+    const d = await r.json();
+    applyFetch({available:d.available, latest_scan:d.latest, age_hours:d.age_hours,
+                fetched_at:d.fetched_at,
+                satellite:(d.scenes||[]).length ? d.scenes[d.scenes.length-1].satellite : null});
+  }catch(e){ /* the stream or the alert load will have reported it */ }
+}
+
+function applyFetch(f){
+  if(!f.available){ $('scan').textContent = 'none yet'; return; }
+  $('scan').textContent = stamp(f.latest_scan);
+  $('sat').textContent = f.satellite || '—';
+  $('age').textContent = ago(f.age_hours);
+  if(f.fetched_at) $('fetched').textContent = stamp(f.fetched_at);
+  if(f.tracks_found != null) $('tracks').textContent = f.tracks_found;
+}
+
+// ---- the push channel ----------------------------------------------------
+// EventSource reconnects on its own, so the only failure worth handling is a
+// stream that never opens at all - then we poll, so the page still works.
+let polling = null;
+function startPolling(){
+  if(polling) return;
+  conn('warn','polling every 20 s');
+  log('event stream unavailable, falling back to polling');
+  polling = setInterval(() => { loadExisting(); loadStatus(); }, 20000);
+}
+
+function connect(){
+  let opened = false;
+  const es = new EventSource(`${API}/api/stream`);
+  es.addEventListener('hello', () => {
+    opened = true;
+    if(polling){ clearInterval(polling); polling = null; }
+    conn('on','live');
+    log('connected to the event stream');
+  });
+  es.addEventListener('alert', e => {
+    const d = JSON.parse(e.data);
+    addAlert(d.alert, true);
+    log(`ALERT ${d.alert.msgType} ${d.alert.sid} — ${d.alert.reason}`);
+  });
+  es.addEventListener('fetch', e => {
+    const d = JSON.parse(e.data);
+    applyFetch(d);
+    log(d.available
+      ? `scan ${stamp(d.latest_scan)}: ${d.scenes_examined} scenes, ${d.tracks_found} system(s)`
+      : `fetch: ${d.detail || 'nothing available'}`);
+  });
+  es.onerror = () => {
+    conn('warn','reconnecting…');
+    if(!opened) startPolling();
+  };
+}
+
+$('run').addEventListener('click', async () => {
+  const b = $('run');
+  b.disabled = true; b.textContent = 'Running the chain…';
+  log('running detection → pattern → intensity → forecast on the latest scan');
+  try{
+    const r = await fetch(`${API}/api/live/evaluate`, {method:'POST'});
+    const d = await r.json();
+    if(!d.available){ log('nothing to run: '+(d.reason||'unknown')); }
+    else{
+      (d.results||[]).forEach(x => { if(!x.issued) log(`${x.sid||x.detection}: ${x.reason}`); });
+      if(!d.results?.length) log(`no systems detected in ${d.scenes_examined} scene(s)`);
+    }
+  }catch(e){ log('run failed: '+e.message); unreachable(e.message); }
+  b.disabled = false; b.textContent = 'Run the chain on the latest scan';
+});
+
+document.querySelectorAll('.tabs button').forEach(b =>
+  b.addEventListener('click', () => selectTab(b.dataset.tab)));
+
+$('feedlink').href = `${API}/api/alerts/feed.atom`;
+$('jsonlink').href = `${API}/api/alerts`;
+selectTab(tab);
+loadExisting();
+loadStatus();
+connect();
+</script>
+</body>
+</html>

@@ -1,7 +1,13 @@
 # task T1: find cyclones in a basin-wide scene and fix their centres
+#
+#     python src/train_detect.py                               the served recipe
+#     python src/train_detect.py --aug shift --tag noflip      a candidate
+#     python src/train_detect.py --sources joint --tag joint   GridSat + INSAT
+#     python src/train_detect.py --evaluate-only               served detector on both sensors
 
 from __future__ import annotations
 
+import argparse
 import json
 import math
 import sys
@@ -26,6 +32,8 @@ from vision.detect import (                                # noqa: E402
 )
 
 GRIDSAT = ROOT / "data" / "gridsat"
+INSAT = ROOT / "data" / "insat" / "grid"
+ROOTS = {"gridsat": GRIDSAT, "insat": INSAT}
 RAW = ROOT / "data" / "raw" / "ibtracs.NI.csv"
 OUT, ART = ROOT / "reports", ROOT / "artifacts"
 
@@ -91,11 +99,11 @@ def focal_loss(pred_logits, target, weight=None,
     return (pos_loss.sum() + neg_loss.sum()) / n
 
 
-def coldest_pixel_baseline(when: pd.Timestamp, n_expected: int):
+def coldest_pixel_baseline(when: pd.Timestamp, n_expected: int, root: Path = GRIDSAT):
     # coldest local minima of brightness temperature, as centre estimates
     import scipy.ndimage as ndi
 
-    with xr.open_dataset(gridsat_path(GRIDSAT, when)) as ds:
+    with xr.open_dataset(gridsat_path(root, when)) as ds:
         ir = ds["irwin_cdr"].isel(time=0).values.astype(np.float32)
         lats, lons = ds["lat"].values, ds["lon"].values
     ir = np.nan_to_num(ir, nan=300.0)
@@ -161,10 +169,10 @@ def predict_scene(model, ds, i, index, device):
 
 def evaluate(model, index, track, device, threshold=0.30,
              cache=None, cache_offset=0, with_baseline=True,
-             min_kt: float = 0.0):
+             min_kt: float = 0.0, root: Path = GRIDSAT):
     # min_kt restricts scoring to systems at or above that intensity
     model.eval()
-    ds = BasinScenes(index, track, GRIDSAT, cache=cache, cache_offset=cache_offset)
+    ds = BasinScenes(index, track, root, cache=cache, cache_offset=cache_offset)
     hits = n_pred = n_true = 0
     errors, base_errors = [], []
     b_hits = b_pred = 0
@@ -193,7 +201,7 @@ def evaluate(model, index, track, device, threshold=0.30,
                     break
 
         if with_baseline:
-            bh, berrs, bp, _ = match(coldest_pixel_baseline(when, len(true_pts)),
+            bh, berrs, bp, _ = match(coldest_pixel_baseline(when, len(true_pts), root),
                                      true_pts)
             b_hits += bh; b_pred += bp; base_errors += berrs
 
@@ -201,6 +209,7 @@ def evaluate(model, index, track, device, threshold=0.30,
     _, _, bf1 = _prf(b_hits, b_pred, n_true)
     return {
         "n_scenes": int(len(index)), "n_storms": int(n_true),
+        "hits": int(hits), "n_pred": int(n_pred),
         "min_kt": float(min_kt), "threshold": float(threshold),
         "precision": prec, "recall": rec, "f1": f1,
         "median_km": float(np.median(errors)) if errors else float("nan"),
@@ -216,67 +225,140 @@ def evaluate(model, index, track, device, threshold=0.30,
     }
 
 
-def tune_threshold(model, index, track, device, cache, cache_offset,
+def tune_threshold(model, parts, track, device,
                    grid=(0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.50)) -> float:
-    # pick the peak threshold on validation, never on test
+    # pick the peak threshold on validation, never on test. parts is a list of
+    # (index, root, cache, offset), one per sensor; hits are pooled across them
     best, best_f1 = grid[0], -1.0
     for thr in grid:
-        r = evaluate(model, index, track, device, threshold=thr,
-                     cache=cache, cache_offset=cache_offset, with_baseline=False)
-        print(f"    threshold {thr:.2f}  F1 {r['f1']:.3f}  "
-              f"P {r['precision']:.3f}  R {r['recall']:.3f}")
-        if r["f1"] > best_f1:
-            best, best_f1 = thr, r["f1"]
+        hits = n_pred = n_true = 0
+        for index, root, cache, offset in parts:
+            r = evaluate(model, index, track, device, threshold=thr, cache=cache,
+                         cache_offset=offset, with_baseline=False, root=root)
+            hits += r["hits"]; n_pred += r["n_pred"]; n_true += r["n_storms"]
+        p, rc, f1 = _prf(hits, n_pred, n_true)
+        print(f"    threshold {thr:.2f}  F1 {f1:.3f}  P {p:.3f}  R {rc:.3f}")
+        if f1 > best_f1:
+            best, best_f1 = thr, f1
     return best
 
 
-def main() -> None:
-    torch.manual_seed(SEED); np.random.seed(SEED)
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    print("=" * 78)
-    print(f"CHAKRAVAT T1 - detection and centre-fixing  [{device}]")
-    print("=" * 78)
-
-    track = build_track(str(RAW))
-    index = build_index(GRIDSAT, track)
-    index = index[index["n_storms"] > 0].reset_index(drop=True)
-    print(f"\nscenes on disk with a storm: {len(index):,}")
-    print(f"storm fixes covered: {int(index['n_storms'].sum()):,}")
-    if len(index) < 40:
-        raise SystemExit("not enough GridSat scenes yet - let the download finish")
-
-    splits = season_split(index)
-    for name, part in splits.items():
-        print(f"  {name:<6} {len(part):>5,} scenes  "
-              f"seasons {sorted(part['season'].unique()) if len(part) else '-'}")
-    if min(len(p) for p in splits.values()) == 0:
-        raise SystemExit("a split is empty - wait for more seasons to download")
-
-    # pre-render every scene once. Reading netCDF per sample left the GPU at
-    # 0% utilisation and put a 40-epoch run at seven hours.
+def scene_parts(track, source: str):
+    # index split by season, and a rendered cache ordered train, val, test
     from vision.detect import build_scene_cache
-    cache_path = ROOT / "data" / "processed" / "basin_scenes.npy"
-    ordered = pd.concat([splits[k] for k in ("train", "val", "test")],
-                        ignore_index=True)
+    root = ROOTS[source]
+    index = build_index(root, track)
+    index = index[index["n_storms"] > 0].reset_index(drop=True)
+    splits = season_split(index)
+    name = "basin_scenes.npy" if source == "gridsat" else f"basin_scenes_{source}.npy"
+    cache_path = ROOT / "data" / "processed" / name
+    ordered = pd.concat([splits[k] for k in ("train", "val", "test")], ignore_index=True)
     if not cache_path.exists() or len(np.load(cache_path, mmap_mode="r")) != len(ordered):
-        print(f"\nrendering {len(ordered):,} scenes to cache ...")
-        build_scene_cache(ordered, GRIDSAT, cache_path)
+        print(f"\nrendering {len(ordered):,} {source} scenes to cache ...")
+        build_scene_cache(ordered, root, cache_path)
     cache = np.load(cache_path, mmap_mode="r")
-
     offsets, at = {}, 0
     for k in ("train", "val", "test"):
         offsets[k] = at
         at += len(splits[k])
+    return splits, cache, offsets, root
+
+
+def score_test(model, track, device, threshold, parts_by_source) -> dict:
+    # full and named-storm scores on held-out seasons, per sensor
+    out = {}
+    for source, (splits, cache, offsets, root) in parts_by_source.items():
+        res = evaluate(model, splits["test"], track, device, threshold=threshold,
+                       cache=cache, cache_offset=offsets["test"], root=root)
+        res["named_only"] = evaluate(model, splits["test"], track, device,
+                                     threshold=threshold, cache=cache,
+                                     cache_offset=offsets["test"], with_baseline=False,
+                                     min_kt=34.0, root=root)
+        n = res["named_only"]
+        print(f"  {source:<8} all systems F1 {res['f1']:.3f} (P {res['precision']:.3f} "
+              f"R {res['recall']:.3f}) median fix {res['median_km']:.0f} km  |  34 kt+ "
+              f"F1 {n['f1']:.3f} R {n['recall']:.3f} median fix {n['median_km']:.0f} km  "
+              f"|  scenes {res['n_scenes']}")
+        out[source] = res
+    return out
+
+
+def _finite(o):
+    # an intensity band with no test examples yields NaN, which json.dumps
+    # happily writes and every strict JSON reader - including the dashboard's
+    # own /api/skill - then rejects. Write null instead.
+    if isinstance(o, float):
+        return None if (math.isnan(o) or math.isinf(o)) else o
+    if isinstance(o, dict):
+        return {k: _finite(v) for k, v in o.items()}
+    if isinstance(o, list):
+        return [_finite(v) for v in o]
+    return o
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--sources", choices=["gridsat", "joint"], default="gridsat",
+                    help="train on GridSat alone or on GridSat and INSAT together")
+    ap.add_argument("--aug", choices=["flip", "shift"], default="flip")
+    ap.add_argument("--tag", default="",
+                    help="write a candidate (artifacts/detector_<tag>.pt, reports/candidates/) "
+                         "instead of replacing the served detector")
+    ap.add_argument("--evaluate-only", action="store_true",
+                    help="score the served detector on every sensor's held-out seasons")
+    args = ap.parse_args()
+    suffix = f"_{args.tag}" if args.tag else ""
+
+    torch.manual_seed(SEED); np.random.seed(SEED)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    print("=" * 78)
+    print(f"CHAKRAVAT T1 - detection and centre-fixing  [{device}]  "
+          f"sources {args.sources}  augmentation {args.aug}")
+    print("=" * 78)
+
+    track = build_track(str(RAW))
+    have_insat = INSAT.exists() and any(INSAT.rglob("nio_*.nc"))
+    train_sources = ["gridsat"] + (["insat"] if args.sources == "joint" else [])
+    if "insat" in train_sources and not have_insat:
+        raise SystemExit("no INSAT scenes - run src/ingest/insat_grid.py first")
+    # every run is scored on INSAT too when it exists, so a GridSat-only model
+    # still reports how it transfers to ISRO's sensor
+    score_sources = ["gridsat"] + (["insat"] if have_insat else [])
+    parts = {src: scene_parts(track, src) for src in score_sources}
+    for src, (splits, _, _, _) in parts.items():
+        for name, part in splits.items():
+            print(f"  {src:<8} {name:<6} {len(part):>5,} scenes  "
+                  f"seasons {sorted(part['season'].unique()) if len(part) else '-'}")
+
+    if args.evaluate_only:
+        model = HeatmapNet().to(device)
+        ckpt = torch.load(ART / "detector.pt", map_location=device, weights_only=False)
+        model.load_state_dict(ckpt["state_dict"])
+        threshold = float(json.loads((OUT / "t1_detection.json").read_text())["threshold"])
+        print(f"\nserved detector at its tuned threshold {threshold:.2f}")
+        res = score_test(model, track, device, threshold, parts)
+        (OUT / "t1_detection_by_sensor.json").write_text(json.dumps(
+            _finite({"detector": "served", "threshold": threshold, **res}), indent=2))
+        print(f"Wrote {OUT / 't1_detection_by_sensor.json'}")
+        return
+
+    from torch.utils.data import ConcatDataset
+
+    def dataset(split: str, train: bool):
+        return ConcatDataset([
+            BasinScenes(parts[src][0][split], track, parts[src][3], train=train,
+                        cache=parts[src][1], cache_offset=parts[src][2][split], aug=args.aug)
+            for src in train_sources])
 
     loaders = {
-        name: DataLoader(BasinScenes(part, track, GRIDSAT,
-                                     train=(name == "train"),
-                                     cache=cache, cache_offset=offsets[name]),
-                         batch_size=BATCH, shuffle=(name == "train"),
-                         num_workers=0, pin_memory=(device == "cuda"))
-        for name, part in splits.items()
+        "train": DataLoader(dataset("train", True), batch_size=BATCH, shuffle=True,
+                            num_workers=0, pin_memory=(device == "cuda")),
+        "val": DataLoader(dataset("val", False), batch_size=BATCH, shuffle=False,
+                          num_workers=0, pin_memory=(device == "cuda")),
     }
+    print(f"  training scenes {len(loaders['train'].dataset):,}   "
+          f"validation scenes {len(loaders['val'].dataset):,}")
 
     model = HeatmapNet().to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
@@ -320,7 +402,7 @@ def main() -> None:
         else:
             bad += 1
         print(f"  epoch {epoch:>2}  train {total/max(seen,1):6.3f}  "
-              f"val {vloss:6.3f}  ({time.time()-t0:.0f}s){flag}")
+              f"val {vloss:6.3f}  ({time.time()-t0:.0f}s){flag}", flush=True)
         if bad >= PATIENCE:
             print(f"  early stop at epoch {epoch}")
             break
@@ -328,16 +410,17 @@ def main() -> None:
     model.load_state_dict(best_state)
 
     print("\ntuning the peak threshold on validation ...")
-    threshold = tune_threshold(model, splits["val"], track, device,
-                               cache, offsets["val"])
+    threshold = tune_threshold(
+        model, [(parts[src][0]["val"], parts[src][3], parts[src][1], parts[src][2]["val"])
+                for src in train_sources], track, device)
     print(f"  chosen: {threshold:.2f}")
 
     print("\nevaluating on held-out seasons ...")
-    res = evaluate(model, splits["test"], track, device, threshold=threshold,
-                   cache=cache, cache_offset=offsets["test"])
+    by_sensor = score_test(model, track, device, threshold, parts)
+    res = by_sensor["gridsat"]
 
     print("\n" + "=" * 78)
-    print("T1 RESULTS - held-out seasons")
+    print("T1 RESULTS - held-out seasons, GridSat")
     print("=" * 78)
     print(f"  scenes {res['n_scenes']:,}   storm fixes {res['n_storms']:,}")
     print(f"\n  coldest-pixel baseline   F1 {res['baseline_f1']:.3f}   "
@@ -356,34 +439,24 @@ def main() -> None:
     # lets Depressions - 56% of the fixes, and frequently with no organised
     # infrared signature - dominate a single number, which then says nothing
     # about performance on the storms that carry warning value.
-    named = evaluate(model, splits["test"], track, device, threshold=threshold,
-                     cache=cache, cache_offset=offsets["test"],
-                     with_baseline=False, min_kt=34.0)
+    named = res["named_only"]
     print("\n  scored on Cyclonic Storm and above (34 kt+), which IMD names")
     print(f"    n={named['n_storms']}  F1 {named['f1']:.3f}  "
           f"precision {named['precision']:.3f}  recall {named['recall']:.3f}  "
           f"median fix {named['median_km']:.0f} km")
-    res["named_only"] = named
-
     print(f"\n  targets: F1 >= 0.90, centre-fix <= 40 km")
 
     ART.mkdir(exist_ok=True)
-    torch.save({"state_dict": model.state_dict()}, ART / "detector.pt")
-    # an intensity band with no test examples yields NaN, which json.dumps
-    # happily writes and every strict JSON reader - including the dashboard's
-    # own /api/skill - then rejects. Write null instead.
-    def _finite(o):
-        if isinstance(o, float):
-            return None if (math.isnan(o) or math.isinf(o)) else o
-        if isinstance(o, dict):
-            return {k: _finite(v) for k, v in o.items()}
-        if isinstance(o, list):
-            return [_finite(v) for v in o]
-        return o
-
-    (OUT / "t1_detection.json").write_text(json.dumps(_finite(res), indent=2))
-    print(f"\nSaved {ART / 'detector.pt'}")
-    print(f"Wrote {OUT / 't1_detection.json'}")
+    report_dir = OUT / "candidates" if args.tag else OUT
+    report_dir.mkdir(parents=True, exist_ok=True)
+    torch.save({"state_dict": model.state_dict(), "threshold": threshold,
+                "aug": args.aug, "sources": train_sources}, ART / f"detector{suffix}.pt")
+    (report_dir / f"t1_detection{suffix}.json").write_text(json.dumps(_finite(res), indent=2))
+    (report_dir / f"t1_detection_by_sensor{suffix}.json").write_text(json.dumps(
+        _finite({"detector": args.tag or "served", "sources": train_sources,
+                 "augmentation": args.aug, "threshold": threshold, **by_sensor}), indent=2))
+    print(f"\nSaved {ART / f'detector{suffix}.pt'}")
+    print(f"Wrote {report_dir / f't1_detection{suffix}.json'}")
 
 
 if __name__ == "__main__":

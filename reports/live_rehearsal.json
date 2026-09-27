@@ -1,0 +1,230 @@
+{
+  "storm": "BIPARJOY",
+  "season": 2023,
+  "cycles": 8,
+  "cycles_that_found_the_target": 7,
+  "identities_given_to_the_target": 1,
+  "identities": {
+    "live.20230605.01": 7
+  },
+  "alerts_issued": 6,
+  "detections_matching_no_known_system": 12,
+  "median_km_from_the_target": 84.55543758788852,
+  "attribution_radius_km": 300.0,
+  "rows": [
+    {
+      "scan": "2023-06-05 00:00:00",
+      "found": 0
+    },
+    {
+      "scan": "2023-06-05 12:00:00",
+      "found": 2,
+      "sid": "live.20230605.01",
+      "matched": false,
+      "issued": true,
+      "reason": "first alert for this storm (Cyclonic Storm)",
+      "attributed_to": "BIPARJOY",
+      "km_from_that_system": 19.799602294010807,
+      "is_target": true
+    },
+    {
+      "scan": "2023-06-05 12:00:00",
+      "found": 2,
+      "sid": "live.20230605.02",
+      "matched": false,
+      "issued": true,
+      "reason": "first alert for this storm (Deep Depression)",
+      "attributed_to": null,
+      "km_from_that_system": NaN,
+      "is_target": false
+    },
+    {
+      "scan": "2023-06-06 00:00:00",
+      "found": 3,
+      "sid": "live.20230605.01",
+      "matched": true,
+      "issued": true,
+      "reason": "routine 12-hourly bulletin",
+      "attributed_to": "BIPARJOY",
+      "km_from_that_system": 149.42878191252902,
+      "is_target": true
+    },
+    {
+      "scan": "2023-06-06 00:00:00",
+      "found": 3,
+      "sid": "live.20230605.02",
+      "matched": true,
+      "issued": false,
+      "reason": "this alert has already been published",
+      "attributed_to": null,
+      "km_from_that_system": NaN,
+      "is_target": false
+    },
+    {
+      "scan": "2023-06-06 00:00:00",
+      "found": 3,
+      "sid": "live.20230606.01",
+      "matched": false,
+      "issued": true,
+      "reason": "first alert for this storm (Deep Depression)",
+      "attributed_to": null,
+      "km_from_that_system": NaN,
+      "is_target": false
+    },
+    {
+      "scan": "2023-06-06 09:00:00",
+      "found": 3,
+      "sid": "live.20230605.01",
+      "matched": true,
+      "issued": false,
+      "reason": "no material change since the last alert",
+      "attributed_to": "BIPARJOY",
+      "km_from_that_system": 84.55543758788852,
+      "is_target": true
+    },
+    {
+      "scan": "2023-06-06 09:00:00",
+      "found": 3,
+      "sid": "live.20230605.02",
+      "matched": true,
+      "issued": false,
+      "reason": "this alert has already been published",
+      "attributed_to": null,
+      "km_from_that_system": NaN,
+      "is_target": false
+    },
+    {
+      "scan": "2023-06-06 09:00:00",
+      "found": 3,
+      "sid": "live.20230606.01",
+      "matched": true,
+      "issued": false,
+      "reason": "this alert has already been published",
+      "attributed_to": null,
+      "km_from_that_system": NaN,
+      "is_target": false
+    },
+    {
+      "scan": "2023-06-06 15:00:00",
+      "found": 3,
+      "sid": "live.20230605.01",
+      "matched": true,
+      "issued": true,
+      "reason": "intensified to Severe Cyclonic Storm",
+      "attributed_to": "BIPARJOY",
+      "km_from_that_system": 97.7671465673797,
+      "is_target": true
+    },
+    {
+      "scan": "2023-06-06 15:00:00",
+      "found": 3,
+      "sid": "live.20230605.02",
+      "matched": true,
+      "issued": false,
+      "reason": "this alert has already been published",
+      "attributed_to": null,
+      "km_from_that_system": NaN,
+      "is_target": false
+    },
+    {
+      "scan": "2023-06-06 15:00:00",
+      "found": 3,
+      "sid": "live.20230606.01",
+      "matched": true,
+      "issued": false,
+      "reason": "this alert has already been published",
+      "attributed_to": null,
+      "km_from_that_system": NaN,
+      "is_target": false
+    },
+    {
+      "scan": "2023-06-06 21:00:00",
+      "found": 3,
+      "sid": "live.20230605.01",
+      "matched": true,
+      "issued": false,
+      "reason": "no material change since the last alert",
+      "attributed_to": "BIPARJOY",
+      "km_from_that_system": 22.870374702954866,
+      "is_target": true
+    },
+    {
+      "scan": "2023-06-06 21:00:00",
+      "found": 3,
+      "sid": "live.20230605.02",
+      "matched": true,
+      "issued": false,
+      "reason": "this alert has already been published",
+      "attributed_to": null,
+      "km_from_that_system": NaN,
+      "is_target": false
+    },
+    {
+      "scan": "2023-06-06 21:00:00",
+      "found": 3,
+      "sid": "live.20230606.01",
+      "matched": true,
+      "issued": false,
+      "reason": "this alert has already been published",
+      "attributed_to": null,
+      "km_from_that_system": NaN,
+      "is_target": false
+    },
+    {
+      "scan": "2023-06-07 03:00:00",
+      "found": 3,
+      "sid": "live.20230605.01",
+      "matched": true,
+      "issued": true,
+      "reason": "routine 12-hourly bulletin",
+      "attributed_to": "BIPARJOY",
+      "km_from_that_system": 173.15321388546644,
+      "is_target": true
+    },
+    {
+      "scan": "2023-06-07 03:00:00",
+      "found": 3,
+      "sid": "live.20230605.02",
+      "matched": true,
+      "issued": false,
+      "reason": "this alert has already been published",
+      "attributed_to": null,
+      "km_from_that_system": NaN,
+      "is_target": false
+    },
+    {
+      "scan": "2023-06-07 03:00:00",
+      "found": 3,
+      "sid": "live.20230606.01",
+      "matched": true,
+      "issued": false,
+      "reason": "this alert has already been published",
+      "attributed_to": null,
+      "km_from_that_system": NaN,
+      "is_target": false
+    },
+    {
+      "scan": "2023-06-07 09:00:00",
+      "found": 2,
+      "sid": "live.20230606.01",
+      "matched": true,
+      "issued": false,
+      "reason": "this alert has already been published",
+      "attributed_to": null,
+      "km_from_that_system": NaN,
+      "is_target": false
+    },
+    {
+      "scan": "2023-06-07 09:00:00",
+      "found": 2,
+      "sid": "live.20230605.01",
+      "matched": true,
+      "issued": false,
+      "reason": "no material change since the last alert",
+      "attributed_to": "BIPARJOY",
+      "km_from_that_system": 68.13005882103245,
+      "is_target": true
+    }
+  ],
+  "reading": "one real storm should collect one identity. more than one means the system would have opened unrelated alert threads for the same cyclone, and nobody reading the feed could follow it."
+}

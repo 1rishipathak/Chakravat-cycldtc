@@ -1,0 +1,141 @@
+{
+  "detector": "joint",
+  "sources": [
+    "gridsat",
+    "insat"
+  ],
+  "augmentation": "flip",
+  "threshold": 0.2,
+  "gridsat": {
+    "n_scenes": 354,
+    "n_storms": 389,
+    "hits": 218,
+    "n_pred": 373,
+    "min_kt": 0.0,
+    "threshold": 0.2,
+    "precision": 0.5844504021447721,
+    "recall": 0.5604113110539846,
+    "f1": 0.5721784776902886,
+    "median_km": 80.24863296029683,
+    "mean_km": 81.32171828916188,
+    "baseline_f1": 0.12339331619537275,
+    "baseline_median_km": 97.76544544996091,
+    "recall_by_intensity": {
+      "D <28": {
+        "n": 218,
+        "recall": 0.42660550458715596
+      },
+      "DD 28-33": {
+        "n": 88,
+        "recall": 0.7159090909090909
+      },
+      "CS 34-47": {
+        "n": 49,
+        "recall": 0.7346938775510204
+      },
+      "SCS+ 48+": {
+        "n": 34,
+        "recall": 0.7647058823529411
+      }
+    },
+    "named_only": {
+      "n_scenes": 354,
+      "n_storms": 83,
+      "hits": 62,
+      "n_pred": 94,
+      "min_kt": 34.0,
+      "threshold": 0.2,
+      "precision": 0.6595744680851063,
+      "recall": 0.7469879518072289,
+      "f1": 0.7005649717514123,
+      "median_km": 74.61033187575583,
+      "mean_km": 75.9510880824604,
+      "baseline_f1": 0.0,
+      "baseline_median_km": null,
+      "recall_by_intensity": {
+        "D <28": {
+          "n": 0,
+          "recall": null
+        },
+        "DD 28-33": {
+          "n": 0,
+          "recall": null
+        },
+        "CS 34-47": {
+          "n": 49,
+          "recall": 0.7346938775510204
+        },
+        "SCS+ 48+": {
+          "n": 34,
+          "recall": 0.7647058823529411
+        }
+      }
+    }
+  },
+  "insat": {
+    "n_scenes": 314,
+    "n_storms": 342,
+    "hits": 191,
+    "n_pred": 411,
+    "min_kt": 0.0,
+    "threshold": 0.2,
+    "precision": 0.46472019464720193,
+    "recall": 0.5584795321637427,
+    "f1": 0.5073041168658698,
+    "median_km": 97.36392911394987,
+    "mean_km": 95.85126335259991,
+    "baseline_f1": 0.06725146198830409,
+    "baseline_median_km": 112.08686457012669,
+    "recall_by_intensity": {
+      "D <28": {
+        "n": 195,
+        "recall": 0.4666666666666667
+      },
+      "DD 28-33": {
+        "n": 80,
+        "recall": 0.725
+      },
+      "CS 34-47": {
+        "n": 41,
+        "recall": 0.6097560975609756
+      },
+      "SCS+ 48+": {
+        "n": 26,
+        "recall": 0.6538461538461539
+      }
+    },
+    "named_only": {
+      "n_scenes": 314,
+      "n_storms": 67,
+      "hits": 42,
+      "n_pred": 87,
+      "min_kt": 34.0,
+      "threshold": 0.2,
+      "precision": 0.4827586206896552,
+      "recall": 0.6268656716417911,
+      "f1": 0.5454545454545454,
+      "median_km": 105.06091297915151,
+      "mean_km": 97.97850555154571,
+      "baseline_f1": 0.0,
+      "baseline_median_km": null,
+      "recall_by_intensity": {
+        "D <28": {
+          "n": 0,
+          "recall": null
+        },
+        "DD 28-33": {
+          "n": 0,
+          "recall": null
+        },
+        "CS 34-47": {
+          "n": 41,
+          "recall": 0.6097560975609756
+        },
+        "SCS+ 48+": {
+          "n": 26,
+          "recall": 0.6538461538461539
+        }
+      }
+    }
+  }
+}

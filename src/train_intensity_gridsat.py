@@ -1,7 +1,12 @@
 # T3 in the operational domain: intensity from GridSat imagery
+#
+#     python src/train_intensity_gridsat.py                    best-track target
+#     python src/train_intensity_gridsat.py --target adt       the original target
+#     python src/train_intensity_gridsat.py --aug rotate --no-calibrate
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 import time
@@ -16,9 +21,11 @@ from torch.utils.data import DataLoader, Dataset
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from vision.scenes import IMAGENET_MEAN, IMAGENET_STD, storm_split  # noqa: E402
+from vision.scenes import (AUGMENTATIONS, IMAGENET_MEAN, IMAGENET_STD,  # noqa: E402
+                           augment, storm_split)
 
 CACHE = ROOT / "data" / "processed" / "scenes"
+INSAT_CACHE = ROOT / "data" / "processed" / "scenes_insat"
 OUT, ART = ROOT / "reports", ROOT / "artifacts"
 PRETRAINED = ART / "intensity_vision.pt"
 
@@ -34,14 +41,24 @@ HUBER_DELTA = 2.5
 # between 34 and 47 kt and 59 above 90. Weighting by inverse bin frequency
 # stops the common middle from dominating the gradient.
 WEIGHT_BINS = [0, 34, 48, 64, 90, 999]
+BANDS = [("<34", 0, 34), ("34-48", 34, 48), ("48-64", 48, 64),
+         ("64-90", 64, 90), ("90+", 90, 999)]
+
+# what T3 learns to read. "best_track" is IMD's 3-minute wind from IBTrACS,
+# interpolated to the scene time by vision/best_track.py - the scale the IMD
+# categories are defined on and the one T4 was trained on. "adt" is ADT's own
+# estimate, which T3 was originally trained and scored against by mistake. ADT
+# uses 1-minute winds and reads about 7.6 kt above IMD across the archive, so
+# the old 10.95 kt RMSE measured agreement with ADT, not accuracy.
+TARGETS = {"best_track": "bt_vmax_kt", "adt": "vmax_kt"}
 
 
 class IntensityPatches(Dataset):
-    # GridSat patch -> best-track intensity in knots
+    # GridSat patch -> intensity in knots, on whatever scale `y` carries
 
-    def __init__(self, patches, meta, idx, train=False, weights=None):
-        self.patches, self.meta, self.idx, self.train = patches, meta, idx, train
-        self.weights = weights
+    def __init__(self, patches, y, idx, train=False, weights=None, aug="reflect"):
+        self.patches, self.y, self.idx, self.train = patches, y, idx, train
+        self.weights, self.aug = weights, aug
 
     def __len__(self):
         return len(self.idx)
@@ -50,17 +67,42 @@ class IntensityPatches(Dataset):
         i = self.idx[k]
         a = self.patches[i].astype(np.float32) / 255.0
         if self.train:
-            r = np.random.randint(4)
-            if r:
-                a = np.rot90(a, r, axes=(0, 1))
-            if np.random.rand() < 0.5:
-                a = np.rot90(a[:, ::-1], 2, axes=(0, 1))
+            a = augment(a, self.aug)
         a = np.ascontiguousarray(a.transpose(2, 0, 1))
         a = (a - IMAGENET_MEAN[:, None, None]) / IMAGENET_STD[:, None, None]
-        y = float(self.meta.iloc[i]["vmax_kt"])
         w = 1.0 if self.weights is None else float(self.weights[i])
-        return (torch.from_numpy(a), torch.tensor(y, dtype=torch.float32),
+        return (torch.from_numpy(a), torch.tensor(float(self.y[i]), dtype=torch.float32),
                 torch.tensor(w, dtype=torch.float32))
+
+
+def load_patches(target: str = "best_track", cache: Path = CACHE):
+    # patches, their metadata and the target, restricted to rows that have one
+    col = TARGETS[target]
+    patches = np.load(cache / "patches.npy", mmap_mode="r")
+    meta = pd.read_csv(cache / "patches.csv")
+    if col not in meta.columns:
+        raise SystemExit(f"patches.csv has no {col} column - "
+                         f"run src/vision/best_track.py first")
+    keep = meta[col].notna() & (meta[col] > 0)
+    rows = np.flatnonzero(keep.to_numpy())
+    meta = meta[keep].reset_index(drop=True)
+    return np.asarray(patches[rows]), meta, meta[col].to_numpy(dtype=np.float64)
+
+
+def load_joint(target: str = "best_track"):
+    # GridSat and INSAT patches in one table, with a sensor column.
+    #
+    # the INSAT cache holds the same ADT records at the same slots, so a storm's
+    # patches from both sensors hash to the same split and neither can leak the
+    # other's test storms. cross-validation said this costs nothing on GridSat
+    # (13.50 -> 13.41 kt) and repairs INSAT (15.11 -> 13.77, bias -4.7 -> -0.7),
+    # which is what lets one model read the live INSAT feed.
+    pg, mg, yg = load_patches(target, CACHE)
+    pi, mi, yi = load_patches(target, INSAT_CACHE)
+    patches = np.concatenate([pg, pi])
+    meta = pd.concat([mg.assign(sensor="gridsat"), mi.assign(sensor="insat")],
+                     ignore_index=True)
+    return patches, meta, np.concatenate([yg, yi])
 
 
 def stats_features(patches, idx):
@@ -83,40 +125,38 @@ def rmse(pred, truth):
     return float(np.sqrt(np.mean((np.asarray(pred) - np.asarray(truth)) ** 2)))
 
 
-def main() -> None:
-    torch.manual_seed(SEED); np.random.seed(SEED)
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    print("=" * 78)
-    print(f"CHAKRAVAT T3-GridSat - intensity in the operational domain  [{device}]")
-    print("=" * 78)
+def summarise(pred, truth) -> dict:
+    # overall error plus bands - one figure hides opposite-signed band errors
+    pred, truth = np.asarray(pred, float), np.asarray(truth, float)
+    e = pred - truth
+    bands = {}
+    for lab, lo, hi in BANDS:
+        m = (truth >= lo) & (truth < hi)
+        bands[lab] = ({"n": int(m.sum()), "bias": float(e[m].mean()),
+                       "rmse": float(np.sqrt(np.mean(e[m] ** 2)))}
+                      if m.sum() >= 3 else {"n": int(m.sum()), "bias": None, "rmse": None})
+    return {"n": int(len(e)), "rmse": float(np.sqrt(np.mean(e ** 2))),
+            "mae": float(np.mean(np.abs(e))), "bias": float(e.mean()), "bands": bands}
 
-    patches = np.load(CACHE / "patches.npy", mmap_mode="r")
-    meta = pd.read_csv(CACHE / "patches.csv")
-    keep = meta["vmax_kt"].notna() & (meta["vmax_kt"] > 0)
-    meta = meta[keep].reset_index(drop=True)
-    patches = patches[np.flatnonzero(keep.to_numpy())]
-    print(f"\npatches {len(meta):,}   storms {meta['storm'].nunique()}   "
-          f"intensity {meta['vmax_kt'].min():.0f}-{meta['vmax_kt'].max():.0f} kt")
 
-    splits = storm_split(meta)
-    for k, v in splits.items():
-        print(f"  {k:<6} {len(v):>4} patches  {meta.loc[v,'storm'].nunique():>3} storms")
-
-    y = meta["vmax_kt"].to_numpy()
-    y_test = y[splits["test"]]
-    y_mean, y_std = float(y[splits["train"]].mean()), float(y[splits["train"]].std())
-
-    print("\nbaselines ...")
-    print(f"  predict-the-mean       RMSE {rmse(np.full_like(y_test, y_mean), y_test):.2f} kt")
+def fit_baselines(patches, y, fit_idx, eval_idx) -> dict[str, np.ndarray]:
+    # predict-the-mean and a ridge on cold-cloud statistics
     from sklearn.linear_model import RidgeCV
     from sklearn.pipeline import make_pipeline
     from sklearn.preprocessing import StandardScaler
     sm = make_pipeline(StandardScaler(), RidgeCV(alphas=np.logspace(-3, 3, 13)))
-    sm.fit(stats_features(patches, splits["train"]), y[splits["train"]])
-    base_stat = rmse(sm.predict(stats_features(patches, splits["test"])), y_test)
-    print(f"  cold-cloud statistics  RMSE {base_stat:.2f} kt")
+    sm.fit(stats_features(patches, fit_idx), y[fit_idx])
+    return {"predict_the_mean": np.full(len(eval_idx), float(y[fit_idx].mean())),
+            "cold_cloud": sm.predict(stats_features(patches, eval_idx))}
 
+
+def fit(patches, y, train_idx, val_idx, device, aug="reflect", seed=SEED,
+        log=print, epochs=EPOCHS):
+    # fine-tune from the Digital Typhoon weights, early-stopped on validation RMSE
     import timm
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+
     model = timm.create_model(BACKBONE, pretrained=True, num_classes=1,
                               in_chans=3).to(device)
     transferred = False
@@ -125,103 +165,212 @@ def main() -> None:
         try:
             model.load_state_dict(ckpt["state_dict"])
             transferred = True
-            print(f"\ninitialised from Digital Typhoon weights "
-                  f"({PRETRAINED.name}) - pretrain, then fine-tune")
         except Exception as exc:  # noqa: BLE001
-            print(f"\ncould not transfer weights ({str(exc)[:60]}); "
-                  f"starting from ImageNet")
+            log(f"  could not transfer weights ({str(exc)[:60]}); starting from ImageNet")
 
-    # inverse-frequency weights, computed on the training split only.
-    bins = np.digitize(y, WEIGHT_BINS) - 1
-    counts = np.bincount(bins[splits["train"]], minlength=len(WEIGHT_BINS) - 1)
+    y_mean, y_std = float(y[train_idx].mean()), float(y[train_idx].std())
+
+    # inverse-frequency weights, computed on the training rows only.
+    bins = np.clip(np.digitize(y, WEIGHT_BINS) - 1, 0, len(WEIGHT_BINS) - 2)
+    counts = np.bincount(bins[train_idx], minlength=len(WEIGHT_BINS) - 1)
     inv = np.where(counts > 0, counts.max() / np.maximum(counts, 1), 1.0)
     weights = inv[bins]
-    print("  sample weights by band: " +
-          ", ".join(f"{WEIGHT_BINS[i]}-{WEIGHT_BINS[i+1]}: x{inv[i]:.1f}"
-                    for i in range(len(inv))))
 
-    loaders = {k: DataLoader(IntensityPatches(patches, meta, v, train=(k == "train"),
-                                              weights=weights),
-                             batch_size=BATCH, shuffle=(k == "train"),
-                             pin_memory=(device == "cuda"))
-               for k, v in splits.items()}
+    train_loader = DataLoader(IntensityPatches(patches, y, train_idx, train=True,
+                                               weights=weights, aug=aug),
+                              batch_size=BATCH, shuffle=True,
+                              pin_memory=(device == "cuda"))
+    val_loader = DataLoader(IntensityPatches(patches, y, val_idx),
+                            batch_size=BATCH, pin_memory=(device == "cuda"))
 
     opt = torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=1e-4)
-    sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=EPOCHS)
+    sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=epochs)
     scaler = torch.amp.GradScaler(device, enabled=(device == "cuda"))
     loss_fn = nn.HuberLoss(delta=HUBER_DELTA, reduction="none")
+    scale = (y_mean, y_std)
 
-    def evaluate(loader):
-        model.eval()
-        p, t = [], []
-        with torch.no_grad():
-            for x, yy_, _ in loader:
-                out = model(x.to(device)).squeeze(-1)
-                p.append(out.cpu().numpy() * y_std + y_mean)
-                t.append(yy_.numpy())
-        return np.concatenate(p), np.concatenate(t)
-
-    print("training ...")
-    best, best_state, bad = np.inf, None, 0
-    for epoch in range(1, EPOCHS + 1):
-        model.train(); t0 = time.time()
-        for x, yy_, w in loaders["train"]:
+    best, best_state, best_epoch, bad = np.inf, None, 0, 0
+    for epoch in range(1, epochs + 1):
+        model.train()
+        t0 = time.time()
+        for x, yy_, w in train_loader:
             x, yy_, w = x.to(device), yy_.to(device), w.to(device)
             opt.zero_grad(set_to_none=True)
             with torch.amp.autocast(device, enabled=(device == "cuda")):
                 per = loss_fn(model(x).squeeze(-1), (yy_ - y_mean) / y_std)
                 loss = (per * w).sum() / w.sum()
-            scaler.scale(loss).backward(); scaler.unscale_(opt)
+            scaler.scale(loss).backward()
+            scaler.unscale_(opt)
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            scaler.step(opt); scaler.update()
+            scaler.step(opt)
+            scaler.update()
         sched.step()
-        vp, vt = evaluate(loaders["val"])
-        v = rmse(vp, vt)
+        v = rmse(predict(model, val_loader, scale, device), y[val_idx])
         flag = ""
         if v < best - 1e-4:
-            best, bad, flag = v, 0, "  *"
+            best, best_epoch, bad, flag = v, epoch, 0, "  *"
             best_state = {k: t.detach().clone() for k, t in model.state_dict().items()}
         else:
             bad += 1
-        if epoch % 2 == 0 or flag:
-            print(f"  epoch {epoch:>2}  val RMSE {v:6.2f} kt  ({time.time()-t0:.0f}s){flag}")
+        if epoch % 5 == 0 or flag:
+            log(f"  epoch {epoch:>2}  val RMSE {v:6.2f} kt  ({time.time()-t0:.0f}s){flag}")
         if bad >= PATIENCE:
-            print(f"  early stop at epoch {epoch}")
+            log(f"  early stop at epoch {epoch}")
             break
 
     model.load_state_dict(best_state)
-    tp, tt = evaluate(loaders["test"])
-    cnn = rmse(tp, tt)
-    mae = float(np.mean(np.abs(tp - tt)))
+    return model, {"y_mean": y_mean, "y_std": y_std, "transferred": transferred,
+                   "best_epoch": best_epoch, "best_val_rmse": float(best)}
+
+
+def predict(model, loader, scale, device) -> np.ndarray:
+    # raw model output in knots, before calibration
+    model.eval()
+    out = []
+    with torch.no_grad():
+        for x, _, _ in loader:
+            out.append(model(x.to(device)).squeeze(-1).float().cpu().numpy())
+    return np.concatenate(out) * scale[1] + scale[0]
+
+
+def predict_idx(model, patches, y, idx, scale, device) -> np.ndarray:
+    loader = DataLoader(IntensityPatches(patches, y, idx), batch_size=BATCH)
+    return predict(model, loader, scale, device)
+
+
+def fit_calibration(pred, truth) -> dict:
+    # predicted = slope x truth + intercept, fitted where it will not be scored
+    slope, intercept = np.polyfit(np.asarray(truth, float), np.asarray(pred, float), 1)
+    return {"slope": float(slope), "intercept": float(intercept)}
+
+
+def apply_calibration(pred, cal: dict | None) -> np.ndarray:
+    # invert the fitted line to undo shrinkage toward the mean; never below 0 kt
+    pred = np.asarray(pred, float)
+    if cal:
+        pred = (pred - cal["intercept"]) / max(cal["slope"], 1e-6)
+    return np.clip(pred, 0.0, None)
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--target", choices=sorted(TARGETS), default="best_track")
+    ap.add_argument("--sources", choices=["gridsat", "joint"], default="gridsat",
+                    help="train on GridSat alone or on GridSat and INSAT together")
+    ap.add_argument("--aug", choices=AUGMENTATIONS, default="reflect")
+    ap.add_argument("--calibrate", action=argparse.BooleanOptionalAction, default=True,
+                    help="serve with the validation-fitted linear recalibration")
+    ap.add_argument("--seed", type=int, default=SEED)
+    ap.add_argument("--tag", default="",
+                    help="write a candidate (artifacts/intensity_gridsat_<tag>.pt, "
+                         "reports/candidates/) instead of replacing the served model")
+    args = ap.parse_args()
+    suffix = f"_{args.tag}" if args.tag else ""
+    report_dir = OUT / "candidates" if args.tag else OUT
+    report_dir.mkdir(parents=True, exist_ok=True)
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print("=" * 78)
+    print(f"CHAKRAVAT T3-GridSat - intensity in the operational domain  [{device}]")
+    print(f"target {args.target}   sources {args.sources}   augmentation {args.aug}   "
+          f"calibrate {args.calibrate}")
+    print("=" * 78)
+
+    patches, meta, y = (load_joint(args.target) if args.sources == "joint"
+                        else load_patches(args.target))
+    if "sensor" not in meta.columns:
+        meta = meta.assign(sensor="gridsat")
+    print(f"\npatches {len(meta):,}   storms {meta['storm'].nunique()}   "
+          f"intensity {y.min():.0f}-{y.max():.0f} kt")
+
+    splits = storm_split(meta)
+    for k, v in splits.items():
+        print(f"  {k:<6} {len(v):>4} patches  {meta.loc[v, 'storm'].nunique():>3} storms")
+    y_test = y[splits["test"]]
+
+    # the headline test set stays GridSat, so this run is comparable with every
+    # earlier one; INSAT test rows are scored separately below
+    sensor = meta["sensor"].to_numpy()
+    test_by_sensor = {s: splits["test"][sensor[splits["test"]] == s]
+                      for s in sorted(set(sensor))}
+    base = fit_baselines(patches, y, splits["train"], splits["test"])
+    print("\nbaselines on test ...")
+    for name, p in base.items():
+        print(f"  {name:<18} RMSE {rmse(p, y_test):.2f} kt")
+
+    print("\ntraining ...")
+    model, info = fit(patches, y, splits["train"], splits["val"], device,
+                      aug=args.aug, seed=args.seed)
+    scale = (info["y_mean"], info["y_std"])
+    val_raw = predict_idx(model, patches, y, splits["val"], scale, device)
+    test_raw = predict_idx(model, patches, y, splits["test"], scale, device)
+    cal = fit_calibration(val_raw, y[splits["val"]])
+
+    raw = summarise(apply_calibration(test_raw, None), y_test)
+    calibrated = summarise(apply_calibration(test_raw, cal), y_test)
+    served = calibrated if args.calibrate else raw
 
     print("\n" + "=" * 78)
-    print("T3-GridSat RESULTS - held-out storms, operational domain")
+    print(f"T3-GridSat RESULTS - held-out storms, truth = {args.target}")
     print("=" * 78)
-    print(f"  predict-the-mean       RMSE {rmse(np.full_like(y_test, y_mean), y_test):6.2f} kt")
-    print(f"  cold-cloud statistics  RMSE {base_stat:6.2f} kt")
-    print(f"  {BACKBONE:<21}  RMSE {cnn:6.2f} kt   MAE {mae:.2f}   "
-          f"bias {np.mean(tp - tt):+.2f}")
-    print("\n  bias by intensity band - a single figure hides opposite errors")
-    for lo, hi in zip(WEIGHT_BINS[:-1], WEIGHT_BINS[1:]):
-        m_ = (tt >= lo) & (tt < hi)
-        if m_.sum() >= 3:
-            print(f"    {lo:>3}-{hi if hi < 999 else '+':<4} n={int(m_.sum()):>3}  "
-                  f"bias {np.mean(tp[m_] - tt[m_]):>+6.1f} kt  "
-                  f"RMSE {np.sqrt(np.mean((tp[m_] - tt[m_]) ** 2)):>5.1f} kt")
-    print(f"\n  transferred from Digital Typhoon: {transferred}")
-    print(f"  reference: Deepti 13.24 kt on INSAT infrared (same basin, finer sensor)")
+    for name, s in (("raw", raw), ("calibrated", calibrated)):
+        print(f"  {BACKBONE} {name:<11} RMSE {s['rmse']:6.2f} kt   MAE {s['mae']:.2f}   "
+              f"bias {s['bias']:+.2f}")
+        print("    " + " | ".join(f"{b}: n={v['n']} bias {v['bias']:+.1f}"
+                                  for b, v in s["bands"].items() if v["bias"] is not None))
+    print(f"  validation fit: predicted = {cal['slope']:.3f} x truth + {cal['intercept']:.2f}")
+
+    # the operational objective method on exactly the same scenes
+    benchmark = None
+    if args.target == "best_track":
+        test_meta = meta.iloc[splits["test"]]
+        has_adt = (test_meta["vmax_kt"] > 0).to_numpy()
+        if has_adt.sum():
+            served_pred = apply_calibration(test_raw, cal if args.calibrate else None)
+            benchmark = {
+                "n": int(has_adt.sum()),
+                "chakravat": summarise(served_pred[has_adt], y_test[has_adt]),
+                "adt": summarise(test_meta["vmax_kt"].to_numpy()[has_adt], y_test[has_adt]),
+            }
+            print(f"\n  same {benchmark['n']} test scenes against IMD best track: "
+                  f"T3 RMSE {benchmark['chakravat']['rmse']:.2f} kt, "
+                  f"ADT {benchmark['adt']['rmse']:.2f} kt")
 
     ART.mkdir(exist_ok=True)
-    torch.save({"state_dict": model.state_dict(), "backbone": BACKBONE,
-                "y_mean": y_mean, "y_std": y_std, "domain": "gridsat"},
-               ART / "intensity_gridsat.pt")
-    (OUT / "t3_intensity_gridsat.json").write_text(json.dumps(
-        {"backbone": BACKBONE, "patches": int(len(meta)),
-         "storms": int(meta["storm"].nunique()), "transferred": transferred,
-         "predict_the_mean_rmse_kt": rmse(np.full_like(y_test, y_mean), y_test),
-         "cold_cloud_rmse_kt": base_stat,
-         "cnn_rmse_kt": cnn, "cnn_mae_kt": mae}, indent=2))
-    print(f"\nSaved {ART / 'intensity_gridsat.pt'}")
+    by_sensor = {}
+    for s, rows in test_by_sensor.items():
+        if len(rows) < 10:
+            continue
+        pred = apply_calibration(predict_idx(model, patches, y, rows, scale, device),
+                                 cal if args.calibrate else None)
+        by_sensor[s] = summarise(pred, y[rows])
+        print(f"  on {s:<8} n={len(rows):>4}  RMSE {by_sensor[s]['rmse']:6.2f} kt  "
+              f"bias {by_sensor[s]['bias']:+.2f}")
+
+    ckpt = {"state_dict": model.state_dict(), "backbone": BACKBONE,
+            "y_mean": info["y_mean"], "y_std": info["y_std"], "domain": "gridsat",
+            "target": args.target, "aug": args.aug, "sources": args.sources}
+    if args.calibrate:
+        ckpt["calibration"] = cal
+    torch.save(ckpt, ART / f"intensity_gridsat{suffix}.pt")
+
+    (report_dir / f"t3_intensity_gridsat{suffix}.json").write_text(json.dumps({
+        "backbone": BACKBONE, "target": args.target, "augmentation": args.aug,
+        "sources": args.sources, "by_sensor": by_sensor,
+        "calibrated": args.calibrate, "patches": int(len(meta)),
+        "storms": int(meta["storm"].nunique()), "transferred": info["transferred"],
+        "splits": {k: {"patches": int(len(v)), "storms": int(meta.loc[v, "storm"].nunique())}
+                   for k, v in splits.items()},
+        "predict_the_mean_rmse_kt": rmse(base["predict_the_mean"], y_test),
+        "cold_cloud_rmse_kt": rmse(base["cold_cloud"], y_test),
+        "cnn_rmse_kt": served["rmse"], "cnn_mae_kt": served["mae"],
+        "cnn_bias_kt": served["bias"],
+        "raw": raw, "recalibrated": calibrated, "adt_benchmark": benchmark,
+    }, indent=2))
+    (report_dir / f"t3_calibration{suffix}.json").write_text(json.dumps(
+        {"target": args.target, "applied": args.calibrate, **cal,
+         "before": raw, "after": calibrated}, indent=2))
+    print(f"\nSaved {ART / f'intensity_gridsat{suffix}.pt'}")
 
 
 if __name__ == "__main__":

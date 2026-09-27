@@ -7,6 +7,7 @@
     "EMBC",
     "IRRCDO"
   ],
+  "augmentation": "reflect",
   "patches": 974,
   "storms": 114,
   "majority": {
@@ -20,5 +21,21 @@
   "cnn": {
     "macro_f1": 0.6886280124075401,
     "accuracy": 0.7642276422764228
-  }
+  },
+  "stats_logistic": {
+    "macro_f1": 0.5855456373804997
+  },
+  "hybrid": {
+    "macro_f1": 0.7105416831990019,
+    "accuracy": 0.7642276422764228,
+    "blend": 0.5,
+    "per_class_f1": {
+      "EYE": 0.7647058823529411,
+      "CRVBND": 0.8253968253968254,
+      "SHEAR": 0.8125000000000001,
+      "EMBC": 0.6046511627906976,
+      "IRRCDO": 0.5454545454545454
+    }
+  },
+  "served": "hybrid"
 }

@@ -1,0 +1,119 @@
+{
+  "available": true,
+  "latest": "2026-09-18T06:00:00",
+  "age_hours": 1.0579695069444444,
+  "fetched_at": "2026-09-18T07:02:32",
+  "scenes": [
+    {
+      "time": "2026-09-15T15:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_15SEP2026_1500_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-15T18:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_15SEP2026_1800_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-15T21:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_15SEP2026_2100_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-16T00:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_16SEP2026_0000_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-16T03:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_16SEP2026_0300_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-16T06:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_16SEP2026_0600_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-16T09:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_16SEP2026_0900_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-16T12:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_16SEP2026_1200_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-16T15:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_16SEP2026_1500_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-16T18:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_16SEP2026_1800_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-16T21:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_16SEP2026_2100_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-17T00:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_17SEP2026_0000_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-17T03:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_17SEP2026_0300_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-17T06:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_17SEP2026_0600_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-17T09:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_17SEP2026_0900_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-17T12:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_17SEP2026_1200_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-17T15:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_17SEP2026_1500_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-17T18:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_17SEP2026_1800_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-17T21:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_17SEP2026_2100_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-18T00:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_18SEP2026_0000_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-18T03:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_18SEP2026_0300_L1C_ASIA_MER_V01R00.h5"
+    },
+    {
+      "time": "2026-09-18T06:00:00",
+      "satellite": "INSAT-3DS",
+      "file": "3SIMG_18SEP2026_0600_L1C_ASIA_MER_V01R00.h5"
+    }
+  ],
+  "refresh": "python src/ingest/insat_live.py"
+}

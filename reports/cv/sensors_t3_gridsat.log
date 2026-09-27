@@ -1,0 +1,65 @@
+T3 sensors  mode=gridsat  gridsat 943  insat 497  insat-era storms 67
+
+fold 0  train 550  val 184  test 305
+  epoch  1  val RMSE  12.31 kt  (34s)  *
+  epoch  2  val RMSE  11.74 kt  (4s)  *
+  epoch  5  val RMSE  14.53 kt  (5s)
+  epoch  8  val RMSE  10.79 kt  (5s)  *
+  epoch 10  val RMSE  13.03 kt  (5s)
+  epoch 12  val RMSE  10.37 kt  (5s)  *
+  epoch 15  val RMSE  11.54 kt  (5s)
+  epoch 20  val RMSE  11.44 kt  (4s)
+  early stop at epoch 24
+  fold 0 done (154s)
+
+fold 1  train 523  val 236  test 296
+  epoch  1  val RMSE  13.25 kt  (41s)  *
+  epoch  2  val RMSE  11.81 kt  (5s)  *
+  epoch  5  val RMSE  12.57 kt  (5s)
+  epoch  6  val RMSE  11.40 kt  (5s)  *
+  epoch 10  val RMSE  11.57 kt  (6s)
+  epoch 12  val RMSE  11.26 kt  (6s)  *
+  epoch 15  val RMSE  12.60 kt  (4s)
+  epoch 20  val RMSE  12.04 kt  (4s)
+  early stop at epoch 24
+  fold 1 done (160s)
+
+fold 2  train 519  val 188  test 355
+  epoch  1  val RMSE  18.30 kt  (18s)  *
+  epoch  2  val RMSE  14.48 kt  (4s)  *
+  epoch  4  val RMSE  12.45 kt  (4s)  *
+  epoch  5  val RMSE  12.58 kt  (4s)
+  epoch  6  val RMSE  11.03 kt  (5s)  *
+  epoch  8  val RMSE  10.91 kt  (4s)  *
+  epoch 10  val RMSE  11.37 kt  (4s)
+  epoch 15  val RMSE  12.08 kt  (4s)
+  epoch 20  val RMSE  10.66 kt  (4s)  *
+  epoch 21  val RMSE  10.48 kt  (4s)  *
+  epoch 25  val RMSE  11.09 kt  (4s)
+  epoch 30  val RMSE  10.44 kt  (5s)  *
+  epoch 35  val RMSE  11.31 kt  (4s)
+  epoch 40  val RMSE  11.00 kt  (4s)
+  early stop at epoch 42
+  fold 2 done (201s)
+
+fold 3  train 629  val 126  test 286
+  epoch  1  val RMSE  15.71 kt  (21s)  *
+  epoch  3  val RMSE  15.69 kt  (6s)  *
+  epoch  5  val RMSE  14.11 kt  (6s)  *
+  epoch 10  val RMSE  13.89 kt  (5s)  *
+  epoch 15  val RMSE  15.28 kt  (4s)
+  epoch 20  val RMSE  14.82 kt  (4s)
+  early stop at epoch 22
+  fold 3 done (128s)
+
+fold 4  train 608  val 209  test 198
+  epoch  1  val RMSE  15.17 kt  (4s)  *
+  epoch  2  val RMSE  15.12 kt  (4s)  *
+  epoch  5  val RMSE  17.14 kt  (5s)
+  epoch 10  val RMSE  16.12 kt  (5s)
+  early stop at epoch 14
+  fold 4 done (72s)
+  on gridsat  n=590  RMSE 13.50 [11.47, 15.59]  bias -0.43
+  on insat    n=497  RMSE 15.11 [12.11, 17.92]  bias -4.66
+
+wrote C:\Users\Rishi Pathak\workspace\Projects\Chakravat-cycldtc\reports\cv\sensors_t3_gridsat.json  (11.9 min)

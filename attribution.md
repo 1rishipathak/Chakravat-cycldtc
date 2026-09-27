@@ -17,10 +17,17 @@ domain, citation requested not required.
 > Knapp, K. R., et al. Globally gridded satellite observations for climate
 > studies. Bulletin of the American Meteorological Society, 2011.
 
-**INSAT-3DR**, ISRO, distributed through MOSDAC (space applications centre,
-ahmedabad). used under the MOSDAC data policy with a registered account.
-granules are per-user and are not redistributed here, `src/ingest/insat.py`
-fetches them with your own credentials.
+**INSAT-3D, 3DR and 3DS**, ISRO, distributed through MOSDAC (space
+applications centre, ahmedabad). used under the MOSDAC data policy with a
+registered account. 1,207 full-sector Level-1C scans (2014-2025) train and test
+the imagery models alongside GridSat, and 3DS is the live feed.
+
+granules are per-user and none of them are redistributed here.
+`src/ingest/insat_archive.py` and `src/ingest/insat_live.py` fetch them with
+your own credentials, which live outside the repo and are never written into
+it. MOSDAC locks an account after three consecutive failed logins, so every
+script here authenticates once and renews with the refresh token rather than
+logging in again.
 
 **digital typhoon**, national institute of informatics, japan (kitamoto et al).
 released under creative commons attribution 4.0, so attribution is required.
@@ -55,16 +62,28 @@ limitations.md section 5 and it's a real ceiling on what the T2 number means.
 
 ## map and interface
 
-**natural earth** 1:10m coastline, public domain. clipped to the basin and
-vendored at `data/static/coastline_nio.geojson` because the landfall module
-needs it at runtime and a demo shouldn't depend on a network.
+**natural earth**, public domain, three files, all clipped and vendored so the
+map needs no network at all:
+
+- 1:10m coastline at `data/static/coastline_nio.geojson`, which the landfall
+  module needs at runtime.
+- the 1:10m **india point-of-view** edition of admin-0 countries at
+  `web/vendor/countries_ind.geojson`. this is the basemap. it replaced
+  openstreetmap tiles, which draw boundaries by who administers the ground -
+  not how the government of india depicts its own, and this screen is meant for
+  a MoES panel. `src/ingest/basemap.py` refuses to write the file unless
+  gilgit, aksai chin and tawang all fall inside india's polygon.
+- 1:10m populated places, for the map labels and for listing which places a
+  forecast cone reaches.
 
 **maplibre GL JS**, BSD-3-clause, vendored at `web/vendor/`.
 
-**openstreetmap** basemap tiles, © openstreetmap contributors, under ODbL.
-tiles are fetched live and not redistributed. the dashboard paints a solid
-background under them so losing the tile server costs the coastlines but not
-the storm.
+## formats
+
+**common alerting protocol 1.2**, OASIS standard. the alert format NDMA's
+SACHET system carries and IMD already feeds. we emit it so a forecast here
+could in principle travel the same pipe, and every document we emit is marked
+status `Exercise` and says in its own text that it is not an IMD warning.
 
 ## what this isn't
 

@@ -1,0 +1,125 @@
+{
+ "storms": [
+  {
+   "sid": "2025295N09068",
+   "name": "UNNAMED",
+   "peak_kt": 25.0,
+   "cycles": 39,
+   "alerts": 21,
+   "share": 0.538,
+   "span_h": 228.0,
+   "fix_interval_h": 6.0,
+   "per_day": 2.21,
+   "reasons": {
+    "first alert": 1,
+    "routine": 16,
+    "new place threatened": 4
+   }
+  },
+  {
+   "sid": "2022230N18095",
+   "name": "UNNAMED",
+   "peak_kt": 32.550000000000004,
+   "cycles": 22,
+   "alerts": 21,
+   "share": 0.955,
+   "span_h": 126.0,
+   "fix_interval_h": 6.0,
+   "per_day": 4.0,
+   "reasons": {
+    "first alert": 1,
+    "new place threatened": 3,
+    "intensity change": 1,
+    "routine": 15,
+    "landfall": 1
+   }
+  },
+  {
+   "sid": "2024329N04089",
+   "name": "FENGAL",
+   "peak_kt": 45.0,
+   "cycles": 43,
+   "alerts": 34,
+   "share": 0.791,
+   "span_h": 252.0,
+   "fix_interval_h": 6.0,
+   "per_day": 3.24,
+   "reasons": {
+    "first alert": 7,
+    "intensity change": 7,
+    "routine": 14,
+    "new place threatened": 3,
+    "landfall forecast change": 2,
+    "landfall": 1
+   }
+  },
+  {
+   "sid": "2021267N18094",
+   "name": "GULAB:SHAHEEN-GU",
+   "peak_kt": 60.0,
+   "cycles": 38,
+   "alerts": 32,
+   "share": 0.842,
+   "span_h": 246.0,
+   "fix_interval_h": 6.6,
+   "per_day": 3.12,
+   "reasons": {
+    "first alert": 6,
+    "new place threatened": 8,
+    "intensity change": 6,
+    "landfall forecast change": 2,
+    "landfall": 3,
+    "routine": 7
+   }
+  },
+  {
+   "sid": "2023156N10067",
+   "name": "BIPARJOY",
+   "peak_kt": 90.0,
+   "cycles": 56,
+   "alerts": 54,
+   "share": 0.964,
+   "span_h": 330.0,
+   "fix_interval_h": 6.0,
+   "per_day": 3.93,
+   "reasons": {
+    "first alert": 1,
+    "routine": 24,
+    "intensity change": 6,
+    "new place threatened": 5,
+    "landfall forecast change": 17,
+    "landfall": 1
+   }
+  },
+  {
+   "sid": "2020136N10088",
+   "name": "AMPHAN",
+   "peak_kt": 130.0,
+   "cycles": 25,
+   "alerts": 22,
+   "share": 0.88,
+   "span_h": 144.0,
+   "fix_interval_h": 6.0,
+   "per_day": 3.67,
+   "reasons": {
+    "first alert": 1,
+    "intensity change": 6,
+    "rapid intensification": 1,
+    "new place threatened": 3,
+    "landfall forecast change": 4,
+    "routine": 6,
+    "landfall": 1
+   }
+  }
+ ],
+ "reason_mix": {
+  "first alert": 17,
+  "routine": 82,
+  "new place threatened": 26,
+  "intensity change": 26,
+  "landfall": 7,
+  "landfall forecast change": 25,
+  "rapid intensification": 1
+ },
+ "total_alerts": 184
+}

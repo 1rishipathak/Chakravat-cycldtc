@@ -1,9 +1,10 @@
 {
   "device": "cuda",
   "detector": true,
+  "detector_insat": true,
   "scene_classifier": true,
   "intensity_vision": true,
   "intensity_domain": "gridsat",
-  "intensity_calibrated": true,
+  "intensity_calibrated": false,
   "gridsat_scenes": 2306
 }

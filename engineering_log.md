@@ -10,6 +10,374 @@ instead of showing four models separately.
 
 ## solved
 
+### the depressions we miss are not behind the threshold
+
+recall on depressions is 0.39 against 0.76 on named storms, and the obvious
+reading is that the detector is simply tuned too conservatively: it is trained
+with intensity weighting and its threshold is picked for F1, both of which
+favour the storms that matter for a forecast. so give it a second, more eager
+operating point and take some of that back.
+
+we did, properly - swept on validation, picked by F2, scored on test, served
+point untouched. threshold 0.15. it moves weak-system recall from 0.480 to
+0.529 and doubles the false alarms, 0.33 to 0.66 per scene. a fair trade for a
+screening view, a bad one for anything that becomes a forecast, which is why the
+tier is now explicit rather than a global setting.
+
+the useful part was the control we almost did not run. take the threshold all
+the way down to 0.05:
+
+    thr 0.05   precision 0.204   weak recall 0.595   2.73 false alarms per scene
+
+eight times the false alarm rate of the served point, and four in ten weak
+systems are still missed. that kills the hypothesis. these are not systems the
+network saw faintly and rejected - if they were, they would appear as the
+threshold fell. they are systems it does not see, which is exactly what you
+would expect from a 20 kt depression in an infrared image, where there is no
+organised convective signature to find and the thing looks like ordinary
+monsoon cloud.
+
+worth stating plainly because it changes what the limitation means. "we miss 6
+in 10 depressions" sounds like a model we undertrained. "we miss 6 in 10
+depressions and cannot find them at any sensitivity we can afford" is a
+statement about infrared imagery, and the fix is a different instrument rather
+than a better threshold.
+
+### the INSAT scene gap is the sensor, and it is two classes
+
+scene typing reads 0.72 on GridSat and 0.60 on INSAT, and INSAT is the live
+feed, so this was the first thing worth attacking with eleven days left. it did
+not work, but the diagnosis is worth more than the fix would have been.
+
+the lead was real. the cold-cloud half of the hybrid is a logistic model on
+brightness-temperature statistics, fitted with one shared scaler and no sensor
+term, and the two sensors' features are not on the same scale: the
+water-vapour spread differs by 0.9 standard deviations, the mean by 0.7, the
+coldest pixel by 0.67. one model cannot fit both. fitting it per sensor lifts
+that half from 0.415 to 0.505 on INSAT, which is a large move.
+
+it buys almost nothing. the hybrid goes 0.601 to 0.608, because the CNN
+dominates the blend and the CNN is the half that is actually weak. a per-sensor
+blend weight was worse than the fixed 0.5 - the curve already peaks there on
+INSAT, and choosing per fold just adds selection noise (0.608 to 0.605).
+
+so we went at the CNN. if the sensors differ by an offset, standardising each
+patch by its own channel statistics should remove it. fifteen minutes of
+cross-validation says no, and says it clearly: 0.722 to 0.703 on GridSat and
+0.601 to 0.560 on INSAT. worse on both. the reason is the point of the whole
+entry - the offset it removes is absolute brightness temperature, and the ADT
+scene classes are partly *defined* by absolute brightness temperature.
+
+which pointed at the test we should have run first. all 505 INSAT patches have
+GridSat twins at the same storm and time with the same label, so we can score
+the same scenes through both instruments and take scene composition out of it
+entirely. the gap survives - 0.725 against 0.601 - and the per-class split is
+the answer:
+
+    EYE     0.76 -> 0.75      SHEAR  0.84 -> 0.76
+    CRVBND  0.75 -> 0.64      EMBC   0.69 -> 0.47      IRRCDO 0.58 -> 0.39
+
+an eye is a hole in the cloud. it is still a hole in the cloud on a different
+satellite. whether a central dense overcast is "embedded" or "irregular" is a
+judgement about how cold and how uniform it is, and that does not survive a
+change of instrument, calibration and viewing angle. the two classes that
+collapse are exactly the two with no geometry to hold on to.
+
+four attempts and no fix, so nothing was promoted and the GridSat-trained
+hybrid still serves. what changed is what the system says: `/scene` now returns
+the measured F1 for the class it just predicted on the sensor it just read, so
+an EMBC off the live feed arrives with "0.47 here, 0.69 on GridSat" attached.
+the honest version of an unfixed limitation is a number next to the answer, not
+a sentence in a document nobody opens.
+
+### auditing the deck against the reports found five stale numbers and a bug
+
+before freezing the deck i checked every hard-coded figure in it against
+`src/eval/headline_numbers.py`, which is supposed to be the arbiter. the audit
+found more in the arbiter than in the deck.
+
+**the arbiter was reporting a model that no longer serves.** its T3 block read
+`cv/t3_best_track_rotate.json`, the GridSat-only run, while the API serves the
+jointly trained model from `cv/t3_best_track_rotate_joint.json`. so the script
+that documents disagreed with the thing it documents: 13.16 kt against 12.96,
+and a different band table. same for T1, where it printed only the GridSat
+detector, making INSAT detection look like 0.41 F1 when the checkpoint that
+actually answers for INSAT imagery gets 0.68. both now print what serves, with
+the alternative beside it.
+
+**a calibration cost that matched no run.** the deck, limitations and this log
+all said recalibration costs 2.7 kt of RMSE, 13.2 to 15.9. the report says 12.96
+to 15.32, a cost of 2.4. the 15.9 came from a run that predates the best-track
+crosswalk and had been copied forward three times without anyone re-reading the
+file it came from. the deck now computes the difference from the report rather
+than restating it.
+
+**a storm count nobody could reproduce.** the deck said 4.4 named storms a
+season. IBTrACS over 1990-2025 gives 167 storms in 36 seasons, which is 4.6, and
+no definition i tried produced 4.4. the basin's own counts are now printed by
+the arbiter, read from the best track file itself, so the claim is checkable
+like any other.
+
+**timings that were all wrong in the same direction.** API.md promised a
+forecast in 3.3 s, a scene in 1.3 s and the pipeline in 30 s. measured: 1.5 s,
+0.3 s, 14 s. nothing was slower than claimed, which is why it survived - an
+overstatement of your own latency never produces a complaint.
+
+**the live feed is 3-hourly, not hourly.** `wanted_slots` steps back in three
+hour synoptic slots and always did; the deck had said hourly. at any moment the
+newest slot is 1 to 4 h old, which is what it says now.
+
+and the bug: `src/eval/numbers.py` shadowed the standard library's `numbers`
+module. numpy imports `numbers` internally, so any script in `src/eval/` that
+imported numpy or pandas crashed on import with a circular-import error from
+numpy - `src/eval/t2_hybrid.py`, the script that produced the T2 numbers, could
+not be run from a clean checkout at all. renamed to `headline_numbers.py`.
+
+then the same audit on the three documents we brief ourselves from, and that
+was worse. the demo script, the panel brief and the primer had all been written
+before the best-track crosswalk and none had been revisited. between them they
+would have had us say out loud: T2 beats its baseline 0.689 to 0.563 (the
+cross-validation says 0.664 to 0.650, a tie, which is the whole reason the
+hybrid exists), intensity 10.95 kt against a 21.06 physics baseline (both
+against ADT's wind, not best track), 121.9 km and +14.2% at 24 h (the selection
+table's blend, which nothing calls), and landfall position 257 km with "adding a
+land mask is the known fix" (it was added; it is 184 km). the primer taught the
+recalibration as applied and served, when the cross-validation is what took it
+out of service.
+
+worse than the deck, because a slide gets read and a script gets spoken. all
+three now carry what the reports say, and the demo's INSAT beat - one storm,
+five scenes, a terminal script - is now the Live tab.
+
+the lesson is the one already at the bottom of this log, arrived at from the
+other direction: a number that is restated rather than read goes stale silently,
+and the file it came from is the only thing that can catch it.
+
+### the alerting rule sent on every forecast cycle, three times over
+
+we could render a CAP document but had no way to publish one: `/cap.xml` built
+fresh XML per request, stamped a new identifier each time, always said
+`msgType=Alert`, and stored nothing. so nothing could subscribe. the fix is an
+alert store with a lifecycle - Alert, then Update carrying `<references>` to
+what it supersedes, then Cancel - behind an Atom feed, which is how CAP
+actually travels.
+
+the interesting part is the decision of *when* to send, because it failed three
+times and each failure was only visible by replaying real storms through it.
+`src/replay_alerts.py` does that, fix by fix, and prints the reason for every
+send. the reason strings are the whole diagnostic; none of this was visible by
+reading the rule.
+
+**v1 - thresholds only.** re-issue when the picture changes by more than half
+our own measured error (landfall timing MAE 9.0 h, position 114 km). sounded
+principled. sent on **25 of Amphan's 25 cycles**, with reasons like a landfall
+point that "moved" 472 km between consecutive cycles and Lhasa entering the
+threat zone. the threshold was right and the quantity was wrong: cycle-to-cycle
+jitter in the landfall point is far larger than our error against truth, and a
+72 h cone sweeping the Himalayas picks up new towns forever.
+
+**v2 - gate on what the forecast can see.** landfall shifts only count inside
+48 h, a place only counts inside 36 h and is announced once per storm, upgrades
+interrupt but downgrades ride the next routine bulletin, and a routine cadence
+underneath. Amphan dropped to 23/25 with clean reasons - but a 33 kt monsoon
+depression still sent on **all 22 of its cycles**, because the cadence read
+proximity to a coast before severity. a depression near land is not a super
+cyclone near land, and India gets many depressions.
+
+**v3 - severity before proximity, and a stated rate limit.** cadence keys off
+intensity first; the intensity trigger compares against the strongest the storm
+has *ever* been, so a deep depression oscillating back and forth stops
+announcing that it has intensified for the third time; the landfall-shift
+trigger is off below cyclone strength, where the landfall point is the least
+reliable thing we produce; and under it all a minimum gap that only the four
+things you would wake someone for may break.
+
+**v4 - the measurement was wrong too.** the suite reported alerts per day as
+`3 h x cycles`, assuming every IBTrACS fix is 3-hourly. they are 6-hourly here,
+so every rate it had ever printed was exactly double. the span now comes from
+the timestamps. "share of cycles" was dropped as a headline at the same time:
+it is really a statement about how densely the archive sampled a storm, not
+about how much the system talks.
+
+and one attempted fix taught more by failing. suppressing the place trigger
+once the centre is inland and below cyclone strength - the right rule, since
+what people need then is a rainfall warning, which is IMD's product and not
+ours - moved 19 alerts out of "new place threatened" and changed the total by
+nothing at all. every storm's count came back identical.
+
+that is the real finding: **the alert rate is cadence-bound, not
+trigger-bound.** checking which tier applied to each of the 184 alerts, every
+storm sits at or just under its tier's ceiling - the 25 kt system spent all 21
+of its alerts on the 12 h watch cadence and measured 2.2/day against a 2.0
+ceiling; the 33 kt system sat 18 of 21 on the 6 h cadence and measured 4.0
+against 4.0. material triggers almost always coincide with a bulletin that was
+due anyway rather than adding to it. so the cadence constants are the policy,
+and the trigger rules decide what an alert *says*, not how often one goes out.
+worth knowing before anyone tunes a threshold hoping to change the rate.
+
+the rates land at 2.2-4.0 per day across 25 kt to 130 kt, in
+`reports/alert_cadence.json`, regenerated by `src/replay_alerts.py --suite`.
+IMD itself bulletins 3-hourly in the cyclone stage, so 8/day is the
+operational benchmark and everything here sits below it. the ordering is not
+monotonic in peak intensity and should not be: a landfalling 33 kt depression
+rates above a super cyclone averaged over a life mostly spent at sea, because
+the tier reads proximity as well as strength.
+
+the honest caveat: four passes of this were tuned while looking at the same six
+storms, so the constants are fitted to them in a way no cross-validation
+protects against. they are policy choices, not measurements, and they are
+written as named constants at the top of `api/alert_store.py` so that is
+visible rather than buried in a condition.
+
+a related claim died on the way: API.md said the CAP was "validated against the
+OASIS schema", and when `<references>` had to be added there was nothing in the
+repo that could check it. no XSD, no validator, nothing that ever ran.
+`src/check_cap.py` is the check that claim needed - element order, closed value
+lists, and a hard refusal of any status but `Exercise`. its own first version
+passed a deliberately invalid `<severity>` because it only looked at children
+of `<alert>` and severity lives inside `<info>`; a negative test caught that,
+which is the only reason the checker is worth anything.
+
+### T3 was graded against ADT, not against best track
+
+found while writing out what "ADT labels" means. `patches.csv` took `vmax_kt`
+straight from the ADT archive and the trainer's own comment called it
+"best-track intensity". it wasn't. every T3 number we published, 10.95 kt
+included, measured how closely the model copies ADT.
+
+that matters because the two are not the same wind. ADT follows the dvorak
+tables, which give a 1-minute mean; IMD's best track is 3-minute. matched in
+space and time across 11,227 fixes, ADT reads +7.6 kt above IMD, a ratio of
+1.106 at 34 kt and up. so T3 learned ADT's scale, the dashboard mapped it onto
+IMD's category bands, and the imagery pipeline fed it to T4, which was trained
+on IMD winds.
+
+the fix is a spatio-temporal crosswalk: interpolate every best track to the ADT
+analysis time and take the nearest storm within 200 km. median separation 28 km,
+no ADT storm splitting across two SIDs, and 943 of 974 patches matched against
+728 that had an ADT wind - the correct target also turned out to be the more
+plentiful one.
+
+5-fold cross-validation by storm, same 719 scenes, everything against IMD best
+track:
+
+| | RMSE | bias |
+|---|---|---|
+| what we were serving (ADT target, recalibrated) | 19.0 kt | +7.4 |
+| ADT itself | 13.95 kt | +7.1 |
+| retrained on best track, no recalibration | 13.5 kt | +0.2 |
+
+the old model's single test split had said 13.8 kt. cross-validation says that
+split was a lucky draw.
+
+### the recalibration that fixed the bias made the error worse
+
+inverting the fitted line does what it promised - the 90 kt+ band goes from
+-13 kt to +2 - but under cross-validation it costs 2.4 kt of RMSE (13.0 to
+15.3), and that holds even when the line is fitted on four folds of held-out
+predictions at once rather than one small validation set. expanding the spread
+fixes the average and adds variance.
+
+(those four figures are re-measured on the model that serves now, the one
+trained on both sensors. the entry first said 2.7 kt, 13.2 to 15.9, which was
+a number carried from an older run and matched no report file - found while
+checking the deck against `src/eval/headline_numbers.py` before submission.)
+
+so it isn't served any more. the severe-storm under-read goes back into
+limitations with its measured size instead of being papered over.
+
+### "mirror plus a half turn keeps the storm cyclonic" doesn't
+
+three datasets augmented with `rot90(a[:, ::-1], 2)` under a comment claiming
+the half turn undid the mirror. a mirror followed by a half turn is a vertical
+flip, and every reflection reverses the sense of rotation. checked it on a 3x3
+array: clockwise in, anticlockwise out. half of T2 and T3's training storms were
+spinning the southern hemisphere way.
+
+rotation-only augmentation won for T3 on every metric under cross-validation
+(13.16 vs 13.38 kt) and lost slightly for T2 (0.664 vs 0.638 macro-F1 for the
+CNN), which makes sense: a cloud pattern has no handedness to lose. each task
+now uses what its own cross-validation picked.
+
+### the single split flattered T2, and the physics baseline was never beaten
+
+cross-validated over all 974 patches the CNN scores macro-F1 0.664 and the
+cold-cloud statistics baseline 0.650 - the same, inside the intervals. the old
+single split had said 0.689 against 0.563.
+
+in hindsight it is not surprising. ADT assigns scene type with rules on
+cloud-top temperature, and those statistics measure exactly that. we were asking
+a CNN to beat the thing the labels were made of.
+
+what saved it is that they fail on different scenes: the CNN is far better on
+EYE, the statistics on SHEAR and IRRCDO. averaging the two sets of probabilities
+50/50 gives 0.710, better than either alone by 0.029 to 0.065 macro-F1 with 95%
+confidence. that hybrid is what serves now. equal weights, so nothing was tuned
+on the held-out folds.
+
+### the INSAT "strips" were our own subsampling
+
+we had written that an INSAT granule is a latitude strip that moves between
+campaigns. the strips are real - they are the rapid-scan sectors ISRO runs over
+an active storm - but the full sector is still there every half hour. 3DR scans
+it at :15 and :45, 3D and 3DS at :00 and :30, each covering 9.5S to 43.6N.
+our nearest-to-the-hour rule picked the :02 rapid scan every single time.
+
+measured on storm days in 2019, 2020 and 2024 and a quiet day in 2017 before
+changing anything. selecting on the minute gets whole-basin imagery, which is
+what made an INSAT archive worth downloading at all.
+
+### MOSDAC access tokens last about five minutes
+
+the first bulk download died at file 117 of 879 with INVALID_TOKEN. MOSDAC's own
+client swaps a refresh token for a new pair when that happens, and a refresh
+needs no password, so it cannot count toward the three-strikes lockout. ours does
+the same now, logs out at the end, and retries dropped connections - which are
+not auth failures - three times before giving up. 10.2 GB then came down in one
+run with three refreshes and nothing lost.
+
+### the map drew india's boundary the way OpenStreetMap does
+
+OSM maps boundaries by who administers the ground, which is not how the
+government of india depicts its own, and this is a screen meant for a MoES
+panel. replaced with natural earth's india point-of-view edition, vendored into
+the repo, and the ingest asserts gilgit, aksai chin and tawang all fall inside
+india's polygon before writing the file. the map now needs no network at all.
+
+### the cone missed kolkata with amphan 52 km away
+
+the first version of "places at risk" used the forecast cone alone. a cone says
+where the centre might go; it says nothing about how wide the storm is. widened
+by the typical radius of gale-force winds for the forecast intensity - measured
+from JTWC wind radii in IBTrACS, 106 km at 34-48 kt rising to 201 km above
+90 kt - and kolkata appears, at 0 h, which is where it was.
+
+### "stay at sea for 72 h" for a storm already ashore
+
+the landfall model answers whether landfall is still to come, which is false
+once it has happened, so amphan at 20 may 12 UTC came back with a 4% landfall
+probability and a CAP headline saying it would stay at sea. IBTrACS puts
+distance to land at 0 over land; the API now says the centre is inland instead.
+
+### a grad-CAM hook fired inside somebody else's forward pass
+
+the imagery tab asks for an intensity estimate and its attention map at the same
+moment. FastAPI runs those on a thread pool, both threads reach the same model
+object, and the explain hook - which calls `retain_grad` - fired inside the
+other thread's `no_grad` pass and crashed it. one lock around every model call,
+and the lazy loaders moved under it too: they set "loaded" before loading
+finished, so a second request mid-load got `None` and a 404.
+
+### the patch cache rebuilt itself on every run
+
+five of the 979 labelled scenes always sit too close to the crop edge to cut a
+patch from, so the cache holds 974. the rebuild check compared those two numbers
+and concluded imagery was missing, every time - twelve minutes of rebuilding,
+and it silently dropped the best-track columns T3 now trains on. it compares
+against what the last build actually saw now, and re-adds the columns itself if
+it does rebuild.
+
+
 ### detection trained on zero positive pixels
 
 focal loss identifies a centre by the target being exactly 1.0. we built targets
@@ -75,6 +443,10 @@ which looks excellent and conceals both. we only found it by reporting bands.
 
 fixed by inverting the fitted line, fitted on validation and applied unchanged
 to test. RMSE 11.66 to 10.95 and every band improved.
+
+both numbers there are against ADT's wind, and the fix did not survive being
+cross-validated: see the two entries at the top of this log. the shrinkage is
+real, the inversion trades 2.4 kt of RMSE for it, and it is no longer served.
 
 worth noting: the docstring in `calibrate_intensity.py` said 0.727 / 13.9 for a
 while, from an older run, while the checkpoint and the report both said
@@ -206,39 +578,51 @@ sector mean, which was suspiciously cold at 206 K.
 see limitations.md, it has the numbers. short list:
 
 - detection misses about 6 in 10 depressions
-- severe storm intensity still reads ~12 kt low at 64-89 kt
+- intensity reads the strongest storms low: -8 kt at 64-90, -13 at 90+
 - landfall position is 184 km, better than 256 but not evacuation grade
 - RI is barely skilful at +0.096
-- IRRCDO has 7 test examples so it's not really measurable
+- IRRCDO is the weakest scene class, F1 0.53 on 97 patches
+- 72 h forecast skill is positive but its interval crosses zero
 - test sets are small, the basin makes about 5 storms a year
 
 ## what judges will probably ask
 
-**why not INSAT-3D for an indian problem statement.** we asked, approval came
-late, so we designed around it. GridSat carries the same IR window channel
-globally and our models take a generic 3 channel patch, so swapping is a data
-loader change plus a fine tune. building on an approval we didn't control would
-have been the actual mistake.
+**why not INSAT for an indian problem statement.** we do use it. everything was
+trained on GridSat first, because it needs no approval and a system that depends
+on one you don't control isn't a system. MOSDAC access then came through and the
+INSAT-3D and 3DR archive is mirrored onto the same grid at the same slots, so
+the two sensors can be compared on identical storms, and the live feed is
+INSAT-3DS.
 
 **do you beat IMD.** no, and we don't claim to. IMD runs multi model numerical
-guidance we have no access to. we beat CLIPER, which is the statistical
-benchmark operational centres score skill against, by 14% on track and 23% on
-intensity at 24 h.
+guidance we have no access to. we beat CLIPER, which is the statistical benchmark
+operational centres score skill against, by 11% on track and 20% on intensity at
+24 h, with intervals that stay clear of zero out to 48 h.
 
-**your dvorak labels are machine generated.** correct, they're from CIMSS ADT.
-so T2 measures agreement with ADT, not with a human analyst. it's in the
-limitations.
+**your dvorak labels are machine generated.** correct, they're from CIMSS ADT, so
+T2 measures agreement with ADT rather than with an analyst. it also explains why
+a logistic model on cloud-top temperature statistics matches the CNN: ADT assigns
+scene type from rules on those same temperatures. serving the average of the two
+is the honest way to use that.
+
+**what is your ground truth for intensity.** IMD's best track, interpolated to
+the scene time. it was ADT's own estimate until we caught it - the entry at the
+top of this log - and ADT runs 7.6 kt above IMD because it reports a 1-minute
+wind. against best track, our estimate and ADT's are level (13.2 vs 13.9 kt RMSE,
+difference -2.3 to +1.5) and ours is unbiased where ADT reads high.
 
 **8 km is too coarse for dvorak.** it costs us eye detail. but we tested the
-claim instead of assuming it and it doesn't hold as a ceiling, within 64 kt+ the
-model correlates 0.883 with truth and reproduces its spread. the severe storm
-error was calibration, not resolution.
+claim instead of assuming it and it doesn't hold as a ceiling: within 64 kt+ the
+model correlates 0.883 with truth and reproduces its spread.
 
-**could this run tomorrow.** not as it stands, and it's a data problem not a
-model one. GridSat is a delayed archive. live needs a real time feed, INSAT
-through MOSDAC or himawari or meteosat. the pipeline and models don't change.
+**could this run tomorrow.** it runs today. the live tab pulls the latest
+INSAT-3DS full-sector scan from MOSDAC, puts it on the model grid and runs the
+same chain on it; the imagery is about an hour old, which is MOSDAC's publishing
+lag. the archive models are unchanged - only the loader knows the difference.
 
-**your test sets are small.** they are, and that's the basin. the north indian
-ocean makes about five named storms a year. we hold out 51 storms, 354 detection
-scenes, 974 scene patches, 728 intensity patches, and report sample counts for
-every band so nobody over-reads a thin one.
+**your test sets are small.** they are, and that's the basin: about five named
+storms a year. so nothing rests on one split any more. T2 and T3 are scored by
+5-fold cross-validation grouped by storm - every patch predicted by a model that
+never saw its storm - and every headline number carries a 95% interval from
+resampling whole storms. that is also how we found that our single test split
+had been flattering both of them.

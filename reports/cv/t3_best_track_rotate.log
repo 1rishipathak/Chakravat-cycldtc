@@ -1,0 +1,68 @@
+T3 CV  target=best_track  aug=rotate  patches=943  storms=113  folds=5
+  fold 0: 209 patches, 21 storms
+  fold 1: 184 patches, 21 storms
+  fold 2: 236 patches, 29 storms
+  fold 3: 188 patches, 23 storms
+  fold 4: 126 patches, 19 storms
+
+fold 0  train 550  val 184  test 209
+  epoch  1  val RMSE  12.31 kt  (41s)  *
+  epoch  2  val RMSE  11.74 kt  (4s)  *
+  epoch  5  val RMSE  14.53 kt  (3s)
+  epoch  8  val RMSE  10.79 kt  (3s)  *
+  epoch 10  val RMSE  13.03 kt  (9s)
+  epoch 12  val RMSE  10.37 kt  (10s)  *
+  epoch 15  val RMSE  11.54 kt  (3s)
+  epoch 20  val RMSE  11.44 kt  (5s)
+  early stop at epoch 24
+  fold 0 test RMSE raw 16.23  calibrated 17.43  (164s)
+
+fold 1  train 523  val 236  test 184
+  epoch  1  val RMSE  13.25 kt  (22s)  *
+  epoch  2  val RMSE  11.81 kt  (4s)  *
+  epoch  5  val RMSE  12.57 kt  (3s)
+  epoch  6  val RMSE  11.40 kt  (3s)  *
+  epoch 10  val RMSE  11.57 kt  (3s)
+  epoch 12  val RMSE  11.26 kt  (3s)  *
+  epoch 15  val RMSE  12.60 kt  (9s)
+  epoch 20  val RMSE  12.04 kt  (8s)
+  early stop at epoch 24
+  fold 1 test RMSE raw 10.89  calibrated 13.40  (142s)
+
+fold 2  train 519  val 188  test 236
+  epoch  1  val RMSE  18.30 kt  (29s)  *
+  epoch  2  val RMSE  14.48 kt  (4s)  *
+  epoch  4  val RMSE  12.45 kt  (3s)  *
+  epoch  5  val RMSE  12.58 kt  (3s)
+  epoch  6  val RMSE  11.03 kt  (4s)  *
+  epoch  8  val RMSE  10.91 kt  (6s)  *
+  epoch 10  val RMSE  11.37 kt  (4s)
+  epoch 15  val RMSE  12.08 kt  (4s)
+  epoch 20  val RMSE  10.66 kt  (4s)  *
+  epoch 21  val RMSE  10.48 kt  (4s)  *
+  epoch 25  val RMSE  11.09 kt  (4s)
+  epoch 30  val RMSE  10.44 kt  (4s)  *
+  epoch 35  val RMSE  11.31 kt  (4s)
+  epoch 40  val RMSE  11.00 kt  (4s)
+  early stop at epoch 42
+  fold 2 test RMSE raw 11.14  calibrated 11.85  (203s)
+
+fold 3  train 629  val 126  test 188
+  epoch  1  val RMSE  15.71 kt  (36s)  *
+  epoch  3  val RMSE  15.69 kt  (4s)  *
+  epoch  5  val RMSE  14.11 kt  (4s)  *
+  epoch 10  val RMSE  13.89 kt  (4s)  *
+  epoch 15  val RMSE  15.28 kt  (5s)
+  epoch 20  val RMSE  14.82 kt  (4s)
+  early stop at epoch 22
+  fold 3 test RMSE raw 11.56  calibrated 14.87  (128s)
+
+fold 4  train 608  val 209  test 126
+  epoch  1  val RMSE  15.17 kt  (4s)  *
+  epoch  2  val RMSE  15.12 kt  (4s)  *
+  epoch  5  val RMSE  17.14 kt  (4s)
+  epoch 10  val RMSE  16.12 kt  (4s)
+  early stop at epoch 14
+  fold 4 test RMSE raw 15.94  calibrated 20.22  (65s)
+
+wrote C:\Users\Rishi Pathak\workspace\Projects\Chakravat-cycldtc\reports\cv\t3_best_track_rotate.json  (11.8 min)
