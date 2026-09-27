@@ -230,8 +230,12 @@ def wind_probability(sid: str, time: str | None = None, threshold: int = 34,
     field = wp.probability_field(tracks, lat, lon, thresholds=(threshold,))
     prob = field[threshold]
 
+    at_risk = wp.places_at_risk(tracks, threshold)
     rel = _report(f"wind_prob_reliability_{threshold}.json")
     return {
+        "places": at_risk[:40],
+        "places_total": len(at_risk),
+        "population_over_time": wp.exposure_over_time(at_risk),
         "sid": sid, "issued_at": str(row["ISO_TIME"].iloc[0]),
         "threshold_kt": threshold, "window_h": 72,
         "members": len(tracks),

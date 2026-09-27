@@ -136,6 +136,80 @@ def contours(prob: np.ndarray, lat: np.ndarray, lon: np.ndarray,
     return out
 
 
+def places_at_risk(tracks: list[list[tuple]], threshold: int = 34,
+                   min_pop: int = 100_000, step_h: float = STEP_H) -> list[dict]:
+    """Populated places the wind may reach, with how likely and how soon.
+
+    The exposure table already says who is inside the threat zone. This says
+    something a decision needs and that does not: how likely, and by when. A
+    place with a 7 in 8 chance of gales in six hours is a different problem from
+    the same place at 1 in 8 in two days, and the cone cannot tell them apart.
+
+    Evaluated at the places themselves rather than on the grid, which is a few
+    hundred points instead of forty thousand.
+    """
+    from models.impact import MIN_POP, _places, gale_radius_km
+
+    min_pop = min_pop if min_pop is not None else MIN_POP
+    places = [p for p in _places() if (p.get("pop") or 0) >= min_pop]
+    if not places:
+        return []
+
+    plat = np.array([p["lat"] for p in places])
+    plon = np.array([p["lon"] for p in places])
+    cos_lat = np.cos(np.radians(plat))
+
+    n = len(tracks)
+    covered = np.zeros((n, len(places)), dtype=bool)
+    first_h = np.full((n, len(places)), np.inf)
+
+    for m, pts in enumerate(tracks):
+        for h, la, lo, v in densify(pts, step_h):
+            r = gale_radius_km(v, int(threshold))
+            if r <= 0:
+                continue
+            dy = (plat - la) * KM_PER_DEG
+            dx = (plon - lo) * KM_PER_DEG * cos_lat
+            hit = (dy * dy + dx * dx) <= r * r
+            newly = hit & ~covered[m]
+            first_h[m, newly] = h
+            covered[m] |= hit
+
+    out = []
+    for i, place in enumerate(places):
+        k = int(covered[:, i].sum())
+        if not k:
+            continue
+        hours = first_h[covered[:, i], i]
+        out.append({
+            "name": place.get("name"), "country": place.get("country"),
+            "region": place.get("region"),
+            "population": int(place.get("pop") or 0),
+            "lat": float(place["lat"]), "lon": float(place["lon"]),
+            "probability": k / n, "members": k,
+            "earliest_h": float(hours.min()),
+            "median_h": float(np.median(hours)),
+        })
+    out.sort(key=lambda d: (-d["probability"], d["median_h"]))
+    return out
+
+
+def exposure_over_time(at_risk: list[dict], horizons=(6, 12, 24, 48, 72),
+                       min_probability: float = 0.25) -> list[dict]:
+    """Cumulative population that may be in the wind by each lead time.
+
+    Counted at or above a probability, because summing every place at any
+    probability produces a number that is large, true and useless.
+    """
+    rows = []
+    for h in horizons:
+        inside = [p for p in at_risk
+                  if p["probability"] >= min_probability and p["median_h"] <= h]
+        rows.append({"by_h": int(h), "places": len(inside),
+                     "population": int(sum(p["population"] for p in inside))})
+    return rows
+
+
 def summarise(field: dict, lat: np.ndarray, lon: np.ndarray) -> dict:
     """The shape of the answer, without shipping the whole grid."""
     deg = float(lat[1] - lat[0])

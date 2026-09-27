@@ -606,6 +606,28 @@ async function renderWind(d, issued){
         against forecasting the base rate every time.
         ${v.verifies ? "This verifies " + esc(v.verifies) + "." : ""}</div>`
       : `<div class="note">Verification has not been generated for this threshold yet.</div>`}
+    ${(w.population_over_time||[]).some(r=>r.population>0) ? `
+      <h3>People who may be in the wind</h3>
+      <table><thead><tr><th>By</th><th>Places</th><th>Population</th></tr></thead>
+      <tbody>${w.population_over_time.map(r=>`<tr>
+        <td class="n">${r.by_h} h</td><td class="n">${r.places}</td>
+        <td class="n">${r.population>=1e6 ? (r.population/1e6).toFixed(1)+" M"
+                                          : (r.population/1e3).toFixed(0)+" k"}</td>
+      </tr>`).join("")}</tbody></table>
+      <div class="note">Cumulative, counting places where the chance is 25% or more by
+        that lead time. Natural Earth metro populations: who is in the path, not how
+        badly they are hit.</div>` : ""}
+    ${(w.places||[]).length ? `
+      <h3>Most likely first</h3>
+      <table><thead><tr><th>Place</th><th>Chance</th><th>Earliest</th><th>Population</th></tr></thead>
+      <tbody>${w.places.slice(0,12).map(p=>`<tr>
+        <td>${esc(p.name)}${p.country?`<span style="color:var(--ink-3)">, ${esc(p.country)}</span>`:""}</td>
+        <td class="n">${(100*p.probability).toFixed(0)}%</td>
+        <td class="n">${p.earliest_h.toFixed(0)} h</td>
+        <td class="n">${p.population>=1e6 ? (p.population/1e6).toFixed(1)+" M"
+                                          : (p.population/1e3).toFixed(0)+" k"}</td>
+      </tr>`).join("")}</tbody></table>
+      ${w.places_total>12?`<div class="note">${w.places_total} places of 100,000 or more in all.</div>`:""}` : ""}
     <div class="note">${esc(w.note||"")}</div>`;
 }
 
