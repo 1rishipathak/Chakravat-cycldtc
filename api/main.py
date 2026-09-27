@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -204,6 +205,47 @@ def _in_cone(fc: dict) -> tuple[list[dict], object]:
     from models.impact import cone_polygon, places_in_cone, track_nodes
     nodes = track_nodes(fc["current"], fc["forecast"])
     return places_in_cone(nodes), cone_polygon(nodes)
+
+
+@app.get("/api/storm/{sid}/wind_probability")
+def wind_probability(sid: str, time: str | None = None, threshold: int = 34,
+                     deg: float = 0.25):
+    # the cone says where the centre may go; this says who gets the wind.
+    #
+    # each of the eight ensemble members sweeps its own wind field along its own
+    # track, and the probability is the share of members covering a point at any
+    # time in the next 72 h. eight members means eighths, so the contours are
+    # drawn at eighths and not at a finer spacing we cannot resolve.
+    from features.build import HORIZONS
+    from models import wind_prob as wp
+
+    if threshold not in wp.THRESHOLDS:
+        raise HTTPException(400, f"threshold must be one of {list(wp.THRESHOLDS)}")
+    row = _row_at(sid, time)
+    lat, lon = wp.basin_grid(deg)
+    try:
+        tracks = wp.member_tracks(store.ensemble, row, HORIZONS)
+    except Exception as exc:                     # noqa: BLE001
+        raise HTTPException(422, f"no ensemble forecast from this fix: {exc}")
+    field = wp.probability_field(tracks, lat, lon, thresholds=(threshold,))
+    prob = field[threshold]
+
+    rel = _report(f"wind_prob_reliability_{threshold}.json")
+    return {
+        "sid": sid, "issued_at": str(row["ISO_TIME"].iloc[0]),
+        "threshold_kt": threshold, "window_h": 72,
+        "members": len(tracks),
+        "contours": wp.contours(prob, lat, lon),
+        "summary": wp.summarise({threshold: prob}, lat, lon)[str(threshold)],
+        "verification": ({"brier_skill_score": rel.get("brier_skill_score"),
+                          "reliability": rel.get("reliability"),
+                          "forecasts": rel.get("forecasts"),
+                          "verifies": rel.get("verifies")} if rel else None),
+        "note": "probability that sustained wind reaches this threshold at any "
+                "point in the window. the wind field is taken as circular, using "
+                "the quadrant-mean radius; a real one is widest in the "
+                "right-forward quadrant.",
+    }
 
 
 @app.get("/api/storm/{sid}/exposure")
@@ -533,6 +575,15 @@ def bulletin(sid: str, time: str | None = None, lang: str = "en"):
 
 
 # ---- imagery tasks (T1 detection, T2 scene, T3 intensity) ---------------
+
+def _report(name: str) -> dict | None:
+    # a verification report, or None if it has not been generated yet
+    path = ROOT / "reports" / name
+    try:
+        return json.loads(path.read_text())
+    except (OSError, ValueError):
+        return None
+
 
 def _source(source: str) -> str:
     # which imagery archive a vision call reads: gridsat, insat or live

@@ -263,6 +263,13 @@ function initMap(){
   const onMapReady = () => {
     const empty = {type:"FeatureCollection",features:[]};
     for(const id of ["cone","track","fcline","pts","fpts"]) map.addSource(id,{type:"geojson",data:empty});
+    /* wind probability goes underneath everything else: it is the widest thing
+       on the map and would bury the track if it sat on top. */
+    map.addSource("windprob",{type:"geojson",data:empty});
+    map.addLayer({id:"windprob-f",type:"fill",source:"windprob",
+      paint:{"fill-color":["get","colour"],"fill-opacity":["get","alpha"]}});
+    map.addLayer({id:"windprob-l",type:"line",source:"windprob",
+      paint:{"line-color":["get","colour"],"line-width":0.8,"line-opacity":.6}});
     map.addLayer({id:"cone-f",type:"fill",source:"cone",
       paint:{"fill-color":"#138808","fill-opacity":.13}});
     map.addLayer({id:"cone-l",type:"line",source:"cone",
@@ -367,7 +374,7 @@ function paintCurrent(){
         type:"Feature", geometry:{type:"Point",coordinates:[p.lon,p.lat]},
         properties:{color:catColor(p.category)}}))});
   } else {
-    for(const id of ["cone","fcline","fpts"]) src(id,{type:"FeatureCollection",features:[]});
+    for(const id of ["cone","fcline","fpts","windprob"]) src(id,{type:"FeatureCollection",features:[]});
   }
 
   const lons=d.track.map(p=>p.lon), lats=d.track.map(p=>p.lat);
@@ -448,11 +455,13 @@ function render(){
       ${fc.rapid_intensification.definition}.
       ${fc.rapid_intensification.flagged?"<strong>Above watch threshold.</strong>":"Below watch threshold."}
     </div>
+    <div id="fc-wind"></div>
     <div id="fc-why"></div>
     <div class="note">Cone radii and intensity ranges are calibrated to
       ${(100*level).toFixed(0)}% and verified on held-out seasons 2020–2025 —
       the ${(100*level).toFixed(0)}% cone contained about that share of verifying positions.</div>
     ` : `<div class="empty">No forecast available from this storm's last fix.</div>`}`;
+  if(fc) renderWind(d, fc.issued_at);
   if(fc) renderWhy(d, fc.issued_at);
 
   document.getElementById("pane-lf").innerHTML = !lf ? `<div class="empty">No landfall assessment.</div>` : `
@@ -525,6 +534,79 @@ async function renderExposure(d, issued){
            in the path, not how badly they will be hit. Populations are Natural
            Earth metro estimates.</div>`;
   }catch(err){ el.innerHTML = `<div class="empty">Places unavailable.</div>`; }
+}
+
+/* Who gets the wind, rather than where the centre goes. Each ensemble member
+   sweeps its own wind field along its own track; the probability is the share
+   of members covering a point at any time in the window. */
+const WIND_BAND = [
+  {at:0.75, colour:"#7a0177", alpha:0.42},
+  {at:0.50, colour:"#c51b8a", alpha:0.34},
+  {at:0.25, colour:"#f768a1", alpha:0.26},
+  {at:0.125, colour:"#fbb4b9", alpha:0.20},
+];
+let windThreshold = 0;          /* 0 = off, otherwise 34, 50 or 64 */
+async function renderWind(d, issued){
+  const box = document.getElementById("fc-wind");
+  if(!box) return;
+  const buttons = [34, 50, 64].map(t =>
+    `<button data-wp="${t}" aria-pressed="${windThreshold === t}">${t} kt</button>`).join("");
+  box.innerHTML = `<h3>Chance of damaging wind</h3>
+    <div class="lvl" role="group" aria-label="Wind threshold" style="display:inline-flex">
+      <button data-wp="0" aria-pressed="${windThreshold === 0}">Off</button>${buttons}
+    </div>
+    <div id="wp-body"><div class="note">The cone is where the centre may go. This is
+      the chance a place sees wind of at least the chosen strength at any time in the
+      next 72 hours, from the eight ensemble members sweeping their own wind fields
+      along their own tracks.</div></div>`;
+  box.querySelectorAll("button[data-wp]").forEach(b => b.onclick = () => {
+    windThreshold = +b.dataset.wp;
+    renderWind(d, issued);
+  });
+  if(!windThreshold){ src("windprob", {type:"FeatureCollection", features:[]}); return; }
+
+  const body = document.getElementById("wp-body");
+  body.innerHTML = `<div class="empty">Sweeping eight members…</div>`;
+  let w;
+  try{
+    w = await (await api(`/api/storm/${d.sid}/wind_probability?time=${encodeURIComponent(issued||"")}&threshold=${windThreshold}`)).json();
+  }catch(e){ body.innerHTML = `<div class="empty">Unavailable for this fix.</div>`; return; }
+  if(!w || !w.contours){ body.innerHTML = `<div class="empty">No forecast from this fix.</div>`; return; }
+
+  /* draw high probability last so it sits on top of the low bands */
+  const feats = [];
+  for(const band of [...WIND_BAND].reverse()){
+    const c = w.contours.find(x => Math.abs(x.level - band.at) < 1e-6);
+    if(!c) continue;
+    for(const ring of c.rings){
+      feats.push({type:"Feature", geometry:{type:"Polygon", coordinates:[ring]},
+                  properties:{colour:band.colour, alpha:band.alpha, level:band.at}});
+    }
+  }
+  src("windprob", {type:"FeatureCollection", features:feats});
+
+  const v = w.verification || {};
+  const rel = (v.reliability || []).filter(r => r.n > 200 && r.forecast > 0.01);
+  body.innerHTML = `
+    <dl class="stats">
+      <div><dt>Area at 25% or more</dt><dd>${(w.summary.area_km2_at_25pct/1000).toFixed(0)}k km²</dd></div>
+      <div><dt>Area at 50% or more</dt><dd>${(w.summary.area_km2_at_50pct/1000).toFixed(0)}k km²</dd></div>
+    </dl>
+    <div class="legend">${WIND_BAND.map(b =>
+      `<span><i style="background:${b.colour};opacity:${b.alpha+0.3}"></i>${(100*b.at).toFixed(0)}%</span>`).join("")}</div>
+    ${rel.length ? `<h3>Has it been right before?</h3>
+      <table><thead><tr><th>We said</th><th>It happened</th><th>Forecasts</th></tr></thead>
+      <tbody>${rel.map(r => `<tr>
+        <td class="n">${(100*r.forecast).toFixed(0)}%</td>
+        <td class="n">${(100*r.observed).toFixed(0)}%</td>
+        <td class="n">${r.n.toLocaleString()}</td></tr>`).join("")}</tbody></table>
+      <div class="note">Every forecast on held-out storms, binned by the probability it
+        gave and compared with how often the wind actually arrived. Brier skill
+        ${v.brier_skill_score != null ? (v.brier_skill_score>=0?"+":"")+v.brier_skill_score.toFixed(2) : "—"}
+        against forecasting the base rate every time.
+        ${v.verifies ? "This verifies " + esc(v.verifies) + "." : ""}</div>`
+      : `<div class="note">Verification has not been generated for this threshold yet.</div>`}
+    <div class="note">${esc(w.note||"")}</div>`;
 }
 
 /* The forecast's answer to Grad-CAM: which inputs it rested on, measured by
@@ -870,7 +952,7 @@ async function renderLive(){
     // a past storm's track and cone drawn over today's sky would read as a
     // forecast for today; clear them until a storm is picked again
     const none = {type:"FeatureCollection", features:[]};
-    for(const id of ["cone","track","fcline","pts","fpts","dettrack"]) src(id, none);
+    for(const id of ["cone","track","fcline","pts","fpts","dettrack","windprob"]) src(id, none);
     map.fitBounds([[40, -2], [100, 30]], {padding:30, duration:600});
     await setSatellite(true, when, "live");
     try{

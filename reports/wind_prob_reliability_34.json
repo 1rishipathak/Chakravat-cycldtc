@@ -1,0 +1,70 @@
+{
+  "threshold_kt": 34,
+  "window_h": 72,
+  "grid_deg": 0.25,
+  "storms": 3,
+  "forecasts": 25,
+  "grid_points": 960625,
+  "reliability": [
+    {
+      "bin_lo": 0.0,
+      "bin_hi": 0.0001,
+      "forecast": 0.0,
+      "observed": 0.0010262038980829275,
+      "n": 938410
+    },
+    {
+      "bin_lo": 0.125,
+      "bin_hi": 0.25,
+      "forecast": 0.125,
+      "observed": 0.13841201716738197,
+      "n": 4660
+    },
+    {
+      "bin_lo": 0.25,
+      "bin_hi": 0.375,
+      "forecast": 0.25,
+      "observed": 0.19783549783549784,
+      "n": 2310
+    },
+    {
+      "bin_lo": 0.375,
+      "bin_hi": 0.5,
+      "forecast": 0.375,
+      "observed": 0.4037487335359676,
+      "n": 1974
+    },
+    {
+      "bin_lo": 0.5,
+      "bin_hi": 0.625,
+      "forecast": 0.5,
+      "observed": 0.42018348623853213,
+      "n": 1635
+    },
+    {
+      "bin_lo": 0.625,
+      "bin_hi": 0.75,
+      "forecast": 0.625,
+      "observed": 0.379746835443038,
+      "n": 1264
+    },
+    {
+      "bin_lo": 0.75,
+      "bin_hi": 0.875,
+      "forecast": 0.75,
+      "observed": 0.5710543549443353,
+      "n": 1527
+    },
+    {
+      "bin_lo": 0.875,
+      "bin_hi": 1.0001,
+      "forecast": 0.977967778405879,
+      "observed": 0.8697569248162804,
+      "n": 8845
+    }
+  ],
+  "brier": 0.004809710474951203,
+  "base_rate": 0.01311021470396877,
+  "brier_skill_score": 0.6282589884253676,
+  "verifies": "track and intensity; the wind field radius model is shared with the truth side and is not tested here"
+}
