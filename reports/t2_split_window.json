@@ -1,0 +1,76 @@
+{
+  "classes": [
+    "EYE",
+    "CRVBND",
+    "SHEAR",
+    "EMBC",
+    "IRRCDO"
+  ],
+  "sw_columns": [
+    "sw_mean",
+    "sw_core",
+    "sw_ring",
+    "sw_thin_frac",
+    "sw_std"
+  ],
+  "insat_patches_with_split_window": 505,
+  "configurations": {
+    "per sensor, no split window": {
+      "gridsat_hybrid": 0.7215137361696424,
+      "gridsat_ci95": [
+        0.6792349791774018,
+        0.7592384460056419
+      ],
+      "insat_hybrid": 0.6081548386564585,
+      "insat_ci95": [
+        0.5503782456318655,
+        0.6545360073842005
+      ],
+      "insat_stats_alone": 0.5053141700815865,
+      "insat_per_class": {
+        "EYE": 0.7380952380952379,
+        "CRVBND": 0.6312849162011173,
+        "SHEAR": 0.7906976744186046,
+        "EMBC": 0.48387096774193544,
+        "IRRCDO": 0.3968253968253968
+      },
+      "insat_stats_per_class": {
+        "EYE": 0.40217391304347827,
+        "CRVBND": 0.5032258064516129,
+        "SHEAR": 0.7544910179640718,
+        "EMBC": 0.44776119402985076,
+        "IRRCDO": 0.4189189189189189
+      }
+    },
+    "per sensor + split window": {
+      "gridsat_hybrid": 0.7215137361696424,
+      "gridsat_ci95": [
+        0.6792349791774018,
+        0.7592384460056419
+      ],
+      "insat_hybrid": 0.6230445860118307,
+      "insat_ci95": [
+        0.5631575847587739,
+        0.6702517397897877
+      ],
+      "insat_stats_alone": 0.4719459746204605,
+      "insat_per_class": {
+        "EYE": 0.7654320987654321,
+        "CRVBND": 0.6428571428571429,
+        "SHEAR": 0.7861271676300577,
+        "EMBC": 0.5081081081081081,
+        "IRRCDO": 0.4126984126984127
+      },
+      "insat_stats_per_class": {
+        "EYE": 0.36756756756756753,
+        "CRVBND": 0.4664536741214057,
+        "SHEAR": 0.7261904761904762,
+        "EMBC": 0.4102564102564102,
+        "IRRCDO": 0.38926174496644295
+      }
+    }
+  },
+  "gain_insat": 0.014889747355372185,
+  "gain_inside_the_interval": true,
+  "verdict": "measured direction, inside the interval"
+}

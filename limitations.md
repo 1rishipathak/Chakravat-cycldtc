@@ -307,8 +307,46 @@ half separately per sensor lifts that half a long way on INSAT, 0.415 to 0.505,
 and moves the blend almost nowhere, 0.601 to 0.608. a per-sensor blend weight
 was worse than the fixed one. training the CNN on both sensors gets 0.612.
 
-four attempts, no fix, so the GridSat-trained hybrid still serves everywhere and
-we say what it costs instead. the scene endpoint now returns the measured F1 for
+### a fifth attempt, with a channel we had all along
+
+every INSAT granule carries six channels and the first regrid kept two. the 12.0
+micron window was sitting on disk unused, and TIR1 minus TIR2 - the split window
+- measures precisely the property the two failing classes are defined by: how
+optically thick the cloud top is. thin cirrus lets the 12 micron channel read
+warmer, opaque convection looks the same to both.
+
+it separates them, exactly as the physics says it should. averaged over the 505
+INSAT patches, in the storm core:
+
+| scene | split window in the core |
+|---|---|
+| EYE | 1.10 K |
+| EMBC | 1.32 K |
+| CRVBND | 2.36 K |
+| IRRCDO | 2.58 K |
+| SHEAR | 2.60 K |
+
+an embedded centre sits under an opaque top and an irregular CDO is ragged and
+semi-transparent, and the channel sees the difference where a single window
+channel cannot. the whole-patch mean separates almost nothing (2.55 to 2.86); it
+is the core that carries it.
+
+feeding those statistics to the INSAT half of the hybrid moves it 0.608 to
+0.623, with GridSat bit-identical because GridSat has no second window channel
+and its model is literally unchanged. EMBC goes 0.48 to 0.51 and IRRCDO 0.40 to
+0.41.
+
+that gain sits inside the interval of the thing it beats, [0.550, 0.655], so by
+our own rule it is a measured direction and not a result. it is also not in the
+serving path: putting it there means carrying a second channel to inference and
+a new failure mode on the live feed, which is a real cost for 0.015 we cannot
+demonstrate. the finding worth keeping is the diagnosis - the gap is a cirrus
+discrimination problem, the instrument to fix it exists, and a properly
+sample-supported model of it is the next thing to build rather than a fifth
+variation on this one. `src/eval_t2_split_window.py` regenerates all of it.
+
+four attempts and a fifth that points somewhere, so the GridSat-trained hybrid
+still serves everywhere and we say what it costs instead. the scene endpoint now returns the measured F1 for
 the class it just predicted on the sensor it just read, so a live INSAT reading
 of EMBC arrives carrying "0.47 here against 0.69 on GridSat" rather than
 arriving bare. `reports/t2_sensor_paired.json` has the table;
