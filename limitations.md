@@ -407,6 +407,66 @@ of passes rather than a season's, is the experiment that would settle it, and it
 is the first thing to build next. `src/ingest/microwave.py` and
 `src/eval_microwave.py` hold all of it, and the imagery is on disk.
 
+## 7c. how small a gain could we even see?
+
+Every improvement we attempted came back null, and for most of the session we
+treated that as a series of failed ideas. It is partly something else, and it is
+measurable.
+
+Operational verification does not compare two models by printing two confidence
+intervals and checking whether they overlap. The National Hurricane Center uses
+a two-sided **paired** t-test on a **homogeneous** sample - the same cases for
+both models - with the degrees of freedom reduced for serial correlation,
+treating forecasts less than 18 hours apart as not independent. Two models
+scored on the same patches are not two samples; they are one sample measured
+twice, and the storms that are hard for one are hard for the other.
+
+Applying that rule to our own archive:
+
+**943 labelled patches are worth 373 independent observations.** They sit three
+hours apart inside storms that last a week, and a cyclone does not reinvent
+itself in three hours.
+
+From that, the smallest change we could call real at 80% power and 5%:
+
+| metric | now | smallest detectable improvement |
+|---|---|---|
+| RMSE | 12.96 kt | 1.78 kt |
+| MAE | 9.74 kt | 1.24 kt |
+| IMD category exact | 39% | +7 points |
+| within 10 kt | 62% | +7 points |
+
+Set the published size of the techniques we did not try against that:
+
+| | typical gain | visible here? |
+|---|---|---|
+| test-time augmentation | ~0.3 kt | no |
+| ensembling several seeds | ~0.4 kt | no |
+| a larger backbone | ~0.8 kt | no |
+| microwave, done properly | ~2 kt | yes |
+
+So the entire class of dependable small improvements is **below the resolution of
+this dataset**. Running them would very likely help a little and we would have no
+honest way to say so. That is not a reason to skip them in a system meant to be
+used; it is a reason not to claim them here.
+
+Two things follow and both are now in force. **MAE is the more powerful metric
+on this sample** - it detects a 1.24 kt change against RMSE's 1.78, because RMSE
+is dominated by a handful of tail cases - so it is quoted alongside RMSE rather
+than behind it. And **model comparisons use the paired test**, in
+`src/eval/paired.py`, not overlapping intervals.
+
+There is a floor underneath all of this as well. Torn and Snyder (2012) put
+best-track intensity uncertainty at about 10 kt for tropical storms and 12 kt
+for stronger systems **in basins without aircraft reconnaissance**, and the
+North Indian Ocean has none at all - IMD's best track is itself largely a
+satellite estimate. Our residual shares 58 kt^2 of variance, about 7.6 kt, with
+ADT, a completely independent method scored against the same labels. Some of
+that is shared infrared blindness rather than label error, so 7.6 kt is an upper
+bound, but it is the same order as the published label uncertainty and our total
+is 12.96. A meaningful part of what we are measuring is the ruler, not the
+model.
+
 ## 8. what we don't claim
 
 - we don't beat IMD. official 24 h guidance for this basin is sharper than our
