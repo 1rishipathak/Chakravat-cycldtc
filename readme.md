@@ -15,6 +15,7 @@ everything is scored on held out seasons 2020-2025, 51 storms that no model
 here has seen.
 
 ## mermaid diagram
+```mermaid
 flowchart TD
 
 subgraph group_ingest["Data inputs"]
@@ -106,6 +107,7 @@ class node_pipeline,node_visionapi,node_detection,node_scenes,node_intensity ton
 class node_features,node_ensemble,node_landfall,node_ri,node_windprob toneMint
 class node_api,node_store,node_events,node_analogues,node_explain toneRose
 class node_forecaster toneIndigo
+```
 
 ## running it
 
