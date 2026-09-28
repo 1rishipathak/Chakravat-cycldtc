@@ -14,6 +14,99 @@ from multi-source satellite data. We split that into four tasks:
 everything is scored on held out seasons 2020-2025, 51 storms that no model
 here has seen.
 
+## mermaid diagram
+flowchart TD
+
+subgraph group_ingest["Data inputs"]
+  node_satdata[("Satellite archives")]
+  node_besttrack[("Best-track data<br/>[ibtracs.py]")]
+  node_environment["ERA5 features<br/>[environment.py]"]
+  node_insatlive["Live INSAT<br/>[insat_live.py]"]
+  node_places[("Coastal places<br/>[coastline.py]")]
+end
+
+subgraph group_vision["Imagery analysis"]
+  node_pipeline["Cyclone pipeline<br/>[pipeline.py]"]
+  node_visionapi["Vision service<br/>[vision.py]"]
+  node_detection["Storm detection<br/>[detect.py]"]
+  node_scenes["Scene typing<br/>[scenes.py]"]
+  node_intensity["Image intensity<br/>[dataset.py]"]
+end
+
+subgraph group_forecast["Forecasting"]
+  node_features["Track features<br/>[build.py]"]
+  node_ensemble["Track ensemble<br/>[ensemble.py]"]
+  node_landfall["Landfall forecast<br/>[landfall.py]"]
+  node_ri["Rapid intensification<br/>[ri.py]"]
+  node_windprob["Wind exposure<br/>[wind_prob.py]"]
+end
+
+subgraph group_service["API and impact"]
+  node_api["Decision API<br/>[main.py]"]
+  node_store[("Alert store<br/>[alert_store.py]")]
+  node_events["Live events<br/>[events.py]"]
+  node_analogues["Storm analogues<br/>[analogues.py]"]
+  node_explain["Forecast explanation"]
+end
+
+node_forecaster(("Forecaster"))
+
+node_forecaster -->|"requests forecasts"| node_api
+node_satdata -->|"provides imagery"| node_visionapi
+node_insatlive -.->|"provides live scans"| node_pipeline
+node_pipeline -->|"requests analysis"| node_visionapi
+node_visionapi -->|"detects centres"| node_detection
+node_visionapi -->|"classifies scenes"| node_scenes
+node_visionapi -->|"estimates intensity"| node_intensity
+node_pipeline -->|"builds track features"| node_features
+node_besttrack -->|"supplies track truth"| node_features
+node_environment -->|"adds predictors"| node_features
+node_features -->|"supplies forecast inputs"| node_ensemble
+node_api -->|"serves track forecasts"| node_ensemble
+node_api -->|"requests landfall risk"| node_landfall
+node_api -->|"requests RI risk"| node_ri
+node_api -->|"requests wind exposure"| node_windprob
+node_windprob -->|"uses member tracks"| node_ensemble
+node_windprob -->|"checks exposed places"| node_places
+node_api -->|"finds prior storms"| node_analogues
+node_api -->|"explains forecasts"| node_explain
+node_api -->|"reads and writes alerts"| node_store
+node_api -->|"publishes live updates"| node_events
+
+click node_satdata "https://github.com/1rishipathak/chakravat-cycldtc/tree/main/src/ingest"
+click node_besttrack "https://github.com/1rishipathak/chakravat-cycldtc/blob/main/src/ingest/ibtracs.py"
+click node_environment "https://github.com/1rishipathak/chakravat-cycldtc/blob/main/src/features/environment.py"
+click node_insatlive "https://github.com/1rishipathak/chakravat-cycldtc/blob/main/src/ingest/insat_live.py"
+click node_pipeline "https://github.com/1rishipathak/chakravat-cycldtc/blob/main/src/pipeline.py"
+click node_visionapi "https://github.com/1rishipathak/chakravat-cycldtc/blob/main/api/vision.py"
+click node_detection "https://github.com/1rishipathak/chakravat-cycldtc/blob/main/src/vision/detect.py"
+click node_scenes "https://github.com/1rishipathak/chakravat-cycldtc/blob/main/src/vision/scenes.py"
+click node_intensity "https://github.com/1rishipathak/chakravat-cycldtc/blob/main/src/vision/dataset.py"
+click node_features "https://github.com/1rishipathak/chakravat-cycldtc/blob/main/src/features/build.py"
+click node_ensemble "https://github.com/1rishipathak/chakravat-cycldtc/blob/main/src/models/ensemble.py"
+click node_landfall "https://github.com/1rishipathak/chakravat-cycldtc/blob/main/src/models/landfall.py"
+click node_ri "https://github.com/1rishipathak/chakravat-cycldtc/blob/main/src/models/ri.py"
+click node_windprob "https://github.com/1rishipathak/chakravat-cycldtc/blob/main/src/models/wind_prob.py"
+click node_api "https://github.com/1rishipathak/chakravat-cycldtc/blob/main/api/main.py"
+click node_store "https://github.com/1rishipathak/chakravat-cycldtc/blob/main/api/alert_store.py"
+click node_events "https://github.com/1rishipathak/chakravat-cycldtc/blob/main/api/events.py"
+click node_analogues "https://github.com/1rishipathak/chakravat-cycldtc/blob/main/src/models/analogues.py"
+click node_explain "https://github.com/1rishipathak/chakravat-cycldtc/blob/main/api/explain_forecast.py"
+click node_places "https://github.com/1rishipathak/chakravat-cycldtc/blob/main/src/ingest/coastline.py"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_satdata,node_besttrack,node_environment,node_insatlive,node_places toneBlue
+class node_pipeline,node_visionapi,node_detection,node_scenes,node_intensity toneAmber
+class node_features,node_ensemble,node_landfall,node_ri,node_windprob toneMint
+class node_api,node_store,node_events,node_analogues,node_explain toneRose
+class node_forecaster toneIndigo
+
 ## running it
 
 ```bash
