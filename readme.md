@@ -14,6 +14,12 @@ from multi-source satellite data. We split that into four tasks:
 everything is scored on held out seasons 2020-2025, 51 storms that no model
 here has seen.
 
+
+
+https://github.com/user-attachments/assets/29d42c93-6b03-45e2-a922-3a6b74608193
+
+
+
 ## mermaid diagram
 ```mermaid
 flowchart TD
